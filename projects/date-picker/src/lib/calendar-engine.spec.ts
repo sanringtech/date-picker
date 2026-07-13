@@ -137,4 +137,80 @@ describe('CalendarEngine', () => {
     expect(() => engine.monthGrids()).not.toThrow();
     expect(engine.monthGrids()[0]).toHaveLength(42);
   });
+
+  it('isDateDisabled is false for everything until setDisabled is called', () => {
+    const engine = createEngine({ today: fixedToday });
+    expect(engine.isDateDisabled(new Date(2026, 1, 20))).toBe(false);
+  });
+
+  it('isDateDisabled reflects the matcher passed to setDisabled (R4 / Decision 5)', () => {
+    const engine = createEngine({ today: fixedToday });
+    const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
+    const holiday = { from: new Date(2026, 0, 26), to: new Date(2026, 0, 30) };
+
+    engine.setDisabled([isWeekend, holiday]);
+
+    expect(engine.isDateDisabled(new Date(2026, 1, 14))).toBe(true); // Saturday
+    expect(engine.isDateDisabled(new Date(2026, 0, 28))).toBe(true); // in holiday interval
+    expect(engine.isDateDisabled(new Date(2026, 1, 16))).toBe(false); // plain Monday
+  });
+
+  it('isDateDisabled reverts to false once setDisabled(undefined) clears the matcher', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setDisabled(new Date(2026, 1, 20));
+    expect(engine.isDateDisabled(new Date(2026, 1, 20))).toBe(true);
+
+    engine.setDisabled(undefined);
+
+    expect(engine.isDateDisabled(new Date(2026, 1, 20))).toBe(false);
+  });
+
+  it('monthGrids reflects setDisabled via each cell.isDisabled', () => {
+    const engine = createEngine({ today: fixedToday }); // Feb 2026, weekStartsOn=1
+    const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
+    engine.setDisabled(isWeekend);
+
+    const grid = engine.monthGrids()[0];
+    const disabledCells = grid.filter((cell) => cell.isDisabled);
+    expect(disabledCells.length).toBeGreaterThan(0);
+    expect(
+      disabledCells.every((cell) => cell.date.getDay() === 0 || cell.date.getDay() === 6),
+    ).toBe(true);
+  });
+
+  it('selectDate is a no-op on a disabled date (I2)', () => {
+    const engine = createEngine({ today: fixedToday });
+    const target = new Date(2026, 1, 20);
+    engine.setDisabled(target);
+
+    engine.selectDate(target);
+
+    expect(engine.selectedDate()).toBeNull();
+  });
+
+  it('setDisabled destroys an existing selection it now conflicts with, rather than masking it', () => {
+    const engine = createEngine({ today: fixedToday });
+    const target = new Date(2026, 1, 20);
+    engine.selectDate(target);
+    expect(engine.selectedDate()).not.toBeNull();
+
+    engine.setDisabled(target); // developer retroactively disables the already-selected day
+
+    expect(engine.selectedDate()).toBeNull();
+
+    // no ghost state: lifting the restriction does not resurrect the old selection
+    engine.setDisabled(undefined);
+    expect(engine.selectedDate()).toBeNull();
+  });
+
+  it('setDisabled leaves an unrelated existing selection untouched', () => {
+    const engine = createEngine({ today: fixedToday });
+    const target = new Date(2026, 1, 20);
+    engine.selectDate(target);
+
+    engine.setDisabled(new Date(2026, 1, 21)); // disables a different day
+
+    expect(engine.selectedDate()).not.toBeNull();
+    expect(isSameDay(engine.selectedDate()!, target)).toBe(true);
+  });
 });

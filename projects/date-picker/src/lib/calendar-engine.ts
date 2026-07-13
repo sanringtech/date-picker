@@ -1,9 +1,10 @@
 import { Injectable, Injector, computed, inject, signal } from '@angular/core';
 import { isSameDay } from 'date-fns/isSameDay';
 import { isValid } from 'date-fns/isValid';
+import { isDisabledByAny } from './calendar-disabled';
 import { buildMonthGrid, GRID_SIZE } from './calendar-grid';
 import { CALENDAR_LOCALE, CALENDAR_TODAY } from './calendar.tokens';
-import type { CalendarDay, CalendarLocale } from './calendar.types';
+import type { CalendarDay, CalendarLocale, DisabledInput } from './calendar.types';
 
 /** M1 scope: no cross-month auto-transfer on arrow keys (Decision 6 lands in M4). */
 export type FocusMoveDirection =
@@ -28,6 +29,7 @@ export class CalendarEngine {
   private readonly _focusedDate = signal<Date | null>(null);
   private readonly _allowDeselect = signal(true);
   private readonly _localeOverride = signal<CalendarLocale | undefined>(undefined);
+  private readonly _disabled = signal<DisabledInput | undefined>(undefined);
 
   /**
    * Decision 7: an explicit `setLocale()` override wins; otherwise fall back to
@@ -57,7 +59,7 @@ export class CalendarEngine {
       isRangeStart: false,
       isRangeEnd: false,
       isInRange: false,
-      isDisabled: false,
+      isDisabled: this.isDateDisabled(cell.date),
       isFocused: focused !== null && isSameDay(cell.date, focused),
     }));
 
@@ -71,6 +73,21 @@ export class CalendarEngine {
   /** Whether re-selecting the already-selected date clears it (constitution §4). */
   setAllowDeselect(allow: boolean): void {
     this._allowDeselect.set(allow);
+  }
+
+  /**
+   * Unified disabled-date matcher — single day / array / interval / predicate,
+   * OR-combined (R4 / Decision 5). If the currently selected date is caught
+   * by the new matcher, the selection is destroyed outright (not masked) —
+   * no ghost state, same discipline as Decision 3's Range-abort policy.
+   */
+  setDisabled(input: DisabledInput | undefined): void {
+    this._disabled.set(input);
+
+    const selected = this._selectedDate();
+    if (selected !== null && this.isDateDisabled(selected)) {
+      this._selectedDate.set(null);
+    }
   }
 
   /** I1: viewDate must always be a valid Date; invalid input falls back to today. */
@@ -151,8 +168,13 @@ export class CalendarEngine {
    * Single-selection state machine (constitution §4):
    * unselected -> selected on any valid pick; selected -> unselected only when
    * the same date is re-picked AND allowDeselect is true, otherwise it holds.
+   * A disabled date is always a no-op (I2: Selected ∩ Disabled = Ø).
    */
   selectDate(date: Date): void {
+    if (this.isDateDisabled(date)) {
+      return;
+    }
+
     const current = this._selectedDate();
     if (current !== null && isSameDay(current, date)) {
       if (this._allowDeselect()) {
@@ -166,5 +188,11 @@ export class CalendarEngine {
   /** §8: clears the selection only — viewDate is deliberately left untouched. */
   clearSelection(): void {
     this._selectedDate.set(null);
+  }
+
+  /** Supports both direct queries (external, tests) and the engine's own I2 enforcement (M2). */
+  isDateDisabled(date: Date): boolean {
+    const disabled = this._disabled();
+    return disabled !== undefined && isDisabledByAny(date, disabled);
   }
 }

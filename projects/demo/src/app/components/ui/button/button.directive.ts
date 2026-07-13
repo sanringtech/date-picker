@@ -34,16 +34,16 @@ export class ButtonDirective {
   protected readonly buttonClass = computed(() => {
     const variants: Record<ButtonVariant, string> = {
       default:
-        'border-transparent bg-[var(--sanring-control)] text-[var(--sanring-control-foreground)]',
+        'border-transparent bg-[var(--sanring-control)] text-[var(--sanring-control-foreground)] hover:brightness-95 active:brightness-90',
       secondary:
-        'border-[var(--sanring-border)] bg-[var(--sanring-surface-strong)] text-[var(--sanring-foreground)] hover:bg-[var(--sanring-active)]',
+        'border-[var(--sanring-border)] bg-[var(--sanring-surface-strong)] text-[var(--sanring-foreground)] hover:bg-[var(--sanring-active)] active:brightness-90',
       outline:
-        'border-[var(--sanring-border-strong)] bg-transparent text-[var(--sanring-foreground)] hover:bg-[var(--sanring-surface-strong)]',
+        'border-[var(--sanring-border-strong)] bg-transparent text-[var(--sanring-foreground)] hover:bg-[var(--sanring-surface-strong)] active:brightness-90',
       ghost:
-        'border-transparent bg-transparent text-[var(--sanring-foreground)] hover:bg-[var(--sanring-surface-strong)]',
+        'border-transparent bg-transparent text-[var(--sanring-foreground)] hover:bg-[var(--sanring-surface-strong)] active:brightness-90',
       destructive:
-        'border-transparent bg-[#dc2626] text-white hover:bg-[#b91c1c] focus-visible:ring-[#ef4444]',
-      link: 'border-transparent bg-transparent px-0 text-[var(--sanring-foreground)] underline-offset-4 hover:underline',
+        'border-transparent bg-[#dc2626] text-white hover:bg-[#b91c1c] focus-visible:ring-[#ef4444] active:brightness-90',
+      link: 'border-transparent bg-transparent px-0 text-[var(--sanring-foreground)] underline-offset-4 hover:underline active:opacity-70',
     };
     return cn(
       'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg border',

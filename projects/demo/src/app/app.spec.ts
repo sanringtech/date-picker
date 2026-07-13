@@ -43,4 +43,13 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelectorAll('[data-testid^="calendar-day-"]')).toHaveLength(42);
   });
+
+  it('disables weekend/summer-break cells via the app-level setDisabled wiring (M2)', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const disabledCells = compiled.querySelectorAll('[data-testid^="calendar-day-"][disabled]');
+    expect(disabledCells.length).toBeGreaterThan(0);
+  });
 });
