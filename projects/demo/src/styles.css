@@ -1,0 +1,26 @@
+@import './theme.css';
+@import 'tailwindcss';
+
+/* Bridges @sanring/ui's semantic tokens into Tailwind's color and radius
+   utility namespace, so the demo can use classes like bg-primary,
+   text-foreground, and border-border instead of a hardcoded palette. */
+@theme inline {
+  --color-background: var(--sanring-background);
+  --color-foreground: var(--sanring-foreground);
+  --color-muted: var(--sanring-muted);
+  --color-border: var(--sanring-border);
+  --color-border-strong: var(--sanring-border-strong);
+  --color-surface: var(--sanring-surface);
+  --color-surface-strong: var(--sanring-surface-strong);
+  --color-primary: var(--sanring-primary);
+  --color-primary-foreground: var(--sanring-primary-fg);
+  --radius: var(--sanring-radius);
+  --radius-lg: var(--sanring-radius-lg);
+}
+
+body {
+  margin: 0;
+  background: var(--sanring-background);
+  color: var(--sanring-foreground);
+  font-family: var(--sanring-font-sans);
+}
