@@ -1,59 +1,70 @@
-# DatePicker
+# @sanring/date-picker
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.6.
+Headless Angular calendar engine — pure logic, zero DOM/CSS assumptions. It computes the 42-day grid, selection state, and keyboard focus; you own every pixel of markup and styling (Tailwind, plain CSS, whatever).
+
+Built on Angular Standalone + Signals, with `date-fns` for calendar math.
+
+## Why headless
+
+Off-the-shelf Angular datepickers (Material, PrimeNG, ...) couple appearance to logic. If your layout doesn't fit their component shape, you end up fighting CSS overrides or rewriting the whole thing. This package only does the "brain": inject `CalendarEngine`, bind `CalendarGridDirective` to your own markup, read the output signals, render however you like.
+
+## Status
+
+Early development, tracking `.claude/prds/date-picker.md`. Currently implemented (M1 tracer bullet):
+
+- Single-month 42-day grid (`CalendarEngine.monthGrids`)
+- Single-date selection with configurable re-click-to-deselect
+- Month navigation (`nextMonth` / `prevMonth` / `setViewDate`)
+- Locale injection via `CALENDAR_LOCALE` (no built-in default — you must provide one)
+- "Today" injection via `CALENDAR_TODAY` (falls back to the system clock)
+- Arrow-key/Home/End/PageUp/PageDown focus movement within the current grid (`CalendarGridDirective`)
+
+Not yet implemented — see the PRD for the full roadmap: range selection, disabled-dates matchers, multi-month grids, cross-month focus auto-paging, full WAI-ARIA grid pattern.
+
+Explicitly out of scope (permanent, not deferred): non-Gregorian calendars, date string parsing/formatting, timezone conversion, Year/Decade views, built-in popover/overlay chrome, built-in min/max-date business rules.
+
+## Workspace layout
+
+This is an Angular CLI workspace containing the publishable library plus (eventually) a demo app:
+
+```
+projects/
+  date-picker/   the @sanring/date-picker library (projects/date-picker/src/lib)
+```
 
 ## Development server
-
-To start a local development server, run:
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open `http://localhost:4200/`; the app reloads on source changes.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Building the library
 
 ```bash
-ng generate component component-name
+ng build date-picker
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Output goes to `dist/date-picker` (Angular Package Format).
 
 ## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
 
 ```bash
 ng test
 ```
 
-## Running end-to-end tests
+Runs with [Vitest](https://vitest.dev/).
 
-For end-to-end (e2e) testing, run:
+## Linting / formatting
 
 ```bash
-ng e2e
+ng lint
+npm run format        # prettier --write
+npm run format:check
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Docs
 
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- Business rules (source of truth): `.claude/constitutions/date-picker.md`
+- Product/technical spec: `.claude/prds/date-picker.md`
