@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { format } from 'date-fns/format';
+import { LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
 import { CALENDAR_LOCALE, CalendarGridDirective } from '@sanring/date-picker';
 import type { CalendarDay } from '@sanring/date-picker';
+import { ButtonDirective } from './components/ui/button';
 
 @Component({
   selector: 'app-root',
-  imports: [CalendarGridDirective],
+  imports: [CalendarGridDirective, ButtonDirective, LucideChevronLeft, LucideChevronRight],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

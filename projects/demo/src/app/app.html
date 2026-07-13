@@ -1,8 +1,10 @@
 <main class="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-8">
   <button
+    sanringBtn
+    variant="outline"
+    size="sm"
     type="button"
     data-testid="theme-toggle"
-    class="rounded border border-border px-3 py-1 text-sm text-muted hover:bg-surface-strong"
     (click)="toggleTheme()"
   >
     切換深/淺色
@@ -17,23 +19,29 @@
   >
     <div class="mb-4 flex items-center justify-between">
       <button
+        sanringBtn
+        variant="ghost"
+        size="icon"
         type="button"
         data-testid="calendar-prev-month"
-        class="rounded p-1 text-lg text-muted hover:bg-surface-strong"
+        aria-label="上一月"
         (click)="grid.engine.prevMonth()"
       >
-        ‹
+        <svg lucideChevronLeft [size]="18"></svg>
       </button>
       <span class="font-semibold text-foreground">
         {{ currentMonthLabel(grid.engine.monthGrids()[0]) }}
       </span>
       <button
+        sanringBtn
+        variant="ghost"
+        size="icon"
         type="button"
         data-testid="calendar-next-month"
-        class="rounded p-1 text-lg text-muted hover:bg-surface-strong"
+        aria-label="下一月"
         (click)="grid.engine.nextMonth()"
       >
-        ›
+        <svg lucideChevronRight [size]="18"></svg>
       </button>
     </div>
 
@@ -72,9 +80,11 @@
         }
       </span>
       <button
+        sanringBtn
+        variant="outline"
+        size="sm"
         type="button"
         data-testid="calendar-clear-selection"
-        class="rounded border border-border px-2 py-1 text-muted hover:bg-surface-strong"
         (click)="grid.engine.clearSelection()"
       >
         清空

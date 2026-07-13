@@ -1,4 +1,4 @@
-@import './theme.css';
+@import './sanring-theme.css';
 @import 'tailwindcss';
 
 /* Bridges @sanring/ui's semantic tokens into Tailwind's color and radius
