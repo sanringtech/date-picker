@@ -1,4 +1,4 @@
-<main class="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-8">
+<main class="min-h-screen bg-background flex flex-col items-center gap-8 p-8">
   <button
     sanringBtn
     variant="outline"
@@ -10,97 +10,116 @@
     切換深/淺色
   </button>
 
-  <div
-    sanringCalendarGrid
-    #grid="sanringCalendarGrid"
-    tabindex="0"
-    data-testid="calendar-grid"
-    class="w-80 rounded-lg border border-border bg-surface p-4 shadow-sm outline-none focus:ring-2 focus:ring-primary"
-  >
-    <div class="mb-4 flex items-center justify-between">
-      <button
-        sanringBtn
-        variant="ghost"
-        size="icon"
-        type="button"
-        data-testid="calendar-prev-month"
-        aria-label="上一月"
-        (click)="grid.engine.prevMonth()"
-      >
-        <svg lucideChevronLeft [size]="18"></svg>
-      </button>
-      <span class="font-semibold text-foreground">
-        {{ currentMonthLabel(grid.engine.monthGrids()[0]) }}
-      </span>
-      <button
-        sanringBtn
-        variant="ghost"
-        size="icon"
-        type="button"
-        data-testid="calendar-next-month"
-        aria-label="下一月"
-        (click)="grid.engine.nextMonth()"
-      >
-        <svg lucideChevronRight [size]="18"></svg>
-      </button>
-    </div>
-
-    <div class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted">
-      @for (label of weekdayLabels; track label) {
-        <span>{{ label }}</span>
-      }
-    </div>
-
-    <div class="grid grid-cols-7 gap-1">
-      @for (day of grid.engine.monthGrids()[0]; track day.date.getTime()) {
-        <button
-          type="button"
-          [disabled]="day.isDisabled"
-          [attr.data-testid]="'calendar-day-' + dayTestId(day.date)"
-          class="aspect-square rounded text-sm transition-colors active:brightness-90"
-          [class.text-muted]="!day.isCurrentMonth"
-          [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
-          [class.bg-primary]="day.isSelected"
-          [class.text-primary-foreground]="day.isSelected"
-          [class.ring-2]="day.isFocused"
-          [class.ring-primary]="day.isFocused"
-          [class.font-bold]="day.isToday && !day.isSelected"
-          [class.hover:bg-surface-strong]="!day.isSelected && !day.isDisabled"
-          [class.hover:brightness-95]="day.isSelected"
-          [class.opacity-40]="day.isDisabled"
-          [class.cursor-not-allowed]="day.isDisabled"
-          [class.line-through]="day.isDisabled"
-          (click)="grid.engine.selectDate(day.date)"
-        >
-          {{ day.date.getDate() }}
-        </button>
-      }
-    </div>
-
-    <div class="mt-4 flex items-center justify-between text-sm">
-      <span class="text-muted" data-testid="calendar-selected-value">
-        @if (grid.engine.selectedDate(); as selected) {
-          已選：{{ formatDate(selected) }}
-        } @else {
-          尚未選取
-        }
-      </span>
-      <button
-        sanringBtn
-        variant="outline"
-        size="sm"
-        type="button"
-        data-testid="calendar-clear-selection"
-        (click)="grid.engine.clearSelection()"
-      >
-        清空
-      </button>
-    </div>
-  </div>
-
-  <p class="w-80 text-xs text-muted" data-testid="calendar-disabled-note">
-    週末與 {{ formatDate(summerBreak.from) }} ~ {{ formatDate(summerBreak.to) }}
-    公休不可選（R4 / Decision 5：自訂函式 + DateInterval 疊加）。「今天」固定為
-    {{ formatDate(fixedToday) }}（CALENDAR_TODAY 注入，模擬 SSR，Decision 4）。
+  <p class="max-w-2xl text-center text-xs text-muted" data-testid="calendar-today-note">
+    「今天」固定為 {{ formatDate(fixedToday) }}（CALENDAR_TODAY 注入，模擬 SSR，Decision
+    4）——所有卡片共用同一個注入基準。
   </p>
+
+  <div class="flex w-full max-w-4xl flex-col gap-8">
+    @for (scenario of scenarios; track scenario.id) {
+      <div class="flex flex-col items-start gap-6 md:flex-row">
+        <sanring-card class="w-80 shrink-0">
+          <sanring-card-content class="p-4">
+            <div
+              sanringCalendarGrid
+              #grid="sanringCalendarGrid"
+              tabindex="0"
+              [attr.data-testid]="'calendar-grid-' + scenario.id"
+              class="block rounded-lg outline-none focus:ring-2 focus:ring-primary"
+            >
+              <div class="mb-4 flex items-center justify-between">
+                <button
+                  sanringBtn
+                  variant="ghost"
+                  size="icon"
+                  type="button"
+                  [attr.data-testid]="'calendar-prev-month-' + scenario.id"
+                  aria-label="上一月"
+                  (click)="grid.engine.prevMonth()"
+                >
+                  <svg lucideChevronLeft [size]="18"></svg>
+                </button>
+                <span class="font-semibold text-foreground">
+                  {{ currentMonthLabel(grid.engine.monthGrids()[0]) }}
+                </span>
+                <button
+                  sanringBtn
+                  variant="ghost"
+                  size="icon"
+                  type="button"
+                  [attr.data-testid]="'calendar-next-month-' + scenario.id"
+                  aria-label="下一月"
+                  (click)="grid.engine.nextMonth()"
+                >
+                  <svg lucideChevronRight [size]="18"></svg>
+                </button>
+              </div>
+
+              <div class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted">
+                @for (label of weekdayLabels; track label) {
+                  <span>{{ label }}</span>
+                }
+              </div>
+
+              <div class="grid grid-cols-7 gap-1">
+                @for (day of grid.engine.monthGrids()[0]; track day.date.getTime()) {
+                  <button
+                    type="button"
+                    [disabled]="day.isDisabled"
+                    [attr.data-testid]="'calendar-day-' + dayTestId(scenario.id, day.date)"
+                    class="aspect-square rounded text-sm transition-colors active:brightness-90"
+                    [class.text-muted]="!day.isCurrentMonth"
+                    [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
+                    [class.bg-primary]="day.isSelected"
+                    [class.text-primary-foreground]="day.isSelected"
+                    [class.ring-2]="day.isFocused"
+                    [class.ring-primary]="day.isFocused"
+                    [class.font-bold]="day.isToday && !day.isSelected"
+                    [class.hover:bg-surface-strong]="!day.isSelected && !day.isDisabled"
+                    [class.hover:brightness-95]="day.isSelected"
+                    [class.opacity-40]="day.isDisabled"
+                    [class.cursor-not-allowed]="day.isDisabled"
+                    [class.line-through]="day.isDisabled"
+                    (click)="grid.engine.selectDate(day.date)"
+                  >
+                    {{ day.date.getDate() }}
+                  </button>
+                }
+              </div>
+
+              <div class="mt-4 flex items-center justify-between text-sm">
+                <span
+                  class="text-muted"
+                  [attr.data-testid]="'calendar-selected-value-' + scenario.id"
+                >
+                  @if (grid.engine.selectedDate(); as selected) {
+                    已選：{{ formatDate(selected) }}
+                  } @else {
+                    尚未選取
+                  }
+                </span>
+                <button
+                  sanringBtn
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  [attr.data-testid]="'calendar-clear-selection-' + scenario.id"
+                  (click)="grid.engine.clearSelection()"
+                >
+                  清空
+                </button>
+              </div>
+            </div>
+          </sanring-card-content>
+        </sanring-card>
+
+        <div class="flex-1 pt-2">
+          <h3 sanringCardTitle class="text-base">{{ scenario.title }}</h3>
+          <p sanringCardDescription class="mt-1 text-sm text-muted">
+            {{ scenario.description }}
+          </p>
+        </div>
+      </div>
+    }
+  </div>
 </main>

@@ -36,20 +36,39 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('renders a 42-cell calendar grid', async () => {
+  it('renders one independent 42-cell grid per demo scenario', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelectorAll('[data-testid^="calendar-day-"]')).toHaveLength(42);
+
+    const grids = compiled.querySelectorAll('[data-testid^="calendar-grid-"]');
+    expect(grids).toHaveLength(3);
+
+    for (const scenarioId of ['basic', 'no-deselect', 'disabled']) {
+      const cells = compiled.querySelectorAll(
+        `[data-testid="calendar-grid-${scenarioId}"] [data-testid^="calendar-day-${scenarioId}-"]`,
+      );
+      expect(cells).toHaveLength(42);
+    }
   });
 
-  it('disables weekend/summer-break cells via the app-level setDisabled wiring (M2)', async () => {
+  it('only the "disabled" scenario has disabled cells; "basic"/"no-deselect" have none (independent engine instances)', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    const disabledCells = compiled.querySelectorAll('[data-testid^="calendar-day-"][disabled]');
-    expect(disabledCells.length).toBeGreaterThan(0);
+
+    const disabledInDisabledScenario = compiled.querySelectorAll(
+      '[data-testid="calendar-grid-disabled"] [data-testid^="calendar-day-"][disabled]',
+    );
+    expect(disabledInDisabledScenario.length).toBeGreaterThan(0);
+
+    for (const scenarioId of ['basic', 'no-deselect']) {
+      const disabledCells = compiled.querySelectorAll(
+        `[data-testid="calendar-grid-${scenarioId}"] [data-testid^="calendar-day-"][disabled]`,
+      );
+      expect(disabledCells).toHaveLength(0);
+    }
   });
 });
