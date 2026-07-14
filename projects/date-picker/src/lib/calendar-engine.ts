@@ -251,8 +251,7 @@ export class CalendarEngine {
     // Locate baseline across all visible grids.
     let baselineG = 0;
     let baselineC = 0;
-    search:
-    for (let g = 0; g < grids.length; g++) {
+    search: for (let g = 0; g < grids.length; g++) {
       for (let c = 0; c < GRID_SIZE; c++) {
         if (isSameDay(grids[g][c].date, baseline)) {
           baselineG = g;
@@ -281,10 +280,18 @@ export class CalendarEngine {
     // control-flow analysis which can't see that).
     let targetFlat = currentFlat;
     switch (direction) {
-      case 'left':  targetFlat = currentFlat - 1; break;
-      case 'right': targetFlat = currentFlat + 1; break;
-      case 'up':    targetFlat = currentFlat - 7; break;
-      case 'down':  targetFlat = currentFlat + 7; break;
+      case 'left':
+        targetFlat = currentFlat - 1;
+        break;
+      case 'right':
+        targetFlat = currentFlat + 1;
+        break;
+      case 'up':
+        targetFlat = currentFlat - 7;
+        break;
+      case 'down':
+        targetFlat = currentFlat + 7;
+        break;
     }
 
     if (targetFlat < 0) {
