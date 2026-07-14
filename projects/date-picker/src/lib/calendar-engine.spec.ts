@@ -464,4 +464,117 @@ describe('Range Selection (§4 / Decision 3)', () => {
     expect(engine.selectedRange()).toEqual({ start: null, end: null });
     expect(engine.isDraftActive()).toBe(false);
   });
+
+  // ── M4: Multi-month grid (Decision 8) ──────────────────────────────────────
+
+  describe('Multi-month grid (Decision 8)', () => {
+    it('setMonthsToDisplay(2) produces two 42-cell grids', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setMonthsToDisplay(2);
+      const grids = engine.monthGrids();
+      expect(grids).toHaveLength(2);
+      expect(grids[0]).toHaveLength(42);
+      expect(grids[1]).toHaveLength(42);
+    });
+
+    it('second grid offset is one month ahead of the first', () => {
+      const engine = createEngine({ today: fixedToday }); // view = Feb 2026
+      engine.setMonthsToDisplay(2);
+      const [feb, mar] = engine.monthGrids();
+      const febCurrent = feb.filter((d) => d.isCurrentMonth);
+      const marCurrent = mar.filter((d) => d.isCurrentMonth);
+      expect(febCurrent[0].date.getMonth()).toBe(1); // February
+      expect(marCurrent[0].date.getMonth()).toBe(2); // March
+    });
+
+    it('setMonthsToDisplay clamps minimum to 1', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setMonthsToDisplay(0);
+      expect(engine.monthGrids()).toHaveLength(1);
+    });
+
+    it('nextMonth() always slides by exactly one month regardless of monthsToDisplay', () => {
+      const engine = createEngine({ today: fixedToday }); // view = Feb 2026
+      engine.setMonthsToDisplay(2);
+      engine.nextMonth();
+      const grids = engine.monthGrids();
+      const firstCurrent = grids[0].filter((d) => d.isCurrentMonth);
+      expect(firstCurrent[0].date.getMonth()).toBe(2); // March now leads
+    });
+  });
+
+  // ── M4: Cross-month focus auto-transfer (Decision 6) ───────────────────────
+
+  describe('Cross-month focus auto-transfer (Decision 6)', () => {
+    it('ArrowLeft from the first cell of the grid transfers to the previous month', () => {
+      const engine = createEngine({ today: fixedToday }); // Feb 2026
+      // Feb grid (weekStartsOn=1) starts Mon Jan 26. moveFocus('left') from flat
+      // index 0 will land at flat -1 → prevMonth() → Jan grid cell 41.
+      engine.moveFocus('left'); // baseline = today (Feb 15, flat 20) → Feb 14
+      // navigate all the way to flat 0 (Jan 26 2026 in Feb grid)
+      for (let i = 0; i < 19; i++) engine.moveFocus('left');
+      // now at flat index 0; one more left crosses the boundary
+      engine.moveFocus('left');
+
+      const grids = engine.monthGrids();
+      const currentMonthCells = grids[0].filter((d) => d.isCurrentMonth);
+      expect(currentMonthCells[0].date.getMonth()).toBe(0); // January now visible
+      expect(engine.focusedDate()).not.toBeNull();
+    });
+
+    it('ArrowRight from the last cell of the grid transfers to the next month', () => {
+      const engine = createEngine({ today: fixedToday }); // Feb 2026
+      // Feb grid last cell (index 41) is Sun Mar 8. One right from there → March
+      // grid, flat index 0.  Navigate right 21 steps from Feb 15 (flat 20) to
+      // reach flat 41, then one more.
+      for (let i = 0; i < 22; i++) engine.moveFocus('right'); // 21 steps to flat 41, +1 crosses
+
+      const grids = engine.monthGrids();
+      const currentMonthCells = grids[0].filter((d) => d.isCurrentMonth);
+      expect(currentMonthCells[0].date.getMonth()).toBe(2); // March now visible
+    });
+
+    it('Home and End never cross a month boundary', () => {
+      const engine = createEngine({ today: fixedToday }); // Feb 15 = Sun, last in its week row
+      engine.moveFocus('home'); // should land on Mon Feb 9 (row-start, still February)
+      let focused = engine.focusedDate()!;
+      expect(focused.getMonth()).toBe(1); // still February
+      expect(focused.getDate()).toBe(9);
+
+      engine.moveFocus('end'); // Sun Feb 15
+      focused = engine.focusedDate()!;
+      expect(focused.getMonth()).toBe(1);
+      expect(focused.getDate()).toBe(15);
+    });
+
+    it('PageDown carries focus to the same day-of-month in the next month', () => {
+      const engine = createEngine({ today: fixedToday }); // Feb 2026
+      engine.moveFocus('right'); // focus Feb 16
+      engine.moveFocus('pagedown'); // → March 16
+      const focused = engine.focusedDate()!;
+      expect(focused.getMonth()).toBe(2); // March
+      expect(focused.getDate()).toBe(16);
+    });
+
+    it('PageUp clamps focus to the last day when the target month is shorter', () => {
+      const engine = createEngine({ today: new Date(2026, 2, 31) }); // Mar 31
+      engine.moveFocus('left'); // set focusedDate to Mar 30
+      engine.moveFocus('pageup'); // target Feb 30 → clamped to Feb 28
+      const focused = engine.focusedDate()!;
+      expect(focused.getMonth()).toBe(1); // February
+      expect(focused.getDate()).toBe(28);
+    });
+
+    it('multi-month: ArrowRight within visible window does not page prematurely', () => {
+      const engine = createEngine({ today: fixedToday }); // Feb 2026
+      engine.setMonthsToDisplay(2); // Feb + Mar visible
+      // Feb 15 is at flat 20 in 84-cell window. ArrowRight 22 times lands at flat 42,
+      // which is cell 0 of Mar grid — still within window, no paging.
+      for (let i = 0; i < 22; i++) engine.moveFocus('right');
+      const grids = engine.monthGrids();
+      // window must still start at February (no paging triggered)
+      const firstCurrent = grids[0].filter((d) => d.isCurrentMonth);
+      expect(firstCurrent[0].date.getMonth()).toBe(1); // still February leads
+    });
+  });
 });

@@ -8,11 +8,11 @@ import { CalendarEngine } from './calendar-engine';
  * `engine.monthGrids()` / `engine.selectedDate()` / `engine.focusedDate()` to
  * paint it however they like (e.g. via Tailwind).
  *
- * M1/M3 scope: arrow keys move focus within the current 42-cell grid and clamp
- * at its edges — they do NOT auto-page to the adjacent month. PageUp/PageDown
- * do change month (an explicit user action, distinct from Decision 6's
- * boundary auto-transfer, which lands in M4).
- * M3 adds: Escape aborts a range draft (Decision 3); in single mode Escape is
+ * M4 adds: Decision 6 cross-month auto-transfer (arrow keys crossing the
+ * visible window boundary trigger prevMonth()/nextMonth() and land on the
+ * corresponding logical cell).  Home/End stay within the same week row and
+ * never cross a month.  PageUp/PageDown change month explicitly.
+ * M3: Escape aborts a range draft (Decision 3); in single mode Escape is
  * not consumed so the outer shell can use it (e.g. close a popover).
  */
 @Directive({

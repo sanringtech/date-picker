@@ -1,4 +1,4 @@
-import { Component, effect, inject, viewChildren } from '@angular/core';
+import { Component, effect, inject, signal, viewChildren } from '@angular/core';
 import { format } from 'date-fns/format';
 import { LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
 import { CALENDAR_LOCALE, CalendarGridDirective } from '@sanring/date-picker';
@@ -59,6 +59,16 @@ const SCENARIOS: readonly DemoScenario[] = [
       '第一次點擊設定起點（進入 Draft），第二次點擊提交區間，Escape 或「中止草稿」按鈕中止並回溯（Decision 3 / §4）。',
     configure: (engine) => engine.setSelectionMode('range'),
   },
+  {
+    id: 'multimonth',
+    title: '⑤ 多月並排 + 跨月焦點（M4）',
+    description:
+      '同時顯示兩個月份（Decision 8），鍵盤方向鍵在兩個月格之間無縫移動；抵達整個視窗邊界才自動換頁（Decision 6）。',
+    configure: (engine) => {
+      engine.setSelectionMode('range');
+      engine.setMonthsToDisplay(2);
+    },
+  },
 ];
 
 @Component({
@@ -82,6 +92,8 @@ export class App {
 
   protected readonly scenarios = SCENARIOS;
   protected readonly fixedToday = FIXED_TODAY;
+  /** Controls whether the selection info renders as a separate block below the calendar. */
+  protected readonly showInfoBlock = signal(true);
 
   protected readonly weekdayLabels = [
     ...this.locale.weekdayLabels.slice(this.locale.weekStartsOn),
@@ -99,6 +111,23 @@ export class App {
   protected currentMonthLabel(days: readonly CalendarDay[]): string {
     const current = days.find((day) => day.isCurrentMonth) ?? days[0];
     return `${current.date.getFullYear()} ${this.locale.monthLabels[current.date.getMonth()]}`;
+  }
+
+  /** Splits a flat 42-cell grid into 6 week rows for role=row ARIA wrappers. */
+  protected toWeeks(grid: readonly CalendarDay[]): CalendarDay[][] {
+    const weeks: CalendarDay[][] = [];
+    for (let i = 0; i < 42; i += 7) {
+      weeks.push(grid.slice(i, i + 7) as CalendarDay[]);
+    }
+    return weeks;
+  }
+
+  protected ariaLabel(day: CalendarDay): string {
+    const base = format(day.date, 'yyyy-MM-dd');
+    if (day.isDisabled) return `${base}（不可選）`;
+    if (day.isRangeStart) return `${base}（區間起點）`;
+    if (day.isRangeEnd) return `${base}（區間終點）`;
+    return base;
   }
 
   protected dayTestId(scenarioId: string, date: Date): string {

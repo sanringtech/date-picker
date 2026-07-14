@@ -6,7 +6,7 @@ import { buildMonthGrid, GRID_SIZE } from './calendar-grid';
 import { CALENDAR_LOCALE, CALENDAR_TODAY } from './calendar.tokens';
 import type { CalendarDay, CalendarLocale, DateRange, DisabledInput } from './calendar.types';
 
-/** M1 scope: no cross-month auto-transfer on arrow keys (Decision 6 lands in M4). */
+/** Full set of focus-movement directions exposed by CalendarEngine.moveFocus(). */
 export type FocusMoveDirection =
   'up' | 'down' | 'left' | 'right' | 'home' | 'end' | 'pageup' | 'pagedown';
 
@@ -20,9 +20,11 @@ const EMPTY_RANGE: DateRange = { start: null, end: null };
 /**
  * Headless calendar state machine.
  *
- * M3 adds: range selection (Draft → commit / abort), clearSelection for range,
- * and I2 enforcement across both modes.  Multi-month grids and cross-month
- * keyboard auto-transfer land in M4 (.claude/prds/date-picker.md §10).
+ * M4 adds: cross-month focus auto-transfer (Decision 6) and multi-month
+ * parallel grid output (Decision 8, monthsToDisplay input, sliding-window
+ * paging).  WAI-ARIA attribute wiring is the consumer's responsibility;
+ * the engine provides the data signals, the directive provides keyboard
+ * handling (.claude/prds/date-picker.md §10).
  *
  * Component-scoped: provide this per calendar instance (`providers: [CalendarEngine]`),
  * not `providedIn: 'root'` — two pickers on the same page must not share state.
@@ -34,6 +36,7 @@ export class CalendarEngine {
 
   private readonly _viewDate = signal<Date>(this.todayFn());
   private readonly _selectionMode = signal<'single' | 'range'>('single');
+  private readonly _monthsToDisplay = signal<number>(1);
   private readonly _selectedDate = signal<Date | null>(null);
   private readonly _selectedRange = signal<DateRange>(EMPTY_RANGE);
   private readonly _draftStart = signal<Date | null>(null);
@@ -60,7 +63,11 @@ export class CalendarEngine {
   /** True while the first range endpoint has been picked but the second has not. */
   readonly isDraftActive = computed(() => this._draftStart() !== null);
 
-  /** Always a 1-element array in M1–M3; multi-month support arrives in M4 (Decision 8). */
+  /**
+   * Decision 8: N parallel 42-cell month grids, sliding window — nextMonth()/
+   * prevMonth() always shift by exactly one month regardless of monthsToDisplay.
+   * I3 invariant holds for each inner array (length always 42).
+   */
   readonly monthGrids = computed<CalendarDay[][]>(() => {
     const locale = this.resolvedLocale();
     const mode = this._selectionMode();
@@ -69,10 +76,10 @@ export class CalendarEngine {
     const draftStart = this._draftStart();
     const focused = this._focusedDate();
     const today = this.todayFn();
+    const monthsToDisplay = this._monthsToDisplay();
+    const viewDate = this._viewDate();
 
     // Resolve the effective display range for range mode.
-    // During Draft: draftStart + focusedDate as tentative end (Open Questions #5 resolved).
-    // After commit: the stable selectedRange.
     let effectiveStart: Date | null = null;
     let effectiveEnd: Date | null = null;
 
@@ -84,7 +91,6 @@ export class CalendarEngine {
         effectiveStart = range.start;
         effectiveEnd = range.end;
       }
-      // Normalise order so effectiveStart ≤ effectiveEnd regardless of pick order.
       if (effectiveStart !== null && effectiveEnd !== null) {
         if (dayMs(effectiveStart) > dayMs(effectiveEnd)) {
           [effectiveStart, effectiveEnd] = [effectiveEnd, effectiveStart];
@@ -92,51 +98,58 @@ export class CalendarEngine {
       }
     }
 
-    const grid = buildMonthGrid(this._viewDate(), locale.weekStartsOn).map((cell): CalendarDay => {
-      let isSelected = false;
-      let isRangeStart = false;
-      let isRangeEnd = false;
-      let isInRange = false;
+    const grids: CalendarDay[][] = [];
+    for (let offset = 0; offset < monthsToDisplay; offset++) {
+      const monthDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1);
+      const grid = buildMonthGrid(monthDate, locale.weekStartsOn).map((cell): CalendarDay => {
+        let isSelected = false;
+        let isRangeStart = false;
+        let isRangeEnd = false;
+        let isInRange = false;
 
-      if (mode === 'single') {
-        isSelected = selected !== null && isSameDay(cell.date, selected);
-      } else {
-        // Grid cells are already day-normalised (R2), so cell.date.getTime() ≡ dayMs(cell.date).
-        const cellMs = cell.date.getTime();
-
-        if (effectiveStart !== null && isSameDay(cell.date, effectiveStart)) {
-          isRangeStart = true;
-          isSelected = true;
+        if (mode === 'single') {
+          isSelected = selected !== null && isSameDay(cell.date, selected);
+        } else {
+          const cellMs = cell.date.getTime();
+          if (effectiveStart !== null && isSameDay(cell.date, effectiveStart)) {
+            isRangeStart = true;
+            isSelected = true;
+          }
+          if (effectiveEnd !== null && isSameDay(cell.date, effectiveEnd)) {
+            isRangeEnd = true;
+            isSelected = true;
+          }
+          if (effectiveStart !== null && effectiveEnd !== null) {
+            const sMs = dayMs(effectiveStart);
+            const eMs = dayMs(effectiveEnd);
+            isInRange = cellMs > sMs && cellMs < eMs;
+          }
         }
-        if (effectiveEnd !== null && isSameDay(cell.date, effectiveEnd)) {
-          isRangeEnd = true;
-          isSelected = true;
-        }
-        if (effectiveStart !== null && effectiveEnd !== null) {
-          const sMs = dayMs(effectiveStart);
-          const eMs = dayMs(effectiveEnd);
-          isInRange = cellMs > sMs && cellMs < eMs;
-        }
-      }
 
-      return {
-        date: cell.date,
-        isCurrentMonth: cell.isCurrentMonth,
-        isToday: isSameDay(cell.date, today),
-        isSelected,
-        isRangeStart,
-        isRangeEnd,
-        isInRange,
-        isDisabled: this.isDateDisabled(cell.date),
-        isFocused: focused !== null && isSameDay(cell.date, focused),
-      };
-    });
-
-    return [grid];
+        return {
+          date: cell.date,
+          isCurrentMonth: cell.isCurrentMonth,
+          isToday: isSameDay(cell.date, today),
+          isSelected,
+          isRangeStart,
+          isRangeEnd,
+          isInRange,
+          isDisabled: this.isDateDisabled(cell.date),
+          isFocused: focused !== null && isSameDay(cell.date, focused),
+        };
+      });
+      grids.push(grid);
+    }
+    return grids;
   });
 
   setLocale(locale: CalendarLocale | undefined): void {
     this._localeOverride.set(locale);
+  }
+
+  /** Decision 8: number of parallel months to display; minimum clamped to 1. */
+  setMonthsToDisplay(n: number): void {
+    this._monthsToDisplay.set(Math.max(1, Math.floor(n)));
   }
 
   /** Switches selection mode and resets all selection state to avoid cross-mode leakage. */
@@ -175,8 +188,8 @@ export class CalendarEngine {
       this._selectedRange.set(EMPTY_RANGE);
     }
 
-    const draftStart = this._draftStart();
-    if (draftStart !== null && this.isDateDisabled(draftStart)) {
+    const ds = this._draftStart();
+    if (ds !== null && this.isDateDisabled(ds)) {
       this._draftStart.set(null);
     }
   }
@@ -197,10 +210,16 @@ export class CalendarEngine {
   }
 
   /**
-   * Moves keyboard focus (Decision 6, M1/M3 subset — see FocusMoveDirection).
-   * Arrow keys / Home / End stay within the current 42-cell grid and clamp at
-   * its edges (no auto-paging). PageUp/PageDown change month and carry focus
-   * to the same day-of-month, clamped to the shorter month.
+   * Moves keyboard focus.
+   *
+   * Decision 6 (M4): arrow keys that would leave the visible grid window
+   * auto-page by one month and land on the corresponding logical cell in the
+   * new window.  Home/End stay within the current week row, never crossing
+   * a month boundary.  PageUp/PageDown change month explicitly and carry
+   * focus to the same day-of-month, clamped to the shorter month.
+   *
+   * Multi-month (Decision 8): the visible window is N × 42 cells; the
+   * flat-index calculation spans all N grids before triggering a page.
    */
   moveFocus(direction: FocusMoveDirection): void {
     if (direction === 'pageup' || direction === 'pagedown') {
@@ -210,50 +229,79 @@ export class CalendarEngine {
       } else {
         this.nextMonth();
       }
-
       const newViewDate = this._viewDate();
       const daysInNewMonth = new Date(
         newViewDate.getFullYear(),
         newViewDate.getMonth() + 1,
         0,
       ).getDate();
-      const clampedDay = Math.min(dayOfMonth, daysInNewMonth);
       this._focusedDate.set(
-        new Date(newViewDate.getFullYear(), newViewDate.getMonth(), clampedDay),
+        new Date(
+          newViewDate.getFullYear(),
+          newViewDate.getMonth(),
+          Math.min(dayOfMonth, daysInNewMonth),
+        ),
       );
       return;
     }
 
-    const grid = this.monthGrids()[0];
-    // In range mode _selectedDate is always null; fall back to today for the baseline.
+    const grids = this.monthGrids();
     const baseline = this._focusedDate() ?? this._selectedDate() ?? this.todayFn();
-    const baselineIndex = grid.findIndex((cell) => isSameDay(cell.date, baseline));
-    const currentIndex = baselineIndex === -1 ? 0 : baselineIndex;
 
-    let targetIndex: number;
-    switch (direction) {
-      case 'left':
-        targetIndex = currentIndex - 1;
-        break;
-      case 'right':
-        targetIndex = currentIndex + 1;
-        break;
-      case 'up':
-        targetIndex = currentIndex - 7;
-        break;
-      case 'down':
-        targetIndex = currentIndex + 7;
-        break;
-      case 'home':
-        targetIndex = Math.floor(currentIndex / 7) * 7;
-        break;
-      case 'end':
-        targetIndex = Math.floor(currentIndex / 7) * 7 + 6;
-        break;
+    // Locate baseline across all visible grids.
+    let baselineG = 0;
+    let baselineC = 0;
+    search:
+    for (let g = 0; g < grids.length; g++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        if (isSameDay(grids[g][c].date, baseline)) {
+          baselineG = g;
+          baselineC = c;
+          break search;
+        }
+      }
     }
 
-    const clampedIndex = Math.min(Math.max(targetIndex, 0), GRID_SIZE - 1);
-    this._focusedDate.set(grid[clampedIndex].date);
+    // Home/End: move within the SAME grid's week row, never cross a month.
+    if (direction === 'home') {
+      this._focusedDate.set(grids[baselineG][Math.floor(baselineC / 7) * 7].date);
+      return;
+    }
+    if (direction === 'end') {
+      this._focusedDate.set(grids[baselineG][Math.floor(baselineC / 7) * 7 + 6].date);
+      return;
+    }
+
+    // Flat index across the full N-month visible window.
+    const currentFlat = baselineG * GRID_SIZE + baselineC;
+    const totalCells = grids.length * GRID_SIZE;
+
+    // Definite assignment: initialize to currentFlat as an unreachable fallback
+    // (home/end/pageup/pagedown all returned above; this covers TypeScript's
+    // control-flow analysis which can't see that).
+    let targetFlat = currentFlat;
+    switch (direction) {
+      case 'left':  targetFlat = currentFlat - 1; break;
+      case 'right': targetFlat = currentFlat + 1; break;
+      case 'up':    targetFlat = currentFlat - 7; break;
+      case 'down':  targetFlat = currentFlat + 7; break;
+    }
+
+    if (targetFlat < 0) {
+      // Cross-month: slide window back one month, land on the corresponding cell.
+      this.prevMonth();
+      const newGrids = this.monthGrids();
+      const newFlat = newGrids.length * GRID_SIZE + targetFlat;
+      this._focusedDate.set(newGrids[Math.floor(newFlat / GRID_SIZE)][newFlat % GRID_SIZE].date);
+    } else if (targetFlat >= totalCells) {
+      // Cross-month: slide window forward one month.
+      this.nextMonth();
+      const newGrids = this.monthGrids();
+      const newFlat = targetFlat - totalCells;
+      this._focusedDate.set(newGrids[Math.floor(newFlat / GRID_SIZE)][newFlat % GRID_SIZE].date);
+    } else {
+      this._focusedDate.set(grids[Math.floor(targetFlat / GRID_SIZE)][targetFlat % GRID_SIZE].date);
+    }
   }
 
   /**
@@ -285,17 +333,14 @@ export class CalendarEngine {
     }
 
     // Range mode
-    const draftStart = this._draftStart();
-    if (draftStart === null) {
-      // First pick: enter Draft — selectedRange is deliberately NOT touched here,
-      // so abortRangeDraft() never needs to roll back anything (Decision 3 design).
+    const ds = this._draftStart();
+    if (ds === null) {
       this._draftStart.set(date);
     } else {
-      // Second pick: commit, auto-sorting so start ≤ end regardless of pick order.
-      if (dayMs(draftStart) <= dayMs(date)) {
-        this._selectedRange.set({ start: draftStart, end: date });
+      if (dayMs(ds) <= dayMs(date)) {
+        this._selectedRange.set({ start: ds, end: date });
       } else {
-        this._selectedRange.set({ start: date, end: draftStart });
+        this._selectedRange.set({ start: date, end: ds });
       }
       this._draftStart.set(null);
     }

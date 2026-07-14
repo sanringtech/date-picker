@@ -90,17 +90,19 @@ describe('CalendarGridDirective', () => {
     expect(isSameDay(focused!, new Date(2026, 1, 15))).toBe(true); // Sunday of that week
   });
 
-  it('arrow-key movement clamps at the grid edges instead of paging to another month', () => {
-    for (let i = 0; i < 60; i++) {
+  it('arrow-key movement auto-transfers to the adjacent month when crossing the grid boundary (Decision 6)', () => {
+    // today = Feb 15 2026 (Sunday, weekStartsOn=1). Feb grid (starts Mon Jan 26)
+    // places Feb 15 at flat index 20. 21 left-presses exhaust indices 20→0 then
+    // cross to -1, triggering prevMonth() so the window slides to January.
+    for (let i = 0; i < 21; i++) {
       pressKey(gridEl, 'ArrowLeft');
     }
-    const focused = host.directive.engine.focusedDate();
     const currentMonthCells = host.directive.engine
       .monthGrids()[0]
       .filter((cell) => cell.isCurrentMonth);
-    // still February 2026 — no auto-transfer to January happened
-    expect(currentMonthCells[0].date.getMonth()).toBe(1);
-    expect(focused).not.toBeNull();
+    // view has slid to January 2026 — auto-transfer happened (not clamped)
+    expect(currentMonthCells[0].date.getMonth()).toBe(0);
+    expect(host.directive.engine.focusedDate()).not.toBeNull();
   });
 
   it('PageDown/PageUp change the rendered month and carry focus along', () => {
