@@ -4,7 +4,7 @@ constitution_id: date-picker
 constitution_name: Sanring Headless Date/Calendar Engine
 status: active           # draft | active | superseded | archived
 owner: jack755051
-last_updated: 2026-07-14  # Decision 10 追加
+last_updated: 2026-07-14  # Decision 11 追加（Multi-dates Selection）
 scope: date-picker-engine     # Angular headless calendar/date-picker 核心引擎
 related_prds: [date-picker, date-picker-widget]
 supersedes:
@@ -88,6 +88,22 @@ supersedes:
 
 **業務理由**（AI 提案・使用者拍板，T2，見 §7 Decision 3）：區間選擇在業務語意上是一個不可分割的單一交易（起點+終點）。若在完成整筆交易前中止，交易視為從未發生，系統必須立刻銷毀草稿並回溯到上一個穩定狀態；保留草稿會產生無法預期的「幽靈狀態」，對 UX 有極大傷害。
 
+### 多選日期 (Multi-dates Selection，AI 提案・使用者拍板，T2，見 §7 Decision 11)
+
+```
+[已選取 N 個（含 0）] ──點擊未選中日期──> [已選取 N+1 個]（集合無上限）
+[已選取 N 個] ──點擊集合中已選中日期──> [已選取 N-1 個]（永遠觸發移除）
+```
+
+**合法轉換**：
+- 點擊任一未選中日期：加入選取集合（集合大小無上限）
+- 點擊集合中任一已選中日期：永遠從集合移除該日期——此 toggle 行為與 Single 模式的 `allowDeselect` 開關無關，屬於 Multi 模式定義本身固有的語意，不受該開關控制
+
+**備註**：
+- Multi 模式的選取集合語意上是一個 Set（無序、無重複），不是 List——見 §5 I6。
+- `clearSelection()` 在 Multi 模式下的語意與 Single/Range 模式一致：清空整個集合。「移除集合中某一項」被視為業務上必須存在的能力，但屬於獨立於 `clearSelection()` 之外的操作；其具體方法命名/簽章屬於技術實作細節，留待 PRD 階段定義，不寫入憲法。
+- 切換選取模式進入或離開 Multi 模式時，比照現有 Single/Range 模式的行為：一律重置所有選取狀態，不嘗試保留跨模式可轉換的資料。
+
 ## 5. 不可變約束 (Invariants)
 
 - **I1（ViewDate Validity）**：無論系統處於初始化、清空選取或發生異常錯誤時，推導網格的基準點 `viewDate` 必須永遠是一個合法存在的 `Date` 物件（預設退回「今天」或合法邊界），絕對不允許成為 `null` 或 `Invalid Date`。
@@ -95,6 +111,7 @@ supersedes:
 - **I3（Grid Size Constancy）**：無論 `viewDate` 落在何年何月，引擎運算輸出的 `CalendarDay` 陣列長度永遠嚴格等於 42，不存在任何動態增減的合法路徑。
 - **I4（Localization Neutrality，AI 提案・使用者拍板延伸，T2，見 §7 Decision 7）**：引擎不得在內部寫死任何特定語言或地區的曆法慣例（例如一週起始日、月份/星期名稱）；所有在地化相關的顯示與計算規則必須 100% 由外部注入的語系設定決定。
 - **I5（Composed Widget Default Overridability，AI 提案・使用者拍板延伸，T2，見 §7 Decision 9）**：Composed Widget 層允許內建預設樣式與預設格式化，但每一條預設值都必須可被外部 100% 覆寫/替換；不存在任何「使用者無法覆寫」的合法預設決定。此不變量與 §9 Zero Opinion（僅約束 engine 本體）互相獨立，並非其例外。
+- **I6（Multi Selection Set Uniqueness，AI 提案・使用者拍板，T2，見 §7 Decision 11）**：Multi-dates 選取集合語意上為 Set，任何時刻集合內不存在重複日期。I2（Selected ∩ Disabled = Ø）與 I3（Grid Size Constancy）在 Multi 模式下原樣成立，不因多選模式而放寬或收緊。
 
 ## 6. 業務術語表 (Glossary)
 
@@ -188,6 +205,30 @@ supersedes:
 
 - **註記**：具體 CLI 工具實作、npm 套件與複製模式各自的命名/發佈機制，屬技術實作細節，留待 PRD 階段定義，不寫入憲法。
 
+### Decision 11: Multi-dates Selection 核心業務規則拍板（AI 提案・使用者拍板，T2）
+
+- **決策**：
+  1. **Toggle 行為**：Multi 模式下點擊已選中日期永遠觸發移除，不受 `allowDeselect` 開關控制（該開關僅適用於 Single 模式）。
+  2. **數量上限**：Multi 選取集合無上限。
+  3. **不變量**：新增 I6（Set Uniqueness，見 §5）；I2、I3 在 Multi 模式下原樣成立，不變動。
+  4. **`clearSelection()` 語意**：維持「清空整個集合」；「移除集合中某一項」是業務上必須存在的能力，但其方法命名/簽章屬於 API 設計的技術細節，不寫入憲法。
+  5. **模式切換重置**：切換選取模式進入或離開 Multi 模式時，比照現有 Single/Range 行為，一律重置所有選取狀態。
+
+- **理由**：
+  - Toggle 行為與 `allowDeselect` 脫鉤：使用者選擇讓 Multi 模式的 toggle 語意內建於模式定義本身，不與 Single 模式共用開關，避免語意混淆，也不需要新增額外設定面。
+  - 無上限：使用者選擇不對集合大小設限，避免額外的拒絕/擠出規則造成不必要的業務複雜度。
+  - Set Uniqueness 新不變量：因無數量上限，使用者判斷仍需要一條不變量保證集合語意（無重複）；但因選擇無上限，明確排除任何跟「上限」相關的不變量。
+  - `clearSelection()` 語意不變 + 移除單一項留給 PRD：使用者判斷「移除單一項」屬於 API 設計的技術細節，不影響業務語意本身，不需要拉高到憲法層級另立規則。
+  - 模式切換重置：使用者選擇維持與既有 Single/Range 模式一致的行為，避免因為新模式引入不一致的例外規則。
+
+- **替代方案（拒絕）**：
+  - Toggle 行為選項「沿用 `allowDeselect` 開關」——拒絕，使用者選擇讓 Multi 模式獨立於該開關。
+  - Toggle 行為選項「新增獨立開關 `allowDeselectInMulti`」——拒絕，使用者選擇更簡單的「永遠可移除」語意。
+  - 數量上限選項「有上限，達上限後拒絕新選取」／「有上限，達上限後 FIFO 自動擠出最早選取」——皆拒絕，使用者選擇無上限。
+  - `clearSelection()` 語意選項「升格為憲法層級明確定義的獨立業務動作」——拒絕，使用者判斷這只是 API 命名細節。
+  - `clearSelection()` 語意選項「移除單一項不是必要業務需求」——拒絕，使用者仍認為業務上需要這個能力存在，只是命名/簽章不進憲法。
+  - 模式切換選項「嘗試保留可轉換資料（如 single→multi 時把原選取值放進新集合）」——拒絕，使用者選擇維持既有「一律重置」的一致行為。
+
 ## 8. 取消 / 沖銷 / 退回的規矩 (Reversal Semantics)
 
 - **清空選取（Clear Selection）**：屬於完全合法的業務事件。系統必須允許使用者（或外部 API）觸發清空指令，這會將 `selectedDate` 重置為 `null` 或未選取狀態。**核心約束**：清空選取絕對不能連帶重置 `viewDate`（即日曆畫面不能因為清空而擅自跳回預設月份或今天）。
@@ -256,6 +297,11 @@ supersedes:
 - §6 Glossary「standalone 模式」：因使用者回答與「Composed Widget」題重複疑似貼錯，AI 主動重新提問確認，使用者最終選擇「不需要單獨列入 Glossary」
 - §7 Decision 10（「Composed Widget 雙消費模式」是否寫入憲法）：AI 提出 3 個候選（寫進憲法新 Decision / 只寫進 PRD / 兩邊都寫），使用者選擇「兩邊都寫：憲法寫承諾，PRD 寫實現」
 - §7 Decision 10（R5 在 shadcn 複製模式下是否仍適用）：AI 提出 3 個候選（仍成立、需補註說明、TODO），使用者選擇「仍然成立」，並補充理由：R5 約束的是官方發布的原始碼本身，使用者複製走之後如何修改不在憲法管轄範圍
+- §4/§7 Decision 11（Multi 模式 toggle 行為）：AI 提出 4 個候選（永遠移除不受 allowDeselect 控制 / 沿用 allowDeselect / 新增獨立開關 / TODO），使用者選擇「永遠觸發移除，不受 allowDeselect 控制」
+- §4/§7 Decision 11（Multi 模式數量上限）：AI 提出 4 個候選（無上限 / 有上限拒絕新選取 / 有上限 FIFO 擠出 / TODO），使用者選擇「無上限」
+- §5 I6/§7 Decision 11（I2/I3 是否原樣成立、是否需要新不變量）：AI 提出 4 個候選（原樣成立+新增無重複不變量 / 原樣成立不需新不變量 / 使用者自寫其他不變量 / TODO），使用者選擇「I2/I3 原樣成立，且新增『無重複』不變量」
+- §4/§7 Decision 11（clearSelection 語意、移除單一項歸屬）：AI 提出 4 個候選（clearSelection 不變+移除單項屬 API 細節 / 升格為憲法層級新業務動作 / 移除單項非必要需求 / TODO），使用者選擇「clearSelection 仍然是清空全部；移除單一項只是 API 命名細節不進憲法」
+- §4/§7 Decision 11（setSelectionMode 切換 multi 是否重置）：AI 提出 4 個候選（比照現有一律重置 / 嘗試保留可轉換資料 / 視方向而定 / TODO），使用者選擇「是，比照現有行為——一律重置」
 
 ### ✅ 使用者自擬決策（自行提出「選項 + 決策 + 理由」，AI 僅拆分業務本質與技術細節後歸位，T1）
 - §3 R4 / §7 Decision 5：Disabled Dates 統一匹配原則（使用者原話提出「選項 B：萬能匹配器」並自行寫出決策與理由；`Matcher` 型別/`@Input()` 綁定等技術命名已拆出，留給 PRD）
