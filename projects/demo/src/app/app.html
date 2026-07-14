@@ -37,7 +37,13 @@
         <sanring-card class="w-full overflow-hidden">
           <sanring-card-content class="p-5 md:p-6">
             <div class="flex flex-col items-start gap-6 md:flex-row">
-              <div class="w-full max-w-[20rem] shrink-0 sm:w-80">
+              <div
+                [class]="
+                  (scenario.monthsToDisplay ?? 1) > 1
+                    ? 'w-full shrink-0'
+                    : 'w-full max-w-[20rem] shrink-0 sm:w-80'
+                "
+              >
                 <!-- Calendar frame -->
                 <div
                   class="rounded-lg border border-border bg-background p-4 shadow-inner transition-shadow focus-within:ring-2 focus-within:ring-primary"
@@ -49,102 +55,105 @@
                     [attr.data-testid]="'calendar-grid-' + scenario.id"
                     class="block outline-none"
                   >
-                    @for (monthGrid of grid.engine.monthGrids(); track $index) {
-                      <!-- Month navigation header -->
-                      <div class="mb-4 flex items-center justify-between">
-                        @if ($first) {
-                          <button
-                            sanringBtn
-                            variant="ghost"
-                            size="icon"
-                            type="button"
-                            [attr.data-testid]="'calendar-prev-month-' + scenario.id"
-                            aria-label="上一月"
-                            (click)="grid.engine.prevMonth()"
-                          >
-                            <svg lucideChevronLeft [size]="18"></svg>
-                          </button>
-                        } @else {
-                          <span class="w-9"></span>
-                        }
-                        <span class="font-semibold text-foreground">
-                          {{ currentMonthLabel(monthGrid) }}
-                        </span>
-                        @if ($last) {
-                          <button
-                            sanringBtn
-                            variant="ghost"
-                            size="icon"
-                            type="button"
-                            [attr.data-testid]="'calendar-next-month-' + scenario.id"
-                            aria-label="下一月"
-                            (click)="grid.engine.nextMonth()"
-                          >
-                            <svg lucideChevronRight [size]="18"></svg>
-                          </button>
-                        } @else {
-                          <span class="w-9"></span>
-                        }
-                      </div>
-
-                      <!-- Weekday labels -->
-                      <div
-                        class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted"
-                        role="row"
-                        aria-hidden="true"
-                      >
-                        @for (label of weekdayLabels; track label) {
-                          <span>{{ label }}</span>
-                        }
-                      </div>
-
-                      <!-- Day grid — WAI-ARIA role=grid with display:contents row wrappers -->
-                      <div
-                        class="grid grid-cols-7 gap-1"
-                        role="grid"
-                        [attr.aria-label]="currentMonthLabel(monthGrid)"
-                        [class.mb-6]="!$last"
-                      >
-                        @for (week of toWeeks(monthGrid); track $index) {
-                          <div role="row" class="contents">
-                            @for (day of week; track day.date.getTime()) {
+                    <div [class]="grid.engine.monthGrids().length > 1 ? 'flex gap-6' : 'block'">
+                      @for (monthGrid of grid.engine.monthGrids(); track $index) {
+                        <div class="min-w-60 flex-1">
+                          <!-- Month navigation header -->
+                          <div class="mb-4 flex items-center justify-between">
+                            @if ($first) {
                               <button
-                                role="gridcell"
+                                sanringBtn
+                                variant="ghost"
+                                size="icon"
                                 type="button"
-                                [disabled]="day.isDisabled"
-                                [attr.aria-selected]="day.isSelected ? true : null"
-                                [attr.aria-disabled]="day.isDisabled ? true : null"
-                                [attr.aria-label]="ariaLabel(day)"
-                                [attr.data-testid]="
-                                  'calendar-day-' + dayTestId(scenario.id, day.date)
-                                "
-                                class="aspect-square rounded text-sm transition-colors active:brightness-90"
-                                [class.text-muted]="
-                                  !day.isCurrentMonth && !day.isInRange && !day.isSelected
-                                "
-                                [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
-                                [class.bg-primary]="day.isSelected"
-                                [class.text-primary-foreground]="day.isSelected"
-                                [class.bg-primary/20]="day.isInRange && !day.isSelected"
-                                [class.ring-2]="day.isFocused"
-                                [class.ring-primary]="day.isFocused"
-                                [class.font-bold]="day.isToday && !day.isSelected"
-                                [class.hover:bg-surface-strong]="
-                                  !day.isSelected && !day.isDisabled && !day.isInRange
-                                "
-                                [class.hover:brightness-95]="day.isSelected || day.isInRange"
-                                [class.opacity-40]="day.isDisabled"
-                                [class.cursor-not-allowed]="day.isDisabled"
-                                [class.line-through]="day.isDisabled"
-                                (click)="grid.engine.selectDate(day.date)"
+                                [attr.data-testid]="'calendar-prev-month-' + scenario.id"
+                                aria-label="上一月"
+                                (click)="grid.engine.prevMonth()"
                               >
-                                {{ day.date.getDate() }}
+                                <svg lucideChevronLeft [size]="18"></svg>
                               </button>
+                            } @else {
+                              <span class="w-9"></span>
+                            }
+                            <span class="font-semibold text-foreground">
+                              {{ currentMonthLabel(monthGrid) }}
+                            </span>
+                            @if ($last) {
+                              <button
+                                sanringBtn
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                [attr.data-testid]="'calendar-next-month-' + scenario.id"
+                                aria-label="下一月"
+                                (click)="grid.engine.nextMonth()"
+                              >
+                                <svg lucideChevronRight [size]="18"></svg>
+                              </button>
+                            } @else {
+                              <span class="w-9"></span>
                             }
                           </div>
-                        }
-                      </div>
-                    }
+
+                          <!-- Weekday labels -->
+                          <div
+                            class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted"
+                            role="row"
+                            aria-hidden="true"
+                          >
+                            @for (label of weekdayLabels; track label) {
+                              <span>{{ label }}</span>
+                            }
+                          </div>
+
+                          <!-- Day grid — WAI-ARIA role=grid with display:contents row wrappers -->
+                          <div
+                            class="grid grid-cols-7 gap-1"
+                            role="grid"
+                            [attr.aria-label]="currentMonthLabel(monthGrid)"
+                          >
+                            @for (week of toWeeks(monthGrid); track $index) {
+                              <div role="row" class="contents">
+                                @for (day of week; track day.date.getTime()) {
+                                  <button
+                                    role="gridcell"
+                                    type="button"
+                                    [disabled]="day.isDisabled"
+                                    [attr.aria-selected]="day.isSelected ? true : null"
+                                    [attr.aria-disabled]="day.isDisabled ? true : null"
+                                    [attr.aria-label]="ariaLabel(day)"
+                                    [attr.data-testid]="
+                                      'calendar-day-' + dayTestId(scenario.id, day.date)
+                                    "
+                                    class="aspect-square rounded text-sm transition-colors active:brightness-90"
+                                    [class.text-muted]="
+                                      !day.isCurrentMonth && !day.isInRange && !day.isSelected
+                                    "
+                                    [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
+                                    [class.bg-primary]="day.isSelected"
+                                    [class.text-primary-foreground]="day.isSelected"
+                                    [class.bg-primary/20]="day.isInRange && !day.isSelected"
+                                    [class.ring-2]="day.isFocused"
+                                    [class.ring-primary]="day.isFocused"
+                                    [class.font-bold]="day.isToday && !day.isSelected"
+                                    [class.hover:bg-surface-strong]="
+                                      !day.isSelected && !day.isDisabled && !day.isInRange
+                                    "
+                                    [class.hover:brightness-95]="day.isSelected || day.isInRange"
+                                    [class.opacity-40]="day.isDisabled"
+                                    [class.cursor-not-allowed]="day.isDisabled"
+                                    [class.line-through]="day.isDisabled"
+                                    (click)="grid.engine.selectDate(day.date)"
+                                  >
+                                    {{ day.date.getDate() }}
+                                  </button>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
 
                     <!-- Inline info bar (shown when showInfoBlock is off) -->
                     @if (!showInfoBlock()) {

@@ -21,6 +21,8 @@ interface DemoScenario {
   readonly title: string;
   readonly description: string;
   readonly configure: (engine: CalendarEngine) => void;
+  /** Number of parallel months rendered — used to widen the card layout. */
+  readonly monthsToDisplay?: number;
 }
 
 /**
@@ -68,6 +70,7 @@ const SCENARIOS: readonly DemoScenario[] = [
       engine.setSelectionMode('range');
       engine.setMonthsToDisplay(2);
     },
+    monthsToDisplay: 2,
   },
 ];
 
