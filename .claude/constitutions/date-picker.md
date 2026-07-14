@@ -4,7 +4,7 @@ constitution_id: date-picker
 constitution_name: Sanring Headless Date/Calendar Engine
 status: active           # draft | active | superseded | archived
 owner: jack755051
-last_updated: 2026-07-14  # Decision 11 追加（Multi-dates Selection）
+last_updated: 2026-07-15  # Decision 12 追加（Granularity Selection，supersede Decision 8 部分內容）
 scope: date-picker-engine     # Angular headless calendar/date-picker 核心引擎
 related_prds: [date-picker, date-picker-widget]
 supersedes:
@@ -24,11 +24,13 @@ supersedes:
 
 - **這個領域服務的對象**：打造一個專為 sanring-ui 及其企業專案服務的 Angular Headless 日曆核心引擎，服務對象是「上層開發者」（消費此套件的工程師）以及「終端使用者」（含依賴輔助技術者）。
 - **這個領域要解決的核心問題**：將複雜的曆法運算、狀態機與無障礙導航完全封裝，讓上層開發者能以 Tailwind CSS 自由且無痛地組合出具備極致彈性的 Calendar 與 DatePicker 元件。
+- **服務範圍的時間粒度**（AI 提案・使用者拍板，T2，見 §7 Decision 12，2026-07-15 delta）：本引擎服務範圍不僅限於「日期選取」，而是涵蓋任意時間粒度的選取（日 / 月 / 季 / 年），Single、Range、Multi 三種選取模式對所有粒度一體適用。
 - **明確不在這個領域內的問題**：
   - **非公曆曆法系統**：本引擎專注於標準公曆（Gregorian calendar），明確排除農曆、伊斯蘭曆、佛曆等多重曆法的轉換與渲染支援。
   - **字串解析與格式化 (String Parsing & Formatting)**：本引擎的輸入與輸出只接受且只吐出標準 JavaScript `Date` 物件。將後端 `YYYY-MM-DD` 字串轉為 `Date`，或將選取結果格式化顯示在 Input 上的職責，明確歸屬於外層應用與狀態容器，引擎內部不包裝任何字串處理邏輯。
   - **跨時區動態換算**：引擎不負責時區偏移量的計算。引擎永遠信任並依賴傳入 `Date` 物件所帶有的本地系統時區（Local Timezone），不做任何 UTC 強制轉換。
   - **年份 / 十年層級高階曆法檢視**（AI 提案・使用者拍板延伸，T2，見 §7 Decision 8）：Year View（12 個月總覽）與 Decade View 的曆法運算與狀態機不在本引擎服務範圍內。多月並排網格輸出（同時渲染多個相鄰月份）則明確在服務範圍內，屬於業務剛需（如 Range 模式下常見的雙月並排場景）。
+    > **⚠️ 2026-07-15 更新（見 §7 Decision 12）**：本條「年份/十年層級高階曆法檢視不在服務範圍內」的**永久排除判斷已被 Decision 12 推翻**——Month-picker / Year-picker / Quarter-picker 三項已重新拍板納入服務範圍（見 Decision 12）。原文保留供歷史追溯，**現況以 Decision 12 為準**。
 
 ## 2. 領域角色 (Domain Roles)
 
@@ -41,9 +43,10 @@ supersedes:
 
 - **R1**：引擎與外殼嚴格解耦：底層只提供純視覺的網格積木（Calendar），彈出容器（DatePicker）由應用層自行組合。
 - **R2**：時間零點與全維度分離：網格基準（viewDate）強制歸零，使用者選取值（selectedDate）保留時分秒。
-- **R3**：網格視覺恆定：無論月份天數，強制固定輸出 42 天（6 週）的網格陣列，溢出日期以相鄰月份補齊。
+- **R3**：網格視覺恆定：無論月份天數，強制固定輸出 42 天（6 週）的網格陣列，溢出日期以相鄰月份補齊。**（⚠️ 2026-07-15 更新，見 R6/Decision 12）：本條僅適用於「日」粒度網格；月/年/季粒度的網格尺寸規則見新增 R6。**
 - **R4**（AI 提案・使用者拍板延伸，T2，見 §7 Decision 5）：禁用日期（Disabled Dates）的判斷邏輯必須能同時支援單日、日期陣列、日期區間、以及自訂條件函式四種輸入形式，以涵蓋業務上任意複雜度的禁用規則。
 - **R5**（AI 提案・使用者拍板延伸為正式 Rule，T2 + 使用者親口理由 T1，見 §7 Decision 9）：無論 Composed Widget 層或任何應用層，都只能透過 engine 對外公開的 public API 消費 engine，不得存取未公開的內部實作，不享有任何特權後門——即使該應用層由同一團隊發布。
+- **R6**（AI 提案・使用者拍板，T2，見 §7 Decision 12，2026-07-15 delta）：網格尺寸依選取粒度而定，不強制套用 R3 的「42 天」規則：月粒度網格固定輸出 12 格（對應一年 12 個月）；季粒度網格固定輸出 4 格（對應一年 4 季）；年粒度網格輸出 N 格，N 的範圍由消費端決定，不由引擎內建固定值。
 
 ## 4. 業務狀態機 (State Machines)
 
@@ -104,11 +107,23 @@ supersedes:
 - `clearSelection()` 在 Multi 模式下的語意與 Single/Range 模式一致：清空整個集合。「移除集合中某一項」被視為業務上必須存在的能力，但屬於獨立於 `clearSelection()` 之外的操作；其具體方法命名/簽章屬於技術實作細節，留待 PRD 階段定義，不寫入憲法。
 - 切換選取模式進入或離開 Multi 模式時，比照現有 Single/Range 模式的行為：一律重置所有選取狀態，不嘗試保留跨模式可轉換的資料。
 
+### 粒度選取 (Granularity Selection: Month / Year / Quarter，AI 提案・使用者拍板，T2，見 §7 Decision 12，2026-07-15 delta)
+
+**業務語意**：Month-picker、Year-picker、Quarter-picker 三項功能共用**同一套**選取狀態機——與日粒度完全相同的 Single / Range / Multi 語意（見上方三節），差別僅在於「選取值的最小單位」從一天換成一個月 / 一季 / 一年，以及網格尺寸不同（見 R6）。
+
+**合法轉換**：與 Single Selection、Range Selection、Multi-dates Selection 三節定義的合法轉換規則**逐條適用**，只是把「日期」替換為「月份／季度／年份」值。例如：Range 模式下「選擇起點 → Draft → 選擇終點 → 提交」的狀態轉換，在月粒度下就是「選一個起始月 → Draft → 選一個結束月 → 提交一段連續月份區間」。
+
+**季度定義的可注入參數**（業務理由，使用者原話延伸，T2）：由於「第幾季從哪個月開始」在不同業務情境下可能不同（例如公曆季度 vs 財年季度），本引擎需要一個比照 `weekStartsOn`（I4 在地化不變量）的可注入參數，讓消費端明確指定季度的起始月，引擎不內建任何特定季度劃分慣例。
+
+**備註**：
+- 不新增獨立的 Rule/狀態機來分別描述 Month/Year/Quarter 三者——三者是同一套通用規則的三種粒度實例，避免重複規則造成維護負擔。
+- 這套通用狀態機是否透過同一個 `CalendarEngine` 擴充參數實現，或需要獨立的 Injectable/子類，屬於技術架構決策，留待 PRD 階段定義，不寫入憲法。
+
 ## 5. 不可變約束 (Invariants)
 
 - **I1（ViewDate Validity）**：無論系統處於初始化、清空選取或發生異常錯誤時，推導網格的基準點 `viewDate` 必須永遠是一個合法存在的 `Date` 物件（預設退回「今天」或合法邊界），絕對不允許成為 `null` 或 `Invalid Date`。
 - **I2（Selection-Disabled Mutually Exclusive）**：在任何系統穩定狀態下，被標記為「選中（Selected）」的日期集合與「禁用（Disabled）」的日期集合，其交集永遠為空（`Selected ∩ Disabled = Ø` 恆成立）。
-- **I3（Grid Size Constancy）**：無論 `viewDate` 落在何年何月，引擎運算輸出的 `CalendarDay` 陣列長度永遠嚴格等於 42，不存在任何動態增減的合法路徑。
+- **I3（Grid Size Constancy）**：無論 `viewDate` 落在何年何月，引擎運算輸出的 `CalendarDay` 陣列長度永遠嚴格等於 42，不存在任何動態增減的合法路徑。**（⚠️ 2026-07-15 更新，見 R6/Decision 12）：本不變量僅適用於日粒度的 `CalendarDay` 網格；月/年/季粒度的網格尺寸不變量見 R6，具體型別/命名留待 PRD 定義。**
 - **I4（Localization Neutrality，AI 提案・使用者拍板延伸，T2，見 §7 Decision 7）**：引擎不得在內部寫死任何特定語言或地區的曆法慣例（例如一週起始日、月份/星期名稱）；所有在地化相關的顯示與計算規則必須 100% 由外部注入的語系設定決定。
 - **I5（Composed Widget Default Overridability，AI 提案・使用者拍板延伸，T2，見 §7 Decision 9）**：Composed Widget 層允許內建預設樣式與預設格式化，但每一條預設值都必須可被外部 100% 覆寫/替換；不存在任何「使用者無法覆寫」的合法預設決定。此不變量與 §9 Zero Opinion（僅約束 engine 本體）互相獨立，並非其例外。
 - **I6（Multi Selection Set Uniqueness，AI 提案・使用者拍板，T2，見 §7 Decision 11）**：Multi-dates 選取集合語意上為 Set，任何時刻集合內不存在重複日期。I2（Selected ∩ Disabled = Ø）與 I3（Grid Size Constancy）在 Multi 模式下原樣成立，不因多選模式而放寬或收緊。
@@ -166,6 +181,8 @@ supersedes:
 - **註記**：具體注入機制（`@Input() locale` 綁定、語系物件型別）屬技術實作細節，留待 PRD 階段定義，不寫入憲法。
 
 ### Decision 8: 多月網格輸出納入服務範圍，年 / 十年檢視排除（AI 提案・使用者拍板延伸，T2）
+
+> **⚠️ 2026-07-15 更新**：本決策「年份/十年層級高階曆法檢視排除」部分已被 **Decision 12** 推翻（Month-picker/Year-picker/Quarter-picker 重新拍板納入服務範圍）。「多月並排網格輸出納入服務範圍」部分未受影響，仍然成立。原文保留供歷史追溯，見 Decision 12 完整 rationale。
 
 - **決策**：多月並排網格輸出在服務範圍內；年份 / 十年層級高階曆法檢視不在服務範圍內（見 §1 Out of Scope）。
 - **理由**：多月並排在 Range 模式中是絕對的剛需（例如機票、飯店預訂場景），對 Headless 引擎而言多算一個月的陣列成本極低；年份/十年檢視會引入另一套完全不同的狀態機，留在未來版本再做最穩妥。
@@ -229,6 +246,38 @@ supersedes:
   - `clearSelection()` 語意選項「移除單一項不是必要業務需求」——拒絕，使用者仍認為業務上需要這個能力存在，只是命名/簽章不進憲法。
   - 模式切換選項「嘗試保留可轉換資料（如 single→multi 時把原選取值放進新集合）」——拒絕，使用者選擇維持既有「一律重置」的一致行為。
 
+### Decision 12: Supersede Decision 8——開放 Month-picker / Year-picker / Quarter-picker（AI 提案・使用者拍板，T2，2026-07-15 delta）
+
+- **決策**：
+  1. **推翻 Decision 8 的永久排除判斷**：Decision 8 對「年份/十年層級高階曆法檢視」的永久排除不再成立，理由是市場對標情境變了（現在要正面對標 vue3-datepicker 的完整功能集，Decision 8 拍板當下未以此為比較基準）**且**原始工程量評估過於悲觀（Decision 8 原文稱「會引入另一套完全不同的狀態機」，但實際盤點後月/年/季網格的狀態機與現有日網格結構相似，工程量與 Multi-dates 同等級）。
+  2. **§1 業務目的擴大服務範圍**：新增一句說明服務範圍涵蓋任意時間粒度選取（日/月/季/年），不逐字重寫既有段落（見 §1）。
+  3. **新增 R6**：網格尺寸依粒度而定（月=12格、季=4格、年=N格由消費端決定），R3「42天網格」保留但加註僅適用於日粒度（見 §3）。
+  4. **共用單一狀態機**：Month/Year/Quarter 三項功能不各自訂立獨立規則，共用與日粒度相同的 Single/Range/Multi 選取語意，只是選取值單位換成月/季/年（見 §4 粒度選取）。
+  5. **新增季度起始月可注入參數**：比照 `weekStartsOn`（I4），新增一個可注入參數讓消費端指定季度從哪個月開始，引擎不內建任何季度劃分慣例（見 §4 粒度選取）。
+  6. **架構決策留待 PRD**：新粒度是否透過同一個 `CalendarEngine` 擴充 `selectionGranularity` 參數實現，或需要獨立 Injectable/子類——包括 I1-I4/I6 是否需要重新表述為「對任意粒度都成立」——屬於技術架構決策，憲法只表達業務意圖「新粒度必須與既有不變量相容」，具體實現方式不寫入憲法。
+  7. **Decision 8 原文處理**：保留 Decision 8 原文供歷史追溯，不刪除、不改寫；本 Decision 12 於文中明確標注取代了 Decision 8 的哪個部分（見上方 Decision 8 段落開頭的更新註記）。frontmatter `supersedes:` 欄位維持不動——該欄位語意是「整份憲法檔案被另一份取代」（cross-file），不適用於「同檔案內單條 Decision 被部分取代」的情境，本次採用「新 Decision 文中注明取代範圍」的方式處理，不誤用該欄位。
+
+- **理由**：
+  - 永久排除判斷不成立：使用者判斷 Decision 8 當初「留在未來版本再做最穩妥」這句話被定調為永久排除而非延後，但現在業務目標明確要對標 vue3-datepicker 完整功能集，這是決策情境本身的變化；同時原始「另一套完全不同的狀態機」的工程量評估，經重新盤點後發現言過其實，兩個理由共同支撐「不成立」的判斷。
+  - §1 只新增說明句：使用者選擇不重寫既有業務目的段落，避免稀釋既有內容，僅新增一句話反映服務範圍擴大。
+  - R6 而非直接改寫 R3：使用者選擇新增獨立 Rule 而非修改 R3 本文，因為 R3「42天」對日粒度仍然完全成立，不應該被稀釋成模糊的通用敘述；新粒度的網格尺寸規則另立門戶更清楚。
+  - 共用單一狀態機：使用者主動指出三項功能「網格大小不同，但選取語意本質相同」，比起拆成三條重複規則，共用一套規則加一個粒度參數更精簡；但使用者也主動補充季度定義有業務歧義（起始月不同慣例），需要額外一個可注入參數處理，不能簡單套用「純粹只是網格大小不同」的假設。
+  - 架構決策留待 PRD：使用者判斷「同一 CalendarEngine 擴充參數」vs「獨立 Injectable」是技術實作選擇，不是業務規則，憲法不需要越俎代庖拍板技術架構。
+  - Decision 8 原文保留：使用者選擇維持歷史記錄可追溯，而非抹除既有決策軌跡；同時確認 frontmatter `supersedes:` 欄位的既有語意（cross-file）不適用於本次同檔案內的部分取代情境，避免誤用欄位語意。
+
+- **替代方案（拒絕）**：
+  - 「Decision 8 不成立」原因選項「只因為業務 owner 想做」——拒絕，使用者要求具體理由而非同義反覆，最終選擇市場情境+工程量評估雙重理由。
+  - §1 選項「直接改寫服務對象/核心問題描述段落」——拒絕，使用者選擇只新增說明句，不動既有段落。
+  - §1 選項「不改 §1，只改 Out of Scope 清單」——拒絕，使用者判斷這是服務範圍的擴大，值得在業務目的層級留下說明，而不只是清單增減。
+  - R3/R6 選項「直接修改 R3 本文成通用敘述」——拒絕，使用者選擇新增獨立 R6，保留 R3 對日粒度的明確性。
+  - 狀態機選項「三項功能各自訂立獨立規則」——拒絕，使用者選擇共用單一通用狀態機，但額外補充季度起始月參數處理業務歧義。
+  - 選取模式選項「新粒度只有單選一種模式，不支援 Range/Multi」——拒絕，使用者選擇三種模式對所有粒度一體適用，與日粒度共用同一套 `selectionMode` 語意。
+  - 架構選項「憲法直接拍板單一 Engine 擴充參數 vs 獨立子類」——拒絕，使用者選擇把此技術架構問題留給 PRD 階段，憲法只表達業務意圖。
+  - Decision 8 處理選項「直接修改/刪除 Decision 8 被推翻的部分」——拒絕，使用者選擇保留原文、新 Decision 注明取代範圍，維持歷史可追溯性。
+  - Glossary 選項「新增 selectionGranularity 等新粒度術語」——拒絕（本次不寫入），使用者選擇留到 PRD 階段再定義正式術語，憲法層級不需要。
+
+- **註記**：具體型別命名（如 `selectionGranularity`、月/季/年網格的 Cell 型別命名）、CalendarEngine 架構（單一擴充 vs 獨立子類）、I1-I4/I6 不變量在新粒度下的具體型別層級表述方式，皆屬技術實作細節，留待 PRD 階段定義，不寫入憲法。
+
 ## 8. 取消 / 沖銷 / 退回的規矩 (Reversal Semantics)
 
 - **清空選取（Clear Selection）**：屬於完全合法的業務事件。系統必須允許使用者（或外部 API）觸發清空指令，這會將 `selectedDate` 重置為 `null` 或未選取狀態。**核心約束**：清空選取絕對不能連帶重置 `viewDate`（即日曆畫面不能因為清空而擅自跳回預設月份或今天）。
@@ -283,6 +332,7 @@ supersedes:
 - §10 TODO 1-4（Q3 拍板清單中的 TODO 項）+ TODO 5-6（使用者主動追加的 SSR/Hydration 時區衝突、多月聯動與高階視圖支援）
 - §7 Decision 9 理由段落：使用者針對「Composed 層是否可碰 engine 內部 API」的完整原話論證（拒絕特權後門、拒絕雙重標準、要求升格為正式 Rule R5 的理由）
 - §7 Decision 10 理由段落：使用者針對「為何 Composed Widget 需同時支援 npm 黑盒與 shadcn 複製所有權轉移兩種消費模式」的完整原話論證（兩模式同源於「不鎖死使用者」核心承諾，呼應 R1 與 I5）
+- §4/§7 Decision 12 季度起始月參數：使用者主動補充「額外在這套通用規則裡加一個像 weekStartsOn 那樣的可注入參數（例如『季度起始月』），專門處理季度定義的歧義，而不是為了這一個小差異就把整套規則拆成三份重複的東西」（原話）
 
 ### ⚠️ AI 改寫成 invariant 形式（內容對應使用者原話）
 - 無——使用者本次回答已直接以斷言式（assertive）業務規則格式提供，AI 僅做章節歸位，未改寫用詞。
@@ -302,6 +352,16 @@ supersedes:
 - §5 I6/§7 Decision 11（I2/I3 是否原樣成立、是否需要新不變量）：AI 提出 4 個候選（原樣成立+新增無重複不變量 / 原樣成立不需新不變量 / 使用者自寫其他不變量 / TODO），使用者選擇「I2/I3 原樣成立，且新增『無重複』不變量」
 - §4/§7 Decision 11（clearSelection 語意、移除單一項歸屬）：AI 提出 4 個候選（clearSelection 不變+移除單項屬 API 細節 / 升格為憲法層級新業務動作 / 移除單項非必要需求 / TODO），使用者選擇「clearSelection 仍然是清空全部；移除單一項只是 API 命名細節不進憲法」
 - §4/§7 Decision 11（setSelectionMode 切換 multi 是否重置）：AI 提出 4 個候選（比照現有一律重置 / 嘗試保留可轉換資料 / 視方向而定 / TODO），使用者選擇「是，比照現有行為——一律重置」
+- §7 Decision 12（Decision 8 永久排除判斷是否仍成立）：AI 提出 4 個候選（不成立-市場情境變 / 不成立-工程量評估有誤 / 不成立-兩者皆是 / 自己寫），使用者選擇「不成立：兩者都有」
+- §1/§7 Decision 12（§1 業務目的是否重新定義服務範圍）：AI 提出 4 個候選（重寫段落 / 只改 Out of Scope 清單 / 新增一句不改既有段落 / TODO），使用者選擇「新增一句說明，不改既有段落」
+- §4/§7 Decision 12（三項功能是否共用同一套狀態機）：AI 提出 2 個候選（共用/各自獨立）+ 使用者主動補充「共用但需加季度起始月可注入參數處理歧義」，超越二選一選項本身
+- §3/§7 Decision 12（R3 42天網格如何處理新粒度網格尺寸）：AI 提出 4 個候選（新增 R6 / 只加不變量不拉高 Rule 層級 / 直接改寫 R3 本文 / TODO），使用者選擇「新增 R6，R3 保留並加註僅適用日粒度」
+- §7 Decision 12（單一 Engine 擴充 vs 獨立子類）：AI 提出 4 個候選（單一 Engine 擴充 selectionGranularity / 獨立 Injectable / 留待 PRD 階段 / TODO），使用者選擇「留待 PRD 階段，憲法只寫業務意圖」
+- §7 Decision 12（Decision 8 原文與 supersedes 欄位處理方式）：AI 提出 3 個候選（保留原文+新 Decision 注明 / 直接修改刪除 / TODO），使用者選擇「保留 Decision 8 原文，新 Decision 文中注明 supersede 部分內容」
+- §1/§7 Decision 12（§1 Out of Scope 中 Year/Decade View 排除條文如何改）：AI 提出 3 個候選（移除整條 / 保留但標註已取代 / TODO），使用者選擇「保留但標註已被取代」
+- §4/§7 Decision 12（新粒度是否支援 Single/Range/Multi 三種模式）：AI 提出 4 個候選（也支援三模式共用語意 / 新粒度天生只有選一個值 / 自己寫其他情況 / TODO），使用者選擇「也支援 Single/Range/Multi，與日粒度共用同一套 selectionMode 語意」
+- §6/§7 Decision 12（新粒度概念是否新增 Glossary）：AI 提出 3 個候選（新增 selectionGranularity 術語 / 不需要留到 PRD / TODO），使用者選擇「不需要新增，留到 PRD 階段定義」
+- §7 Decision 12（新 Decision 編號）：AI 提出「Decision 12（順序編號）」與「自訂編號」兩個候選，使用者選擇「Decision 12」
 
 ### ✅ 使用者自擬決策（自行提出「選項 + 決策 + 理由」，AI 僅拆分業務本質與技術細節後歸位，T1）
 - §3 R4 / §7 Decision 5：Disabled Dates 統一匹配原則（使用者原話提出「選項 B：萬能匹配器」並自行寫出決策與理由；`Matcher` 型別/`@Input()` 綁定等技術命名已拆出，留給 PRD）

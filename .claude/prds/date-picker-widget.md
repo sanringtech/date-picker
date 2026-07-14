@@ -4,7 +4,7 @@ feature_id: date-picker-widget
 feature_name: Sanring Composed DatePicker Widget (@sanring/date-picker-widget)
 status: draft
 owner: jack755051
-last_updated: 2026-07-14
+last_updated: 2026-07-15
 related_constitution: .claude/constitutions/date-picker.md
 related_adrs: []
 ---
@@ -55,6 +55,27 @@ related_adrs: []
 - ❌ SSR hydration 自動偵測 —— 沿用 Decision 4
 - ❌ 跨框架版本（React/Vue）——目標讀者明確是 Angular 生態系，「shadcn/vue」僅為消費模式比喻，不是字面互通目標（見第 1 節、憲法 Decision 10）
 
+### 🔍 vue3-datepicker 功能對標：純技術可行性分析（AI 分析，未排入任何 Milestone）
+
+以下是比對 vue3-datepicker 功能列表後的**純技術可行性**判斷——刻意把「技術上做不做得到」與「憲法現況是否允許」分開討論，不互相污染判斷。Engine／Widget 兩欄各自獨立評估，不強制二選一；「現行治理狀態」單獨列一欄，僅陳述現況，不作為技術可行性的理由。
+
+| 功能 | Engine 可行？ | Widget 可行？ | 現行治理狀態 |
+|---|---|---|---|
+| `range` | ✅ 已實作，狀態機在此層 | ⚠️ 技術上可重刻，但等於重造 engine 已測試過的邏輯，無實益 | 無限制 |
+| `multi-calendars` | ✅ 已實作（共享選取狀態版本，`monthsToDisplay`） | ✅ 也可行——不需共享選取狀態時，widget 可並排多個獨立 `CalendarEngine` 實例 | 無限制 |
+| `multi-dates` | ✅ 已拍板（Decision 11/I6），未實作 | ❌ 不行，屬於資料模型層級，widget 無法繞過 | 無限制，待實作 |
+| `month-picker` | ✅ 可行——新開一套跟日網格平行的月份網格/狀態機/鍵盤導覽，工程量同 Multi-dates 等級 | ✅ 也可行（簡化版：`CalendarLocale.monthLabels` + widget 本地狀態，犧牲與日網格同等的鍵盤導覽嚴謹度換取低成本） | 憲法 §1／Decision 8 現行列為永久排除，**這是治理決定，不是技術限制**；真要做，走 supersede 訪談即可解除 |
+| `year-picker` | ✅ 可行，同上換年份網格 | ✅ 可行，同上簡化版 | 同上 |
+| `quarter-picker` | ✅ 可行，同上換 4 格季度網格，選項少工程量略小 | ✅ 可行，同上簡化版更容易 | 同上 |
+| `time-picker` | ✅ 技術上可行（可把時分狀態塞進 engine，但會打破其目前「只管日期」的單一職責） | ✅ 可行且更乾淨（利用 R2 既有時分保真特性，widget 自己管時分、合成 Date 才丟給 `selectDate()`） | 無限制，widget 路徑不需任何憲法修訂 |
+| `week-picker` | ✅ 技術上可行（可新增 `selectWeek()` 或 `selectionMode:'week'`） | ✅ 可行且更乾淨（借用既有 Range 的兩次 `selectDate()` 呼叫湊出來） | 無限制，widget 路徑不需任何憲法修訂 |
+| `text-input` | ❌ 不行——engine 的資料契約定死「只吃/只吐 Date 物件」，字串解析/格式化放進 engine 會改變其核心介面定義 | ✅ 可行，本來就該在這層 | 無限制 |
+| `inline` | 不適用（engine 從不渲染任何東西） | ✅ 可行，且不限 Widget——任何直接用 `CalendarGridDirective` 的消費者本來就能自行決定是否包 overlay | 無限制 |
+| `flow` | 不適用（跟資料模型無關） | ✅ 可行，純步驟切換 UI 邏輯，不限官方 Composed Widget 才能做 | 無限制 |
+| `vertical` | 不適用（純版面方向） | ✅ 可行，且任何直接用 `CalendarGridDirective` 的消費者自己刻 CSS 即可 | 無限制 |
+
+**一句話結論**：12 項裡沒有一項是技術上做不到的。`multi-dates` 是唯一「只能 Engine 做」；`text-input` 是唯一「只能 Widget 做，Engine 做了會違背自己資料契約」；`inline`／`flow`／`vertical` 甚至不需要等 Composed Widget，裸 engine 消費者自己就能刻。唯一真正受限的是 `month-picker`／`year-picker`／`quarter-picker`——受限的是**憲法 Decision 8 目前的治理決定**，不是技術瓶頸，兩者不要混為一談：技術可行性判斷不受現行憲法拘束，但若要真的排入範圍施工，仍需先走 supersede 拍板。
+
 ## 4. 使用者故事 (User Stories)
 
 > 🔶 **AI 草稿，待使用者確認** —— 使用者訪談中表示此節交回主 Claude 擬草稿，以下內容尚未拍板。
@@ -94,6 +115,14 @@ related_adrs: []
 | Monorepo 結構（新套件與既有 `projects/date-picker` 是否同一 workspace） | TODO | ❌ 未訪談 | 需另外拍板：新增 `projects/date-picker-widget` library 到現有 Angular workspace，或另開獨立 repo |
 | 測試框架 | TODO | ❌ 未訪談 | 建議沿用既有 Vitest（見 engine PRD §5），但未經使用者確認，不視為拍板 |
 | 套件版本/發布策略（是否與 engine 版本鎖定同步） | TODO | ❌ 未訪談 | — |
+
+**被拒絕的替代方案（Popover/Input 實作來源，AI 分析・對話中經使用者確認方向）**：
+
+曾考慮過兩種替代 Angular CDK Overlay 從零實作的方案，皆已排除：
+
+- **反向依賴 `@sanring/ui`（把它的 Popover/Input 當 npm dependency）**——排除原因：會強迫任何只想用 `@sanring/date-picker-widget` 的第三方使用者，被迫連帶安裝整個 `@sanring/ui` 設計系統，直接違背本 PRD §1「獨立於 sanring/ui 之外也能用」的業務目標；也會讓套件關係變得自相矛盾（`sanring/ui` 依賴 engine，`date-picker-widget` 又反過來依賴 `sanring/ui`，形成混亂的雙向依賴故事）。
+- **複製 `@sanring/ui` 現有 Popover/Input 原始碼**——排除原因：(1) 複製後會與 sanring/ui 原版脫鉤演化，日後 sanring/ui 修 a11y/CDK 相容性問題不會自動同步，形成雙份程式碼各自維護的長期負債；(2) sanring/ui 原版大概率帶有其專屬設計系統的樣式假設，需要額外拆除才能符合 Composed Widget「中性、可覆寫」的預設值承諾（憲法 I5），這個拆除成本未必比重新寫小；(3) 現況查核（demo app 僅 vendor 了 `@sanring/ui` 的 Button 與 lucide icons）顯示 sanring/ui 目前很可能根本還沒有 Popover/Input 元件可供複製。
+- **結論**：Composed Widget 的 Popover/Overlay 一律直接建立在 `@angular/cdk` 之上（見上表已拍板項），不依賴、不複製 `@sanring/ui` 的既有實作；`@sanring/ui` 若要組裝自己的 DatePicker，走的是消費 `@sanring/date-picker`（engine）這條既有路徑，與 `date-picker-widget` 彼此獨立、互不依賴。
 
 ## 6. 資料模型 (Data Model)
 
@@ -194,6 +223,7 @@ TODO：實際 error 狀態的 ARIA live region 文案、視覺樣式細節——
 - [ ] UI Flow error 狀態文案/樣式細節（第 8 節，AI 草稿待確認）
 - [ ] 風險清單、里程碑分期（第 9-10 節，AI 草稿待確認）
 - [ ] 何時啟動下一輪訪談補齊上述 TODO？取決於團隊資源投入時程。
+- [ ] `time-picker` / `week-picker` 是否排入未來 Milestone？可行性結論見第 3 節「已識別但未排入本輪範圍的功能」——兩者皆確認為 widget-only、不需憲法修訂，僅待業務需求觸發排程。
 
 ---
 
