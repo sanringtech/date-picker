@@ -1,0 +1,38 @@
+name: Require Changeset
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'projects/date-picker/**'
+
+jobs:
+  check:
+    name: Check for pending changeset
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify a changeset was added
+        run: |
+          if ! find .changeset -maxdepth 1 -name '*.md' ! -name 'README.md' | grep -q .; then
+            echo "::error::This PR touches projects/date-picker/**, but no changeset was found under .changeset/. Run 'npm run changeset' (or 'npm run changeset -- --empty' if this change doesn't need a release)."
+            exit 1
+          fi
+          echo "Pending changeset found."
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify the changeset covers @sanring/date-picker
+        run: npx changeset status --since=origin/${{ github.base_ref }}
