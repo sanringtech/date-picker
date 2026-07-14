@@ -214,3 +214,254 @@ describe('CalendarEngine', () => {
     expect(isSameDay(engine.selectedDate()!, target)).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// M3: Range Selection (§4 / Decision 3 / §8)
+// ---------------------------------------------------------------------------
+
+describe('Range Selection (§4 / Decision 3)', () => {
+  const fixedToday = new Date(2026, 1, 15); // Feb 15 2026
+
+  it('isDraftActive starts false', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+    expect(engine.isDraftActive()).toBe(false);
+  });
+
+  it('first selectDate in range mode enters Draft — isDraftActive true, selectedRange untouched', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+
+    engine.selectDate(new Date(2026, 1, 10));
+
+    expect(engine.isDraftActive()).toBe(true);
+    expect(engine.selectedRange()).toEqual({ start: null, end: null });
+    expect(isSameDay(engine.draftStart()!, new Date(2026, 1, 10))).toBe(true);
+  });
+
+  it('second selectDate commits the range and exits Draft', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+
+    engine.selectDate(new Date(2026, 1, 10));
+    engine.selectDate(new Date(2026, 1, 20));
+
+    expect(engine.isDraftActive()).toBe(false);
+    expect(engine.draftStart()).toBeNull();
+    expect(isSameDay(engine.selectedRange().start!, new Date(2026, 1, 10))).toBe(true);
+    expect(isSameDay(engine.selectedRange().end!, new Date(2026, 1, 20))).toBe(true);
+  });
+
+  it('committed range auto-sorts: picking end before start swaps so start ≤ end', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+
+    engine.selectDate(new Date(2026, 1, 20)); // later first
+    engine.selectDate(new Date(2026, 1, 10)); // earlier second
+
+    expect(isSameDay(engine.selectedRange().start!, new Date(2026, 1, 10))).toBe(true);
+    expect(isSameDay(engine.selectedRange().end!, new Date(2026, 1, 20))).toBe(true);
+  });
+
+  it('abortRangeDraft clears draft and leaves selectedRange unchanged (Decision 3)', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+    // Commit a range first to have a non-empty stable value.
+    engine.selectDate(new Date(2026, 1, 5));
+    engine.selectDate(new Date(2026, 1, 10));
+    const stableRange = engine.selectedRange();
+
+    // Start a new draft, then abort.
+    engine.selectDate(new Date(2026, 1, 15));
+    expect(engine.isDraftActive()).toBe(true);
+
+    engine.abortRangeDraft();
+
+    expect(engine.isDraftActive()).toBe(false);
+    expect(engine.draftStart()).toBeNull();
+    // selectedRange must be the stable value from before the draft started.
+    expect(isSameDay(engine.selectedRange().start!, stableRange.start!)).toBe(true);
+    expect(isSameDay(engine.selectedRange().end!, stableRange.end!)).toBe(true);
+  });
+
+  it('abortRangeDraft on an idle engine is a no-op', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+
+    expect(() => engine.abortRangeDraft()).not.toThrow();
+    expect(engine.isDraftActive()).toBe(false);
+  });
+
+  it('clearSelection in range mode resets range and aborts draft, viewDate unchanged (§8)', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+    engine.selectDate(new Date(2026, 1, 5));
+    engine.selectDate(new Date(2026, 1, 10));
+    engine.nextMonth(); // advance viewDate to March
+    engine.selectDate(new Date(2026, 2, 1)); // start a new draft
+
+    engine.clearSelection();
+
+    expect(engine.selectedRange()).toEqual({ start: null, end: null });
+    expect(engine.isDraftActive()).toBe(false);
+    // viewDate still March (§8: clearSelection must not reset viewDate).
+    const currentMonthCells = engine.monthGrids()[0].filter((cell) => cell.isCurrentMonth);
+    expect(currentMonthCells[0].date.getMonth()).toBe(2);
+  });
+
+  it('monthGrids marks isRangeStart and isRangeEnd on committed endpoints', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+    const start = new Date(2026, 1, 10);
+    const end = new Date(2026, 1, 20);
+
+    engine.selectDate(start);
+    engine.selectDate(end);
+
+    const grid = engine.monthGrids()[0];
+    const startCell = grid.find((c) => isSameDay(c.date, start))!;
+    const endCell = grid.find((c) => isSameDay(c.date, end))!;
+
+    expect(startCell.isRangeStart).toBe(true);
+    expect(startCell.isSelected).toBe(true);
+    expect(startCell.isRangeEnd).toBe(false);
+    expect(endCell.isRangeEnd).toBe(true);
+    expect(endCell.isSelected).toBe(true);
+    expect(endCell.isRangeStart).toBe(false);
+  });
+
+  it('monthGrids marks isInRange strictly between committed endpoints (endpoints excluded)', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+
+    engine.selectDate(new Date(2026, 1, 10));
+    engine.selectDate(new Date(2026, 1, 20));
+
+    const grid = engine.monthGrids()[0];
+    const midCell = grid.find((c) => isSameDay(c.date, new Date(2026, 1, 15)))!;
+    const beforeCell = grid.find((c) => isSameDay(c.date, new Date(2026, 1, 9)))!;
+    const afterCell = grid.find((c) => isSameDay(c.date, new Date(2026, 1, 21)))!;
+
+    expect(midCell.isInRange).toBe(true);
+    expect(midCell.isRangeStart).toBe(false);
+    expect(midCell.isRangeEnd).toBe(false);
+    expect(beforeCell.isInRange).toBe(false);
+    expect(afterCell.isInRange).toBe(false);
+  });
+
+  it('draft preview: only isRangeStart shown when focusedDate is null', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+    const start = new Date(2026, 1, 10);
+
+    engine.selectDate(start);
+
+    expect(engine.isDraftActive()).toBe(true);
+    const grid = engine.monthGrids()[0];
+    const startCell = grid.find((c) => isSameDay(c.date, start))!;
+    expect(startCell.isRangeStart).toBe(true);
+    expect(startCell.isSelected).toBe(true);
+    // No tentative end because focusedDate is null.
+    expect(grid.every((c) => !c.isRangeEnd)).toBe(true);
+    expect(grid.every((c) => !c.isInRange)).toBe(true);
+  });
+
+  it('draft preview: focusedDate acts as tentative range end (Open Questions #5)', () => {
+    const engine = createEngine({ today: fixedToday }); // today = Feb 15
+    engine.setSelectionMode('range');
+    const start = new Date(2026, 1, 10);
+
+    engine.selectDate(start); // enter Draft
+    // moveFocus with no prior focusedDate falls back to today (Feb 15), then right → Feb 16.
+    engine.moveFocus('right');
+    const tentativeEnd = engine.focusedDate()!;
+
+    expect(engine.isDraftActive()).toBe(true);
+    expect(tentativeEnd).not.toBeNull();
+
+    const grid = engine.monthGrids()[0];
+    const startCell = grid.find((c) => isSameDay(c.date, start))!;
+    const endCell = grid.find((c) => isSameDay(c.date, tentativeEnd))!;
+
+    expect(startCell.isRangeStart).toBe(true);
+    expect(endCell.isRangeEnd).toBe(true);
+    expect(endCell.isSelected).toBe(true);
+
+    // Days strictly between start (Feb 10) and tentativeEnd (Feb 16) should be isInRange.
+    const inRangeCell = grid.find((c) => isSameDay(c.date, new Date(2026, 1, 13)))!;
+    expect(inRangeCell.isInRange).toBe(true);
+  });
+
+  it('draft preview auto-sorts when focusedDate is before draftStart', () => {
+    const engine = createEngine({ today: fixedToday }); // today = Feb 15
+    engine.setSelectionMode('range');
+
+    engine.selectDate(new Date(2026, 1, 20)); // draftStart = Feb 20
+    engine.moveFocus('left'); // focusedDate → Feb 14 (today - 1)
+
+    const grid = engine.monthGrids()[0];
+    const focusedDate = engine.focusedDate()!;
+    // After sort: focusedDate should be treated as start, draftStart as end.
+    const tentativeStartCell = grid.find((c) => isSameDay(c.date, focusedDate))!;
+    const tentativeEndCell = grid.find((c) => isSameDay(c.date, new Date(2026, 1, 20)))!;
+
+    expect(tentativeStartCell.isRangeStart).toBe(true);
+    expect(tentativeEndCell.isRangeEnd).toBe(true);
+  });
+
+  it('selectDate is a no-op on a disabled date in range mode (I2)', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+    const saturday = new Date(2026, 1, 14);
+    engine.setDisabled((d) => d.getDay() === 6);
+
+    engine.selectDate(saturday);
+
+    expect(engine.isDraftActive()).toBe(false);
+    expect(engine.selectedRange()).toEqual({ start: null, end: null });
+  });
+
+  it('setDisabled destroys a committed range whose start is now disabled (I2 range)', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+    engine.selectDate(new Date(2026, 1, 10));
+    engine.selectDate(new Date(2026, 1, 20));
+
+    engine.setDisabled(new Date(2026, 1, 10)); // retroactively disables the range start
+
+    expect(engine.selectedRange()).toEqual({ start: null, end: null });
+  });
+
+  it('setDisabled destroys a committed range whose end is now disabled (I2 range)', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+    engine.selectDate(new Date(2026, 1, 10));
+    engine.selectDate(new Date(2026, 1, 20));
+
+    engine.setDisabled(new Date(2026, 1, 20)); // retroactively disables the range end
+
+    expect(engine.selectedRange()).toEqual({ start: null, end: null });
+  });
+
+  it('setDisabled aborts an active draft whose start is now disabled', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionMode('range');
+    engine.selectDate(new Date(2026, 1, 10)); // enter Draft
+
+    engine.setDisabled(new Date(2026, 1, 10));
+
+    expect(engine.isDraftActive()).toBe(false);
+    expect(engine.draftStart()).toBeNull();
+  });
+
+  it('no single-mode state bleeds into range mode after setSelectionMode (no ghost state)', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.selectDate(new Date(2026, 1, 20)); // single selection
+
+    engine.setSelectionMode('range'); // switch resets everything
+
+    expect(engine.selectedDate()).toBeNull();
+    expect(engine.selectedRange()).toEqual({ start: null, end: null });
+    expect(engine.isDraftActive()).toBe(false);
+  });
+});

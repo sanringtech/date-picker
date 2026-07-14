@@ -8,10 +8,12 @@ import { CalendarEngine } from './calendar-engine';
  * `engine.monthGrids()` / `engine.selectedDate()` / `engine.focusedDate()` to
  * paint it however they like (e.g. via Tailwind).
  *
- * M1 scope: arrow keys move focus within the current 42-cell grid and clamp
+ * M1/M3 scope: arrow keys move focus within the current 42-cell grid and clamp
  * at its edges — they do NOT auto-page to the adjacent month. PageUp/PageDown
  * do change month (an explicit user action, distinct from Decision 6's
  * boundary auto-transfer, which lands in M4).
+ * M3 adds: Escape aborts a range draft (Decision 3); in single mode Escape is
+ * not consumed so the outer shell can use it (e.g. close a popover).
  */
 @Directive({
   selector: '[sanringCalendarGrid]',
@@ -23,6 +25,15 @@ export class CalendarGridDirective {
 
   @HostListener('keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {
+    // Escape is handled conditionally — only consumed in range-draft mode.
+    if (event.key === 'Escape') {
+      if (this.engine.isDraftActive()) {
+        this.engine.abortRangeDraft();
+        event.preventDefault();
+      }
+      return;
+    }
+
     switch (event.key) {
       case 'ArrowLeft':
         this.engine.moveFocus('left');

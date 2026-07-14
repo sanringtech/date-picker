@@ -25,7 +25,7 @@ interface DemoScenario {
 
 /**
  * Progressive showcase states (PRD §8's "representative assembly states"
- * spirit, scoped to what M1+M2 actually implement). Each scenario gets its
+ * spirit, scoped to what M1–M3 actually implement). Each scenario gets its
  * own CalendarEngine instance — CalendarGridDirective is component-scoped
  * by design, so N grids on one page never share state.
  */
@@ -51,6 +51,13 @@ const SCENARIOS: readonly DemoScenario[] = [
       engine.setAllowDeselect(false);
       engine.setDisabled([isWeekend, summerBreak]);
     },
+  },
+  {
+    id: 'range',
+    title: '④ 區間選取（Range）',
+    description:
+      '第一次點擊設定起點（進入 Draft），第二次點擊提交區間，Escape 或「中止草稿」按鈕中止並回溯（Decision 3 / §4）。',
+    configure: (engine) => engine.setSelectionMode('range'),
   },
 ];
 

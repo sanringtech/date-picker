@@ -15,111 +15,149 @@
     4）——所有卡片共用同一個注入基準。
   </p>
 
-  <div class="flex w-full max-w-4xl flex-col gap-8">
+  <section aria-label="日期選擇器展示區" class="flex w-full max-w-4xl flex-col gap-8">
     @for (scenario of scenarios; track scenario.id) {
-      <div class="flex flex-col items-start gap-6 md:flex-row">
-        <sanring-card class="w-80 shrink-0">
-          <sanring-card-content class="p-4">
-            <div
-              sanringCalendarGrid
-              #grid="sanringCalendarGrid"
-              tabindex="0"
-              [attr.data-testid]="'calendar-grid-' + scenario.id"
-              class="block rounded-lg outline-none focus:ring-2 focus:ring-primary"
-            >
-              <div class="mb-4 flex items-center justify-between">
-                <button
-                  sanringBtn
-                  variant="ghost"
-                  size="icon"
-                  type="button"
-                  [attr.data-testid]="'calendar-prev-month-' + scenario.id"
-                  aria-label="上一月"
-                  (click)="grid.engine.prevMonth()"
+      <section
+        class="block"
+        [attr.aria-labelledby]="'scenario-title-' + scenario.id"
+        [attr.data-testid]="'scenario-section-' + scenario.id"
+      >
+        <sanring-card class="w-full overflow-hidden">
+          <sanring-card-content class="p-5 md:p-6">
+            <div class="flex flex-col items-start gap-6 md:flex-row">
+              <div
+                class="w-full max-w-[20rem] shrink-0 rounded-lg border border-border bg-background p-4 shadow-inner sm:w-80"
+              >
+                <div
+                  sanringCalendarGrid
+                  #grid="sanringCalendarGrid"
+                  tabindex="0"
+                  [attr.data-testid]="'calendar-grid-' + scenario.id"
+                  class="block rounded-lg outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <svg lucideChevronLeft [size]="18"></svg>
-                </button>
-                <span class="font-semibold text-foreground">
-                  {{ currentMonthLabel(grid.engine.monthGrids()[0]) }}
-                </span>
-                <button
-                  sanringBtn
-                  variant="ghost"
-                  size="icon"
-                  type="button"
-                  [attr.data-testid]="'calendar-next-month-' + scenario.id"
-                  aria-label="下一月"
-                  (click)="grid.engine.nextMonth()"
-                >
-                  <svg lucideChevronRight [size]="18"></svg>
-                </button>
-              </div>
+                  <div class="mb-4 flex items-center justify-between">
+                    <button
+                      sanringBtn
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      [attr.data-testid]="'calendar-prev-month-' + scenario.id"
+                      aria-label="上一月"
+                      (click)="grid.engine.prevMonth()"
+                    >
+                      <svg lucideChevronLeft [size]="18"></svg>
+                    </button>
+                    <span class="font-semibold text-foreground">
+                      {{ currentMonthLabel(grid.engine.monthGrids()[0]) }}
+                    </span>
+                    <button
+                      sanringBtn
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      [attr.data-testid]="'calendar-next-month-' + scenario.id"
+                      aria-label="下一月"
+                      (click)="grid.engine.nextMonth()"
+                    >
+                      <svg lucideChevronRight [size]="18"></svg>
+                    </button>
+                  </div>
 
-              <div class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted">
-                @for (label of weekdayLabels; track label) {
-                  <span>{{ label }}</span>
-                }
-              </div>
-
-              <div class="grid grid-cols-7 gap-1">
-                @for (day of grid.engine.monthGrids()[0]; track day.date.getTime()) {
-                  <button
-                    type="button"
-                    [disabled]="day.isDisabled"
-                    [attr.data-testid]="'calendar-day-' + dayTestId(scenario.id, day.date)"
-                    class="aspect-square rounded text-sm transition-colors active:brightness-90"
-                    [class.text-muted]="!day.isCurrentMonth"
-                    [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
-                    [class.bg-primary]="day.isSelected"
-                    [class.text-primary-foreground]="day.isSelected"
-                    [class.ring-2]="day.isFocused"
-                    [class.ring-primary]="day.isFocused"
-                    [class.font-bold]="day.isToday && !day.isSelected"
-                    [class.hover:bg-surface-strong]="!day.isSelected && !day.isDisabled"
-                    [class.hover:brightness-95]="day.isSelected"
-                    [class.opacity-40]="day.isDisabled"
-                    [class.cursor-not-allowed]="day.isDisabled"
-                    [class.line-through]="day.isDisabled"
-                    (click)="grid.engine.selectDate(day.date)"
+                  <div
+                    class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted"
                   >
-                    {{ day.date.getDate() }}
-                  </button>
-                }
+                    @for (label of weekdayLabels; track label) {
+                      <span>{{ label }}</span>
+                    }
+                  </div>
+
+                  <div class="grid grid-cols-7 gap-1">
+                    @for (day of grid.engine.monthGrids()[0]; track day.date.getTime()) {
+                      <button
+                        type="button"
+                        [disabled]="day.isDisabled"
+                        [attr.data-testid]="'calendar-day-' + dayTestId(scenario.id, day.date)"
+                        class="aspect-square rounded text-sm transition-colors active:brightness-90"
+                        [class.text-muted]="
+                          !day.isCurrentMonth && !day.isInRange && !day.isSelected
+                        "
+                        [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
+                        [class.bg-primary]="day.isSelected"
+                        [class.text-primary-foreground]="day.isSelected"
+                        [class.bg-primary/20]="day.isInRange && !day.isSelected"
+                        [class.ring-2]="day.isFocused"
+                        [class.ring-primary]="day.isFocused"
+                        [class.font-bold]="day.isToday && !day.isSelected"
+                        [class.hover:bg-surface-strong]="
+                          !day.isSelected && !day.isDisabled && !day.isInRange
+                        "
+                        [class.hover:brightness-95]="day.isSelected || day.isInRange"
+                        [class.opacity-40]="day.isDisabled"
+                        [class.cursor-not-allowed]="day.isDisabled"
+                        [class.line-through]="day.isDisabled"
+                        (click)="grid.engine.selectDate(day.date)"
+                      >
+                        {{ day.date.getDate() }}
+                      </button>
+                    }
+                  </div>
+
+                  <div class="mt-4 flex items-center justify-between gap-2 text-sm">
+                    <span
+                      class="min-w-0 flex-1 truncate text-muted"
+                      [attr.data-testid]="'calendar-selected-value-' + scenario.id"
+                    >
+                      @if (grid.engine.selectedDate(); as selected) {
+                        已選：{{ formatDate(selected) }}
+                      } @else if (grid.engine.isDraftActive()) {
+                        起點：{{ formatDate(grid.engine.draftStart()!) }}（請選終點）
+                      } @else if (grid.engine.selectedRange().start; as start) {
+                        {{ formatDate(start) }} ～
+                        {{ formatDate(grid.engine.selectedRange().end!) }}
+                      } @else {
+                        尚未選取
+                      }
+                    </span>
+                    <div class="flex shrink-0 gap-1">
+                      @if (grid.engine.isDraftActive()) {
+                        <button
+                          sanringBtn
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          [attr.data-testid]="'calendar-abort-draft-' + scenario.id"
+                          (click)="grid.engine.abortRangeDraft()"
+                        >
+                          中止
+                        </button>
+                      }
+                      <button
+                        sanringBtn
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        [attr.data-testid]="'calendar-clear-selection-' + scenario.id"
+                        (click)="grid.engine.clearSelection()"
+                      >
+                        清空
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div class="mt-4 flex items-center justify-between text-sm">
-                <span
-                  class="text-muted"
-                  [attr.data-testid]="'calendar-selected-value-' + scenario.id"
-                >
-                  @if (grid.engine.selectedDate(); as selected) {
-                    已選：{{ formatDate(selected) }}
-                  } @else {
-                    尚未選取
-                  }
-                </span>
-                <button
-                  sanringBtn
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  [attr.data-testid]="'calendar-clear-selection-' + scenario.id"
-                  (click)="grid.engine.clearSelection()"
-                >
-                  清空
-                </button>
+              <div class="flex-1 pt-1 md:pt-2">
+                <h3 sanringCardTitle class="text-base" [id]="'scenario-title-' + scenario.id">
+                  {{ scenario.title }}
+                </h3>
+                <p sanringCardDescription class="mt-1 text-sm text-muted">
+                  {{ scenario.description }}
+                </p>
               </div>
             </div>
           </sanring-card-content>
         </sanring-card>
-
-        <div class="flex-1 pt-2">
-          <h3 sanringCardTitle class="text-base">{{ scenario.title }}</h3>
-          <p sanringCardDescription class="mt-1 text-sm text-muted">
-            {{ scenario.description }}
-          </p>
-        </div>
-      </div>
+      </section>
     }
-  </div>
+  </section>
 </main>
