@@ -4,9 +4,9 @@ constitution_id: date-picker
 constitution_name: Sanring Headless Date/Calendar Engine
 status: active           # draft | active | superseded | archived
 owner: jack755051
-last_updated: 2026-07-12
+last_updated: 2026-07-14  # Decision 10 追加
 scope: date-picker-engine     # Angular headless calendar/date-picker 核心引擎
-related_prds: [date-picker]
+related_prds: [date-picker, date-picker-widget]
 supersedes:
 ---
 
@@ -43,6 +43,7 @@ supersedes:
 - **R2**：時間零點與全維度分離：網格基準（viewDate）強制歸零，使用者選取值（selectedDate）保留時分秒。
 - **R3**：網格視覺恆定：無論月份天數，強制固定輸出 42 天（6 週）的網格陣列，溢出日期以相鄰月份補齊。
 - **R4**（AI 提案・使用者拍板延伸，T2，見 §7 Decision 5）：禁用日期（Disabled Dates）的判斷邏輯必須能同時支援單日、日期陣列、日期區間、以及自訂條件函式四種輸入形式，以涵蓋業務上任意複雜度的禁用規則。
+- **R5**（AI 提案・使用者拍板延伸為正式 Rule，T2 + 使用者親口理由 T1，見 §7 Decision 9）：無論 Composed Widget 層或任何應用層，都只能透過 engine 對外公開的 public API 消費 engine，不得存取未公開的內部實作，不享有任何特權後門——即使該應用層由同一團隊發布。
 
 ## 4. 業務狀態機 (State Machines)
 
@@ -93,6 +94,7 @@ supersedes:
 - **I2（Selection-Disabled Mutually Exclusive）**：在任何系統穩定狀態下，被標記為「選中（Selected）」的日期集合與「禁用（Disabled）」的日期集合，其交集永遠為空（`Selected ∩ Disabled = Ø` 恆成立）。
 - **I3（Grid Size Constancy）**：無論 `viewDate` 落在何年何月，引擎運算輸出的 `CalendarDay` 陣列長度永遠嚴格等於 42，不存在任何動態增減的合法路徑。
 - **I4（Localization Neutrality，AI 提案・使用者拍板延伸，T2，見 §7 Decision 7）**：引擎不得在內部寫死任何特定語言或地區的曆法慣例（例如一週起始日、月份/星期名稱）；所有在地化相關的顯示與計算規則必須 100% 由外部注入的語系設定決定。
+- **I5（Composed Widget Default Overridability，AI 提案・使用者拍板延伸，T2，見 §7 Decision 9）**：Composed Widget 層允許內建預設樣式與預設格式化，但每一條預設值都必須可被外部 100% 覆寫/替換；不存在任何「使用者無法覆寫」的合法預設決定。此不變量與 §9 Zero Opinion（僅約束 engine 本體）互相獨立，並非其例外。
 
 ## 6. 業務術語表 (Glossary)
 
@@ -102,6 +104,7 @@ supersedes:
 | `selectedDate`（最終選取值） | 使用者實際選定、且將作為表單值拋出給外部系統的資料實體。會完整保留使用者（或外部系統）賦予的時、分、秒分量。 | `viewDate` |
 | `CalendarDay`（日曆細胞） | 42 天網格陣列中的最小運算與渲染單位，封裝了特定日期在當前視圖下的業務狀態（例如：是否為當月、是否為今天、是否處於被禁用狀態）。 | JavaScript 原生的 `Date` 物件——原生 `Date` 只是客觀的時間點，`CalendarDay` 是帶有「UI 與業務上下文」的狀態載體。 |
 | `Headless Engine`（無頭引擎） | 僅負責封裝狀態機、曆法數學運算與無障礙鍵盤導航，完全不綁定任何 DOM 結構（如 Popover）或視覺樣式（CSS）的純粹邏輯層。它不提供「長相」，只提供「大腦」。 | 傳統 UI 元件庫的 `<DatePicker>` 元件（外觀由開發者在應用層套用 Tailwind CSS 組合而成）。 |
+| `Composed Widget`（組裝元件，AI 提案・使用者拍板，T2，見 §7 Decision 9） | 站在 Headless Engine 之上、以 engine 對外公開的 public API 組裝而成的「開箱即用」產出物（含 input、popover/overlay、預設可覆寫樣式與格式化），可被獨立安裝直接使用。其預設值必須 100% 可被外部覆寫（見 §5 I5），且不享有存取 engine 內部/未公開 API 的特權（見 §3 R5）。 | `Headless Engine` 本身（兩者是分層產出，不是同一個東西，見 §7 Decision 9）；傳統封閉式 `<DatePicker>` 元件（外觀/行為即使有預設值，仍必須可被拆解替換，不會讓開發者卡死在單一長相）。 |
 
 ## 7. 業務決策 (Business Decisions)
 
@@ -150,6 +153,40 @@ supersedes:
 - **決策**：多月並排網格輸出在服務範圍內；年份 / 十年層級高階曆法檢視不在服務範圍內（見 §1 Out of Scope）。
 - **理由**：多月並排在 Range 模式中是絕對的剛需（例如機票、飯店預訂場景），對 Headless 引擎而言多算一個月的陣列成本極低；年份/十年檢視會引入另一套完全不同的狀態機，留在未來版本再做最穩妥。
 - **註記**：「多算幾個月的網格陣列」與「年/十年檢視另一套狀態機」是本引擎服務範圍的業務邊界，已寫入 §1；但「哪個版本交付」屬於 PRD Milestones/Phase 規劃範疇，不寫入憲法。
+
+### Decision 9: 兩層終局願景——Headless Engine 與 Composed Widget 分層產出（AI 提案・使用者拍板，T2 + 使用者親口理由，T1）
+
+- **決策**：本產品最終將產出兩層獨立產出物：
+  1. **Headless Engine 層**（現狀，見 §1-§8 既有規則）——供上層開發者（如 sanring/ui）比照 shadcn/vue 消費 headless primitive 的模式，自行組裝出風格化的 DatePicker。
+  2. **Composed Widget 層**（新增，定義見 §6 Glossary「Composed Widget」）——比照 vue3-datepicker，開箱即用、含 input + popover/overlay + 預設可覆寫樣式，可被獨立安裝直接使用的產出物。
+
+  Composed Widget 層在架構上屬於 R1「引擎與外殼嚴格解耦」定義的「應用層」的一種官方實作，只是恰好由同一團隊以獨立套件/子路徑發布；不因此取得任何存取 engine 未公開內部 API 的特權，一律只能透過 engine 對外公開的 public API 消費（見新增 R5，§3）。Composed Widget 層允許內建預設樣式與預設格式化，但每一條預設值都必須可被外部 100% 覆寫（見新增 I5，§5）；§9 Zero Opinion 不變量的適用範圍維持僅限 engine 本體，不因 Composed Widget 層存在而放寬或收緊。
+
+- **理由**（使用者原話，T1，回應「Composed 層是否可以碰 engine 內部 API」的訪談提問）：
+  > 選項 2（Composed 層可以走內部 API 後門）我會直接建議排除。這條路線的風險在於：一旦「官方參考實作」被允許碰 engine 尚未公開的內部 API，engine 的 public API 邊界就名存實亡——之後 engine 想重構內部實作，會發現「內部」早就被 Composed 層依賴死了，動一下就炸。這正是 R1 當初想避免的「被鎖死、只能重造輪子」問題，只是這次鎖死的是你自己的團隊。而且這也會製造雙重標準：外部消費者被要求走 public API，你自己的官方實作卻走後門，這對第三方消費者觀感也不好（「連官方都要走後門才能用得順」暗示 public API 設計本身有缺陷）。選項 1 和選項 3 的實質結論一致：Composed 層沒有特權，一律走 public API。差別只在於「這條規矩放哪」——選項 1 把它埋進 Decision 9 的附帶說明句，選項 3 把它升格成 §3 的正式 Rule（R5）。我傾向選項 3，因為這條規矩的殺傷力不小：實務上「反正是自己團隊，兩邊都是我寫的」這種心態非常容易誘使工程師偷懶直接 import engine 的私有實作抄捷徑，尤其 Composed 跟 engine 大概率會放在同一個 monorepo/repo 裡，物理上根本沒有邊界擋著。埋在 Decision 的說明文字裡容易被略過，升格成一條明確、可引用、可在 code review 直接拿出來擋人的 Rule（像 R1-R4 那樣），執行力道差很多。
+
+- **替代方案（拒絕）**：
+  - 選項「Composed 層享有特權，可直接存取 engine 內部未公開 API」——拒絕原因：會架空 R1 的 public API 邊界，製造「自己團隊可以走後門」的雙重標準，且未來 engine 重構將被 Composed 層的隱性依賴綁死。
+  - 選項「兩層願景不寫進憲法，留給 PRD/Roadmap」——拒絕原因：使用者判斷這是會約束 engine public API 邊界、影響 R1 詮釋方式的業務規則，非純交付形態問題。
+  - 選項「§1 業務目的段落直接改寫，納入兩層敘述」——拒絕原因：使用者選擇維持 §1 業務目的現狀不動，只在 §7 新增 Decision，避免既有業務目的段落被覆蓋/稀釋。
+  - 選項「Composed 層預設樣式/格式化視為 §9 Zero Opinion 的例外」——拒絕原因：使用者選擇不把 Composed 層當作既有不變量的例外個案處理，而是新增一條獨立不變量（I5），讓 §9 Zero Opinion 維持「僅約束 engine 本體」的單純語意。
+
+- **註記**：具體套件拆分方式（NPM package 命名、monorepo 結構、popover library 選型等）屬技術實作細節，留待 PRD 階段定義，不寫入憲法。「standalone 模式」一詞經訪談確認不需要獨立收進 §6 Glossary（使用者判斷其為一般形容詞，非需正式定義的業務術語）。
+
+### Decision 10: Composed Widget 雙消費模式承諾——npm 黑盒安裝 + 所有權轉移複製（AI 提案・使用者拍板延伸，T2 + 使用者親口理由，T1，見 §7 Decision 9 延伸）
+
+- **決策**：Composed Widget 層必須同時支援兩種消費模式：
+  1. **npm 黑盒安裝模式**（比照 vue3-datepicker）：使用者直接 `npm install` 官方套件，當作黑盒消費，滿足開箱即用的便利性。
+  2. **所有權轉移複製模式**（借用 shadcn CLI 的消費模式當比喻，非字面上與 Vue 生態系 shadcn/vue 互通——Angular 套件無法被 Vue 生態系直接消費；目標讀者是 Angular 生態系，含 sanring-ui）：使用者可透過工具將 Composed Widget 原始碼複製進自己的專案，程式碼所有權完全轉移給使用者，使用者可任意修改。
+
+  兩種模式不是各自獨立的兩個決定，而是同一個核心承諾——「不能讓使用者被鎖死、必須保有完全掌控的退路」——在 Composed 層的兩種具體實現。
+
+- **理由**（使用者原話，T1）：
+  > 兩種消費模式不是各自獨立的兩個決定，而是同一個核心承諾——「不能讓使用者被鎖死、必須保有完全掌控的退路」——在 Composed 層的兩種具體實現。黑盒安裝（npm install）滿足「開箱即用」的方便性，這是 Composed Widget 存在的初衷（對標 vue3-datepicker）；但如果只提供黑盒模式，使用者一旦遇到黑盒沒開放的客製化需求，就會被迫放棄整個套件、重造輪子——這正是當初 R1「引擎與外殼嚴格解耦」想避免的問題，只是換了個位置在 Composed 層重演。所以必須同時保留複製所有權轉移模式（比照 shadcn CLI），讓使用者在需要深度客製化時，隨時能拿到完整原始碼、自己接手維護。兩者互補、缺一不可：拿掉黑盒模式會失去「開箱即用」的目標；拿掉複製模式則會讓 Composed 層違背整個產品「不鎖死使用者」的核心精神（呼應已拍板的「100% 可覆寫」不變量）。
+
+- **R5 在複製模式下的適用範圍**（使用者拍板，T2）：R5「Composed Widget 只能透過 engine public API 消費」約束的是**官方發布的那一份原始碼本身**——即官方發布出去的 Composed Widget 程式碼，不能 import engine 未公開的內部實作。使用者複製走之後如何修改，屬於使用者自己的自由，不在憲法管轄範圍內。
+
+- **註記**：具體 CLI 工具實作、npm 套件與複製模式各自的命名/發佈機制，屬技術實作細節，留待 PRD 階段定義，不寫入憲法。
 
 ## 8. 取消 / 沖銷 / 退回的規矩 (Reversal Semantics)
 
@@ -203,6 +240,8 @@ supersedes:
 - §8 清空選取語意（Q10 原話）
 - §9 今天的後備地位 / 預設邊界零立場（Q11 原話）
 - §10 TODO 1-4（Q3 拍板清單中的 TODO 項）+ TODO 5-6（使用者主動追加的 SSR/Hydration 時區衝突、多月聯動與高階視圖支援）
+- §7 Decision 9 理由段落：使用者針對「Composed 層是否可碰 engine 內部 API」的完整原話論證（拒絕特權後門、拒絕雙重標準、要求升格為正式 Rule R5 的理由）
+- §7 Decision 10 理由段落：使用者針對「為何 Composed Widget 需同時支援 npm 黑盒與 shadcn 複製所有權轉移兩種消費模式」的完整原話論證（兩模式同源於「不鎖死使用者」核心承諾，呼應 R1 與 I5）
 
 ### ⚠️ AI 改寫成 invariant 形式（內容對應使用者原話）
 - 無——使用者本次回答已直接以斷言式（assertive）業務規則格式提供，AI 僅做章節歸位，未改寫用詞。
@@ -210,6 +249,13 @@ supersedes:
 ### 🔷 AI 提案・使用者拍板（propose-and-ratify, T2）
 - §4/§7 Decision 3/§8：Range Selection 中斷策略——AI 提出 A（回溯 Discard）/ B（保留草稿）/ C（委派外殼）三個候選 + 推薦 A，使用者明確選擇「選項 A」並補充拍板理由（業務交易完整性、避免幽靈狀態）
 - §7 Decision 4/§9：SSR/Hydration「今天」判定優先順序——AI 提出 A（本地優先容忍跳動）/ B（絕對一致禁止跳動）/ C（外部注入基準）三個候選 + 推薦 C，使用者選擇「C 的改良版」並自行補充後備機制（外部基準優先 → 環境 `new Date()` 後備）與引擎邊界免責聲明，同時明確裁決此決策修正 Q11 原始 Fallback Priority 規則
+- §7 Decision 9（兩層願景收錄形式）：AI 提出 4 個候選（§1+Decision / 只 Decision / 只 §1 / 不寫入）+ 推薦「§1+Decision」，使用者選擇「只加 §7 新 Decision 9，不動 §1」
+- §5 I5（Zero Opinion 與 Composed 層預設值的關係）：AI 提出 4 個候選（Zero Opinion 只約束 engine / Zero Opinion 全域適用 / 新增獨立不變量 / TODO）+ 隱含比較，使用者選擇「新增獨立不變量：有預設但必須 100% 可覆寫」
+- §3 R5（Composed 層與 R1 應用層的關係）：AI 提出 4 個候選（理解正確不需特權 / 理解需修正給特權 / 理解大致對但升格為正式 Rule / TODO），使用者選擇「理解大致對，但升格為新 Rule R5」，並附上完整原話論證（見上方 T1 段落）
+- §6 Glossary「Composed Widget」：AI 提出 4 個候選（採用 AI 草稿定義 / 自寫定義 / 不列入 / TODO），使用者選擇「採用 AI 草稿定義」原文照收
+- §6 Glossary「standalone 模式」：因使用者回答與「Composed Widget」題重複疑似貼錯，AI 主動重新提問確認，使用者最終選擇「不需要單獨列入 Glossary」
+- §7 Decision 10（「Composed Widget 雙消費模式」是否寫入憲法）：AI 提出 3 個候選（寫進憲法新 Decision / 只寫進 PRD / 兩邊都寫），使用者選擇「兩邊都寫：憲法寫承諾，PRD 寫實現」
+- §7 Decision 10（R5 在 shadcn 複製模式下是否仍適用）：AI 提出 3 個候選（仍成立、需補註說明、TODO），使用者選擇「仍然成立」，並補充理由：R5 約束的是官方發布的原始碼本身，使用者複製走之後如何修改不在憲法管轄範圍
 
 ### ✅ 使用者自擬決策（自行提出「選項 + 決策 + 理由」，AI 僅拆分業務本質與技術細節後歸位，T1）
 - §3 R4 / §7 Decision 5：Disabled Dates 統一匹配原則（使用者原話提出「選項 B：萬能匹配器」並自行寫出決策與理由；`Matcher` 型別/`@Input()` 綁定等技術命名已拆出，留給 PRD）
@@ -228,3 +274,4 @@ supersedes:
 - 未自創使用者未提到的業務規則——propose-and-ratify 提案僅供選擇，未經使用者選/改一律未寫入
 - 未靜默套用 sanring 預設技術棧——技術選型內容（@sanring/date-picker NPM 套件、Angular Standalone Components + Signals + date-fns、Matcher 型別、`@Input()` 綁定命名、date-fns Locale 物件、版本分期）已在訪談中明確識別為 PRD 範疇並排除於本憲法之外，未寫入，且已在對話中明確告知使用者
 - 未靜默將 frontmatter `status` 從 `draft` 改為 `active`——此變更由業務 owner 本人於本輪對話中明確拍板後才執行
+- 未把疑似貼錯的重複回答（「standalone 模式」題答案與「Composed Widget」題完全相同）直接寫入 Glossary——偵測到異常後主動停下重新提問，取得使用者明確裁決（不列入）後才處理，未腦補使用者原意
