@@ -1,8 +1,14 @@
 {
   "name": "@sanring/date-picker",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Headless Angular calendar engine — pure logic, zero DOM/CSS assumptions",
-  "keywords": ["angular", "calendar", "datepicker", "headless", "signals"],
+  "keywords": [
+    "angular",
+    "calendar",
+    "datepicker",
+    "headless",
+    "signals"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sanring/date-picker.git"
