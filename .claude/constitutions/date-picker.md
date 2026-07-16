@@ -4,7 +4,7 @@ constitution_id: date-picker
 constitution_name: Sanring Headless Date/Calendar Engine
 status: active           # draft | active | superseded | archived
 owner: jack755051
-last_updated: 2026-07-15  # Decision 12 追加（Granularity Selection，supersede Decision 8 部分內容）
+last_updated: 2026-07-16  # Decision 13/14 追加（Programmatic Value Setting、Range Day-Count Limit）
 scope: date-picker-engine     # Angular headless calendar/date-picker 核心引擎
 related_prds: [date-picker, date-picker-widget]
 supersedes:
@@ -47,6 +47,8 @@ supersedes:
 - **R4**（AI 提案・使用者拍板延伸，T2，見 §7 Decision 5）：禁用日期（Disabled Dates）的判斷邏輯必須能同時支援單日、日期陣列、日期區間、以及自訂條件函式四種輸入形式，以涵蓋業務上任意複雜度的禁用規則。
 - **R5**（AI 提案・使用者拍板延伸為正式 Rule，T2 + 使用者親口理由 T1，見 §7 Decision 9）：無論 Composed Widget 層或任何應用層，都只能透過 engine 對外公開的 public API 消費 engine，不得存取未公開的內部實作，不享有任何特權後門——即使該應用層由同一團隊發布。
 - **R6**（AI 提案・使用者拍板，T2，見 §7 Decision 12，2026-07-15 delta）：網格尺寸依選取粒度而定，不強制套用 R3 的「42 天」規則：月粒度網格固定輸出 12 格（對應一年 12 個月）；季粒度網格固定輸出 4 格（對應一年 4 季）；年粒度網格輸出 N 格，N 的範圍由消費端決定，不由引擎內建固定值。
+- **R7**（AI 提案・使用者拍板，T2，見 §7 Decision 13，2026-07-16 delta）：程式化寫值（如外部直接設定選取值，而非透過使用者互動觸發）與使用者互動路徑必須遵守完全相同的合法性規則：命中 Disabled 規則時一律靜默拒絕、不寫入（呼應 I2），且必須通過與使用者互動路徑相同的 §4 狀態機合法轉換檢查；不存在任何繞過既有業務規則的特權寫入路徑。
+- **R8**（AI 提案・使用者拍板，T2，見 §7 Decision 14，2026-07-16 delta）：Range 選取支援可注入的天數上下限限制（例如「最多選 30 天」），此參數比照 I4 `weekStartsOn` 的 Zero-default 精神，預設無限制，需消費端明確注入才生效；使用者於 Draft 狀態（起點已定、終點未定）選擇超出限制的終點時，該次選取一律被拒絕、終點不提交，Draft 維持在原有起點、等待使用者重新選擇合法終點。
 
 ## 4. 業務狀態機 (State Machines)
 
@@ -91,6 +93,8 @@ supersedes:
 
 **業務理由**（AI 提案・使用者拍板，T2，見 §7 Decision 3）：區間選擇在業務語意上是一個不可分割的單一交易（起點+終點）。若在完成整筆交易前中止，交易視為從未發生，系統必須立刻銷毀草稿並回溯到上一個穩定狀態；保留草稿會產生無法預期的「幽靈狀態」，對 UX 有極大傷害。
 
+**天數上下限限制（AI 提案・使用者拍板，T2，見 §7 Decision 14，2026-07-16 delta，見 R8）**：Draft 狀態下選擇的終點若超出消費端注入的天數上下限，該次選取被拒絕，終點不提交、Draft 維持在原有起點，等待使用者重新選擇合法終點——此行為與命中 Disabled 規則時的拒絕邏輯一致，不引入新的行為模式（例如自動 clamp 或視為新起點）。
+
 ### 多選日期 (Multi-dates Selection，AI 提案・使用者拍板，T2，見 §7 Decision 11)
 
 ```
@@ -119,10 +123,22 @@ supersedes:
 - 不新增獨立的 Rule/狀態機來分別描述 Month/Year/Quarter 三者——三者是同一套通用規則的三種粒度實例，避免重複規則造成維護負擔。
 - 這套通用狀態機是否透過同一個 `CalendarEngine` 擴充參數實現，或需要獨立的 Injectable/子類，屬於技術架構決策，留待 PRD 階段定義，不寫入憲法。
 
+### 程式化寫值 (Programmatic Value Setting，AI 提案・使用者拍板，T2，見 §7 Decision 13，2026-07-16 delta)
+
+**業務語意**：無論選取值是透過使用者互動（如點擊網格細胞）觸發，或由消費端透過 API 直接程式化寫入（例如表單載入既有資料時綁定初始選取值），兩條路徑必須遵守完全相同的合法性規則，不存在任何特權旁路（見 R7）。
+
+**合法轉換**：
+- 程式化寫值命中 Disabled 規則：拒絕寫入，選取值維持原狀——與使用者互動路徑命中 Disabled 規則時的行為完全一致（呼應 I2）
+- 程式化寫值必須通過與 Single/Range/Multi 三節定義相同的合法轉換檢查，不允許繞過狀態機直接灌值
+
+**備註**：
+- 此節規則對 Single / Range / Multi / 粒度選取（Month/Quarter/Year）一體適用，不分別另立規則。
+- I2（Selected ∩ Disabled = Ø）在此路徑下同樣視為全域恆等式，不因寫值來源不同而放寬（見 §5 I2 更新註記）。
+
 ## 5. 不可變約束 (Invariants)
 
 - **I1（ViewDate Validity）**：無論系統處於初始化、清空選取或發生異常錯誤時，推導網格的基準點 `viewDate` 必須永遠是一個合法存在的 `Date` 物件（預設退回「今天」或合法邊界），絕對不允許成為 `null` 或 `Invalid Date`。
-- **I2（Selection-Disabled Mutually Exclusive）**：在任何系統穩定狀態下，被標記為「選中（Selected）」的日期集合與「禁用（Disabled）」的日期集合，其交集永遠為空（`Selected ∩ Disabled = Ø` 恆成立）。
+- **I2（Selection-Disabled Mutually Exclusive）**：在任何系統穩定狀態下，被標記為「選中（Selected）」的日期集合與「禁用（Disabled）」的日期集合，其交集永遠為空（`Selected ∩ Disabled = Ø` 恆成立）。**（⚠️ 2026-07-16 更新，見 §7 Decision 13）：本不變量對程式化寫值路徑（非使用者互動觸發）同樣適用，不因寫值來源不同而放寬或例外。**
 - **I3（Grid Size Constancy）**：無論 `viewDate` 落在何年何月，引擎運算輸出的 `CalendarDay` 陣列長度永遠嚴格等於 42，不存在任何動態增減的合法路徑。**（⚠️ 2026-07-15 更新，見 R6/Decision 12）：本不變量僅適用於日粒度的 `CalendarDay` 網格；月/年/季粒度的網格尺寸不變量見 R6，具體型別/命名留待 PRD 定義。**
 - **I4（Localization Neutrality，AI 提案・使用者拍板延伸，T2，見 §7 Decision 7）**：引擎不得在內部寫死任何特定語言或地區的曆法慣例（例如一週起始日、月份/星期名稱）；所有在地化相關的顯示與計算規則必須 100% 由外部注入的語系設定決定。
 - **I5（Composed Widget Default Overridability，AI 提案・使用者拍板延伸，T2，見 §7 Decision 9）**：Composed Widget 層允許內建預設樣式與預設格式化，但每一條預設值都必須可被外部 100% 覆寫/替換；不存在任何「使用者無法覆寫」的合法預設決定。此不變量與 §9 Zero Opinion（僅約束 engine 本體）互相獨立，並非其例外。
@@ -278,6 +294,48 @@ supersedes:
 
 - **註記**：具體型別命名（如 `selectionGranularity`、月/季/年網格的 Cell 型別命名）、CalendarEngine 架構（單一擴充 vs 獨立子類）、I1-I4/I6 不變量在新粒度下的具體型別層級表述方式，皆屬技術實作細節，留待 PRD 階段定義，不寫入憲法。
 
+### Decision 13: 程式化寫值須與使用者互動路徑同規則（AI 提案・使用者拍板，T2，2026-07-16 delta）
+
+- **決策**：
+  1. 程式化寫值（如外部直接設定選取值）命中 Disabled 規則時，一律靜默拒絕、不寫入，選取值維持原狀——與使用者互動路徑（如點擊網格細胞）命中 Disabled 規則時的行為完全一致。
+  2. 程式化寫值必須通過與使用者互動路徑相同的 §4 狀態機合法轉換檢查，不允許繞過狀態機直接灌值。
+  3. I2（`Selected ∩ Disabled = Ø`）對此路徑同樣是全域恆等式，不因寫值來源不同而放寬或例外（見 §5 I2 更新註記）。
+  4. 新增 R7（見 §3）將此規則升格為正式 Rule。
+
+- **理由**：
+  - 命中 Disabled 靜默拒絕：使用者選擇讓程式化寫值與既有 `selectDate()` 的既定行為完全對稱，不引入第二套「特權寫值」邏輯，避免同一個業務語意（選取合法性）在不同觸發來源下產生不一致行為，造成消費端難以預期的 bug。
+  - 通過相同狀態機檢查：使用者選擇讓觸發來源（程式呼叫 vs 使用者點擊）僅影響「誰觸發」，不影響「合法性怎麼判斷」，避免兩條路徑分裂維護。
+  - I2 全域恆等式不放寬：使用者選擇維持 I2 原有「在任何系統穩定狀態下」的全域語意，不因為程式化寫值是「外部權威灌值」就開特例；若消費端真的需要載入一筆「不符合目前 Disabled 規則」的舊資料，那屬於不合法狀態，應由消費端自行先解決規則衝突（例如先呼叫 `setDisabled()` 移除衝突規則），而非讓 engine 破例接受。
+
+- **替代方案（拒絕）**：
+  - 命中 Disabled 選項「允許寫入但同時清空該筆 Disabled 規則」（比照 M2 `setDisabled()` 反向清空選取的既有慣例）——拒絕，使用者選擇更簡單、行為更一致的「靜默拒絕」，不引入「新值優先、舊規則讓步」的反向邏輯。
+  - 命中 Disabled 選項「拋出錯誤」——拒絕，使用者選擇與既有 `selectDate()` 命中 disabled 時的靜默 no-op 行為一致，不無故產生新的錯誤處理路徑。
+  - 狀態機檢查選項「允許繞過合法轉換檢查（外部權威灌值）」——拒絕，使用者選擇統一路徑，不開特權後門。
+  - 狀態機檢查選項「視情境而定（初始化 vs 執行期間分開處理）」——拒絕，使用者選擇單一規則，不增加額外的情境分岔複雜度。
+  - I2 適用範圍選項「只約束使用者互動路徑，程式化寫值不受拘束」——拒絕，使用者選擇維持 I2 全域恆等式語意不變。
+
+- **註記**：`setSelectedDate()`/`setSelectedRange()` 等具體方法命名/簽章屬於技術實作細節，留待 PRD 階段定義，不寫入憲法。
+
+### Decision 14: Range 選取新增可注入天數上下限限制（AI 提案・使用者拍板，T2，2026-07-16 delta）
+
+- **決策**：
+  1. 新增獨立 R8（見 §3）：Range 選取支援可注入的天數上下限限制，不透過 Disabled Dates 機制的組合表達。
+  2. 此參數比照 I4 `weekStartsOn` 的 Zero-default 精神，預設無限制，需消費端明確注入才生效。
+  3. 使用者於 Draft 狀態選擇超出限制的終點時，該次選取一律被拒絕、終點不提交，Draft 維持在原有起點（見 §4 Range Selection 新增備註）。
+
+- **理由**：
+  - 開獨立新 Rule 而非套用 Disabled Dates 機制：使用者判斷天數限制是「區間長度合法性」，跟 Disabled matcher 的「單一日期是否可選」屬於不同語意層級——Disabled matcher 是 per-date 的靜態判斷，天數限制需要知道 Draft 起點才能動態計算，硬塞進 disabled matcher 的介面定義會很牽強，也會混淆 R4 既有定義的邊界。
+  - 預設無限制：使用者選擇延續 §9 Zero Opinion 哲學——引擎不擁有自己的業務邊界意志，未注入時視同無限制，由外殼決定是否需要此限制。
+  - 拒絕終點提交：使用者選擇讓超限行為與命中 Disabled 規則時的拒絕邏輯一致（呼應 Decision 13 的一致性原則），不引入「自動 clamp」或「視為新起點」等額外行為模式，避免消費端需要處理更多分岔情境。
+
+- **替代方案（拒絕）**：
+  - Rule 歸屬選項「用 Disabled Dates 機制的組合表達（動態計算超出範圍的日期皆算 disabled）」——拒絕，使用者判斷語意層級不同，硬套用會牽強。
+  - 預設值選項「強制注入（比照 `CALENDAR_LOCALE`）」——拒絕，使用者選擇不強制，多數消費場景不需要此限制，強制注入會增加無謂的整合門檻。
+  - 超限行為選項「自動 clamp 到上限對應的日期」——拒絕，使用者選擇更簡單、與既有 Disabled 拒絕邏輯一致的「拒絕提交」，不引入自動修正行為。
+  - 超限行為選項「視為新的起點，重新開始 Draft」——拒絕，使用者選擇維持原有起點不變，避免使用者的原始選擇意圖被靜默丟棄。
+
+- **註記**：此參數的具體命名（如 `minRangeDays`/`maxRangeDays`）、注入機制（Signal input vs setter 方法）屬於技術實作細節，留待 PRD 階段定義，不寫入憲法。
+
 ## 8. 取消 / 沖銷 / 退回的規矩 (Reversal Semantics)
 
 - **清空選取（Clear Selection）**：屬於完全合法的業務事件。系統必須允許使用者（或外部 API）觸發清空指令，這會將 `selectedDate` 重置為 `null` 或未選取狀態。**核心約束**：清空選取絕對不能連帶重置 `viewDate`（即日曆畫面不能因為清空而擅自跳回預設月份或今天）。
@@ -302,6 +360,8 @@ supersedes:
 > - 跨月焦點轉移 (A11y) → §4 / §7 Decision 6
 > - 在地化 (i18n) 承諾 → §5 I4 / §7 Decision 7
 > - 多月聯動與高階視圖服務範圍 → §1 Out of Scope / §7 Decision 8
+> - 程式化寫值與 Disabled/狀態機的合法性一致性（2026-07-16 delta）→ §3 R7 / §4 程式化寫值 / §7 Decision 13
+> - Range 天數上下限限制（2026-07-16 delta）→ §3 R8 / §4 Range Selection / §7 Decision 14
 >
 > 若後續實作或 PRD 階段浮現新的業務規則問題，回來這個章節新增 TODO。
 
@@ -362,6 +422,12 @@ supersedes:
 - §4/§7 Decision 12（新粒度是否支援 Single/Range/Multi 三種模式）：AI 提出 4 個候選（也支援三模式共用語意 / 新粒度天生只有選一個值 / 自己寫其他情況 / TODO），使用者選擇「也支援 Single/Range/Multi，與日粒度共用同一套 selectionMode 語意」
 - §6/§7 Decision 12（新粒度概念是否新增 Glossary）：AI 提出 3 個候選（新增 selectionGranularity 術語 / 不需要留到 PRD / TODO），使用者選擇「不需要新增，留到 PRD 階段定義」
 - §7 Decision 12（新 Decision 編號）：AI 提出「Decision 12（順序編號）」與「自訂編號」兩個候選，使用者選擇「Decision 12」
+- §3/§4/§7 Decision 13（程式化寫值命中 Disabled 規則時的處理）：AI 提出 3 個候選（靜默拒絕不寫入 / 允許寫入並清空該筆 Disabled 規則 / 拋出錯誤）+ 推薦「靜默拒絕」，使用者選擇推薦選項
+- §7 Decision 13（程式化寫值是否走與 selectDate() 相同的狀態機合法轉換檢查）：AI 提出 3 個候選（完全比照 selectDate() / 允許繞過合法轉換檢查 / 視情境而定）+ 推薦「完全比照」，使用者選擇推薦選項
+- §5 I2/§7 Decision 13（I2 在程式化寫值路徑下是否同樣是全域恆等式）：AI 提出 2 個候選（是,全域恆等式不放寬 / 否,I2 只約束使用者互動路徑）+ 推薦「是」，使用者選擇推薦選項
+- §3/§7 Decision 14（Range 天數限制應開新 Rule 或套用 Disabled Dates 機制）：AI 提出 2 個候選（開獨立新 Rule / 用 Disabled Dates 機制組合表達）+ 推薦「開獨立新 Rule」，使用者選擇推薦選項
+- §3/§7 Decision 14（天數限制參數是否強制注入或有預設）：AI 提出 2 個候選（預設無限制,需要才注入 / 強制注入比照 CALENDAR_LOCALE）+ 推薦「預設無限制」，使用者選擇推薦選項
+- §4/§7 Decision 14（Draft 狀態下終點超出天數限制時的處理）：AI 提出 3 個候選（拒絕該次選取,終點不提交 / 自動 clamp 到上限對應日期 / 視為新起點重新開始 Draft）+ 推薦「拒絕該次選取」，使用者選擇推薦選項
 
 ### ✅ 使用者自擬決策（自行提出「選項 + 決策 + 理由」，AI 僅拆分業務本質與技術細節後歸位，T1）
 - §3 R4 / §7 Decision 5：Disabled Dates 統一匹配原則（使用者原話提出「選項 B：萬能匹配器」並自行寫出決策與理由；`Matcher` 型別/`@Input()` 綁定等技術命名已拆出，留給 PRD）
