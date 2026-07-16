@@ -45,6 +45,17 @@ export interface DateRange {
   end: Date | null;
 }
 
+/**
+ * Optional day-count bound on range selections (R8 / Decision 14). Zero-default:
+ * both bounds undefined means unbounded, mirroring CalendarLocale's Zero-default
+ * precedent (I4) rather than baking in any built-in limit.
+ * Day count is inclusive of both endpoints (differenceInCalendarDays(end, start) + 1).
+ */
+export interface RangeDayCountLimit {
+  minDays?: number;
+  maxDays?: number;
+}
+
 /** Externally-injected localization contract (I4 / Decision 7). No built-in defaults. */
 export interface CalendarLocale {
   /** Week start day. Mirrors date-fns startOfWeek() options.weekStartsOn; 0=Sunday...6=Saturday. */

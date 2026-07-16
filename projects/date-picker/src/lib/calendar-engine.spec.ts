@@ -213,6 +213,41 @@ describe('CalendarEngine', () => {
     expect(engine.selectedDate()).not.toBeNull();
     expect(isSameDay(engine.selectedDate()!, target)).toBe(true);
   });
+
+  // ── R7 / Decision 13: Programmatic Value Setting ───────────────────────────
+
+  describe('setSelectedDate (R7 / Decision 13)', () => {
+    it('writes the value directly, bypassing the interactive toggle', () => {
+      const engine = createEngine({ today: fixedToday });
+      const target = new Date(2026, 1, 20);
+
+      engine.setSelectedDate(target);
+
+      expect(isSameDay(engine.selectedDate()!, target)).toBe(true);
+    });
+
+    it('re-applying the same date twice stays idempotent (no toggle-off)', () => {
+      const engine = createEngine({ today: fixedToday });
+      const target = new Date(2026, 1, 20);
+
+      engine.setSelectedDate(target);
+      engine.setSelectedDate(target);
+
+      expect(isSameDay(engine.selectedDate()!, target)).toBe(true);
+    });
+
+    it('silently rejects a disabled date, leaving the previous value untouched (I2)', () => {
+      const engine = createEngine({ today: fixedToday });
+      const previous = new Date(2026, 1, 5);
+      const disabledTarget = new Date(2026, 1, 20);
+      engine.setSelectedDate(previous);
+      engine.setDisabled(disabledTarget);
+
+      engine.setSelectedDate(disabledTarget);
+
+      expect(isSameDay(engine.selectedDate()!, previous)).toBe(true);
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -575,6 +610,157 @@ describe('Range Selection (§4 / Decision 3)', () => {
       // window must still start at February (no paging triggered)
       const firstCurrent = grids[0].filter((d) => d.isCurrentMonth);
       expect(firstCurrent[0].date.getMonth()).toBe(1); // still February leads
+    });
+  });
+
+  // ── R7 / Decision 13: setSelectedRange ─────────────────────────────────────
+
+  describe('setSelectedRange (R7 / Decision 13)', () => {
+    it('writes a valid range directly, bypassing Draft entirely', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+
+      engine.setSelectedRange({ start: new Date(2026, 1, 10), end: new Date(2026, 1, 20) });
+
+      expect(engine.isDraftActive()).toBe(false);
+      expect(isSameDay(engine.selectedRange().start!, new Date(2026, 1, 10))).toBe(true);
+      expect(isSameDay(engine.selectedRange().end!, new Date(2026, 1, 20))).toBe(true);
+    });
+
+    it('normalises reversed start/end order', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+
+      engine.setSelectedRange({ start: new Date(2026, 1, 20), end: new Date(2026, 1, 10) });
+
+      expect(isSameDay(engine.selectedRange().start!, new Date(2026, 1, 10))).toBe(true);
+      expect(isSameDay(engine.selectedRange().end!, new Date(2026, 1, 20))).toBe(true);
+    });
+
+    it('clears an in-progress draft (no ghost draft left behind)', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+      engine.selectDate(new Date(2026, 1, 5)); // enters Draft
+
+      engine.setSelectedRange({ start: new Date(2026, 1, 10), end: new Date(2026, 1, 20) });
+
+      expect(engine.isDraftActive()).toBe(false);
+      expect(engine.draftStart()).toBeNull();
+    });
+
+    it('{start: null, end: null} clears the selection like clearSelection()', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+      engine.setSelectedRange({ start: new Date(2026, 1, 10), end: new Date(2026, 1, 20) });
+
+      engine.setSelectedRange({ start: null, end: null });
+
+      expect(engine.selectedRange()).toEqual({ start: null, end: null });
+    });
+
+    it('rejects a half-specified range, leaving the previous value untouched', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+      engine.setSelectedRange({ start: new Date(2026, 1, 10), end: new Date(2026, 1, 20) });
+
+      engine.setSelectedRange({ start: new Date(2026, 1, 1), end: null });
+
+      expect(isSameDay(engine.selectedRange().start!, new Date(2026, 1, 10))).toBe(true);
+    });
+
+    it('rejects the whole write when either endpoint is disabled (I2)', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+      engine.setDisabled(new Date(2026, 1, 20));
+
+      engine.setSelectedRange({ start: new Date(2026, 1, 10), end: new Date(2026, 1, 20) });
+
+      expect(engine.selectedRange()).toEqual({ start: null, end: null });
+    });
+  });
+
+  // ── R8 / Decision 14: Range day-count limit ────────────────────────────────
+
+  describe('Range day-count limit (R8 / Decision 14)', () => {
+    it('is unbounded by default', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+
+      engine.selectDate(new Date(2026, 1, 1));
+      engine.selectDate(new Date(2026, 5, 1)); // a huge span
+
+      expect(engine.isDraftActive()).toBe(false);
+      expect(engine.selectedRange().start).not.toBeNull();
+    });
+
+    it('day count is inclusive of both endpoints (Jul 1 → Jul 3 = 3 days)', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+      engine.setRangeDayCountLimit({ maxDays: 3 });
+
+      engine.selectDate(new Date(2026, 6, 1));
+      engine.selectDate(new Date(2026, 6, 3)); // exactly at the 3-day boundary
+
+      expect(engine.isDraftActive()).toBe(false);
+      expect(isSameDay(engine.selectedRange().end!, new Date(2026, 6, 3))).toBe(true);
+    });
+
+    it('selectDate rejects an endpoint that exceeds maxDays, keeping the draft open', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+      engine.setRangeDayCountLimit({ maxDays: 3 });
+
+      engine.selectDate(new Date(2026, 6, 1)); // draft start
+      engine.selectDate(new Date(2026, 6, 4)); // 4 days — exceeds limit
+
+      expect(engine.isDraftActive()).toBe(true);
+      expect(isSameDay(engine.draftStart()!, new Date(2026, 6, 1))).toBe(true);
+      expect(engine.selectedRange()).toEqual({ start: null, end: null });
+    });
+
+    it('selectDate rejects an endpoint below minDays', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+      engine.setRangeDayCountLimit({ minDays: 3 });
+
+      engine.selectDate(new Date(2026, 6, 1));
+      engine.selectDate(new Date(2026, 6, 2)); // only 2 days — below minimum
+
+      expect(engine.isDraftActive()).toBe(true);
+      expect(engine.selectedRange()).toEqual({ start: null, end: null });
+    });
+
+    it('setSelectedRange rejects a write that violates the configured limit', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+      engine.setRangeDayCountLimit({ maxDays: 3 });
+
+      engine.setSelectedRange({ start: new Date(2026, 6, 1), end: new Date(2026, 6, 10) });
+
+      expect(engine.selectedRange()).toEqual({ start: null, end: null });
+    });
+
+    it('setRangeDayCountLimit proactively clears an already-committed range it now violates', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+      engine.selectDate(new Date(2026, 6, 1));
+      engine.selectDate(new Date(2026, 6, 10)); // 10-day range, committed while unbounded
+
+      engine.setRangeDayCountLimit({ maxDays: 3 });
+
+      expect(engine.selectedRange()).toEqual({ start: null, end: null });
+    });
+
+    it('setRangeDayCountLimit leaves a still-valid committed range untouched', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('range');
+      engine.selectDate(new Date(2026, 6, 1));
+      engine.selectDate(new Date(2026, 6, 2)); // 2-day range
+
+      engine.setRangeDayCountLimit({ maxDays: 3 });
+
+      expect(isSameDay(engine.selectedRange().start!, new Date(2026, 6, 1))).toBe(true);
+      expect(isSameDay(engine.selectedRange().end!, new Date(2026, 6, 2))).toBe(true);
     });
   });
 });

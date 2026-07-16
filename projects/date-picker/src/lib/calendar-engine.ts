@@ -1,10 +1,17 @@
 import { Injectable, Injector, computed, inject, signal } from '@angular/core';
+import { differenceInCalendarDays } from 'date-fns/differenceInCalendarDays';
 import { isSameDay } from 'date-fns/isSameDay';
 import { isValid } from 'date-fns/isValid';
 import { isDisabledByAny } from './calendar-disabled';
 import { buildMonthGrid, GRID_SIZE } from './calendar-grid';
 import { CALENDAR_LOCALE, CALENDAR_TODAY } from './calendar.tokens';
-import type { CalendarDay, CalendarLocale, DateRange, DisabledInput } from './calendar.types';
+import type {
+  CalendarDay,
+  CalendarLocale,
+  DateRange,
+  DisabledInput,
+  RangeDayCountLimit,
+} from './calendar.types';
 
 /** Full set of focus-movement directions exposed by CalendarEngine.moveFocus(). */
 export type FocusMoveDirection =
@@ -13,6 +20,28 @@ export type FocusMoveDirection =
 /** Normalises a Date to midnight for day-level range comparisons. */
 function dayMs(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+/**
+ * R8 / Decision 14: inclusive day count (differenceInCalendarDays(end, start) + 1),
+ * e.g. Jul 1 → Jul 3 counts as 3 days. No limit configured always passes.
+ */
+function isWithinDayCountLimit(
+  start: Date,
+  end: Date,
+  limit: RangeDayCountLimit | undefined,
+): boolean {
+  if (limit === undefined) {
+    return true;
+  }
+  const dayCount = differenceInCalendarDays(end, start) + 1;
+  if (limit.minDays !== undefined && dayCount < limit.minDays) {
+    return false;
+  }
+  if (limit.maxDays !== undefined && dayCount > limit.maxDays) {
+    return false;
+  }
+  return true;
 }
 
 const EMPTY_RANGE: DateRange = { start: null, end: null };
@@ -44,6 +73,7 @@ export class CalendarEngine {
   private readonly _allowDeselect = signal(true);
   private readonly _localeOverride = signal<CalendarLocale | undefined>(undefined);
   private readonly _disabled = signal<DisabledInput | undefined>(undefined);
+  private readonly _rangeDayCountLimit = signal<RangeDayCountLimit | undefined>(undefined);
 
   /**
    * Decision 7: an explicit `setLocale()` override wins; otherwise fall back to
@@ -191,6 +221,28 @@ export class CalendarEngine {
     const ds = this._draftStart();
     if (ds !== null && this.isDateDisabled(ds)) {
       this._draftStart.set(null);
+    }
+  }
+
+  /**
+   * R8 / Decision 14: optional min/max day-count bound on range selections.
+   * Zero-default — undefined means unbounded (I4 weekStartsOn Zero-default
+   * precedent), needs explicit injection to take effect.
+   *
+   * I2-style proactive clear: a limit that the currently committed selectedRange
+   * now violates destroys that selection outright, mirroring setDisabled() rather
+   * than masking a now-invalid stable value.
+   */
+  setRangeDayCountLimit(limit: RangeDayCountLimit | undefined): void {
+    this._rangeDayCountLimit.set(limit);
+
+    const range = this._selectedRange();
+    if (
+      range.start !== null &&
+      range.end !== null &&
+      !isWithinDayCountLimit(range.start, range.end, limit)
+    ) {
+      this._selectedRange.set(EMPTY_RANGE);
     }
   }
 
@@ -344,13 +396,66 @@ export class CalendarEngine {
     if (ds === null) {
       this._draftStart.set(date);
     } else {
-      if (dayMs(ds) <= dayMs(date)) {
-        this._selectedRange.set({ start: ds, end: date });
-      } else {
-        this._selectedRange.set({ start: date, end: ds });
+      const [start, end] = dayMs(ds) <= dayMs(date) ? [ds, date] : [date, ds];
+      // R8 / Decision 14: an out-of-bound endpoint is rejected outright — the
+      // draft stays open at its original start, waiting for a valid pick.
+      if (!isWithinDayCountLimit(start, end, this._rangeDayCountLimit())) {
+        return;
       }
+      this._selectedRange.set({ start, end });
       this._draftStart.set(null);
     }
+  }
+
+  /**
+   * R7 / Decision 13: programmatic write path (e.g. binding an existing value
+   * when editing a form). Same disabled check as selectDate(), but deliberately
+   * NOT the re-pick-to-deselect toggle.
+   *
+   * This is not just "for consistency with the other set*() methods" — selectDate()'s
+   * toggle is an *interpretation of a repeated user interaction event* (gated by
+   * allowDeselect, a flag that only makes sense for that interaction). This method
+   * is a *declaration of what the current state is*, not an event to interpret, so
+   * it must not reuse that interaction's reading. Calling it with the same date
+   * twice (e.g. a form re-applying its bound value) is therefore idempotent — it
+   * never clears the selection, unlike selectDate().
+   */
+  setSelectedDate(date: Date): void {
+    if (this.isDateDisabled(date)) {
+      return;
+    }
+    this._selectedDate.set(date);
+  }
+
+  /**
+   * R7 / Decision 13: direct range write, bypassing the Draft mechanism entirely
+   * — both endpoints arrive at once, so there is nothing to draft. Either
+   * endpoint hitting a disabled date, or the pair violating the configured
+   * day-count limit (R8), rejects the whole write (selectedRange keeps its
+   * previous value) rather than writing a partial/invalid range (Decision 3
+   * "range is one indivisible transaction" precedent). Also clears any
+   * in-progress draft — writing a stable range directly must not leave a ghost
+   * draft behind.
+   */
+  setSelectedRange(range: DateRange): void {
+    if (range.start === null && range.end === null) {
+      this._selectedRange.set(EMPTY_RANGE);
+      this._draftStart.set(null);
+      return;
+    }
+    if (range.start === null || range.end === null) {
+      return; // half-specified range is not a valid committed value
+    }
+    if (this.isDateDisabled(range.start) || this.isDateDisabled(range.end)) {
+      return;
+    }
+    const [start, end] =
+      dayMs(range.start) <= dayMs(range.end) ? [range.start, range.end] : [range.end, range.start];
+    if (!isWithinDayCountLimit(start, end, this._rangeDayCountLimit())) {
+      return;
+    }
+    this._selectedRange.set({ start, end });
+    this._draftStart.set(null);
   }
 
   /**
