@@ -43,7 +43,7 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
 
     const grids = compiled.querySelectorAll('[data-testid^="calendar-grid-"]');
-    expect(grids).toHaveLength(3);
+    expect(grids).toHaveLength(6);
 
     for (const scenarioId of ['basic', 'no-deselect', 'disabled']) {
       const cells = compiled.querySelectorAll(

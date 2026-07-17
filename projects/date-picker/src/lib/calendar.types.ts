@@ -15,7 +15,7 @@ export interface CalendarDay {
   isCurrentMonth: boolean;
   /** Whether this cell is "today", per the CALENDAR_TODAY injection basis (Decision 4). */
   isToday: boolean;
-  /** Whether this cell matches selectedDate (single mode) or a selectedRange endpoint (range mode). */
+  /** Matches selectedDate (single), a selectedRange endpoint (range), or any entry in selectedDates (multi). */
   isSelected: boolean;
   isRangeStart: boolean;
   isRangeEnd: boolean;

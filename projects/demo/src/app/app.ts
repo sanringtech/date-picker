@@ -72,6 +72,13 @@ const SCENARIOS: readonly DemoScenario[] = [
     },
     monthsToDisplay: 2,
   },
+  {
+    id: 'multi',
+    title: '⑥ 多選日期（Multi-dates，M6）',
+    description:
+      '累積點選任意不連續日期，再次點擊同一天立即移除（toggle 語意，不受 allowDeselect 影響，Decision 11 / I6）。',
+    configure: (engine) => engine.setSelectionMode('multi'),
+  },
 ];
 
 @Component({
@@ -139,6 +146,13 @@ export class App {
 
   protected formatDate(date: Date): string {
     return format(date, 'yyyy-MM-dd');
+  }
+
+  protected formatDates(dates: Date[]): string {
+    if (dates.length === 0) return '';
+    const sorted = [...dates].sort((a, b) => a.getTime() - b.getTime());
+    const labels = sorted.slice(0, 3).map((d) => format(d, 'MM/dd'));
+    return sorted.length > 3 ? `${labels.join('、')}…` : labels.join('、');
   }
 
   protected toggleTheme(): void {

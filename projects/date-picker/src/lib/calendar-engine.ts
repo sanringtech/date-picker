@@ -22,6 +22,11 @@ function dayMs(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
 
+/** O(1) isSameDay equivalent used as Map key for multi-selection (I6). */
+function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 /**
  * R8 / Decision 14: inclusive day count (differenceInCalendarDays(end, start) + 1),
  * e.g. Jul 1 → Jul 3 counts as 3 days. No limit configured always passes.
@@ -64,7 +69,7 @@ export class CalendarEngine {
   private readonly todayFn = inject(CALENDAR_TODAY);
 
   private readonly _viewDate = signal<Date>(this.todayFn());
-  private readonly _selectionMode = signal<'single' | 'range'>('single');
+  private readonly _selectionMode = signal<'single' | 'range' | 'multi'>('single');
   private readonly _monthsToDisplay = signal<number>(1);
   private readonly _selectedDate = signal<Date | null>(null);
   private readonly _selectedRange = signal<DateRange>(EMPTY_RANGE);
@@ -74,6 +79,8 @@ export class CalendarEngine {
   private readonly _localeOverride = signal<CalendarLocale | undefined>(undefined);
   private readonly _disabled = signal<DisabledInput | undefined>(undefined);
   private readonly _rangeDayCountLimit = signal<RangeDayCountLimit | undefined>(undefined);
+  /** M6 / I6: Map<dayKey, Date> — O(1) lookup; value preserves caller's original Date (R2). */
+  private readonly _selectedDates = signal<ReadonlyMap<string, Date>>(new Map());
 
   /**
    * Decision 7: an explicit `setLocale()` override wins; otherwise fall back to
@@ -87,6 +94,8 @@ export class CalendarEngine {
 
   readonly selectedDate = this._selectedDate.asReadonly();
   readonly selectedRange = this._selectedRange.asReadonly();
+  /** Non-multi modes: always an empty array. Multi mode: all accumulated dates (Decision 11 / I6). */
+  readonly selectedDates = computed<Date[]>(() => [...this._selectedDates().values()]);
   /** Non-null only while a range selection is in progress (isDraftActive = true). */
   readonly draftStart = this._draftStart.asReadonly();
   readonly focusedDate = this._focusedDate.asReadonly();
@@ -108,6 +117,7 @@ export class CalendarEngine {
     const today = this.todayFn();
     const monthsToDisplay = this._monthsToDisplay();
     const viewDate = this._viewDate();
+    const selectedDatesMap = this._selectedDates();
 
     // Resolve the effective display range for range mode.
     let effectiveStart: Date | null = null;
@@ -139,6 +149,8 @@ export class CalendarEngine {
 
         if (mode === 'single') {
           isSelected = selected !== null && isSameDay(cell.date, selected);
+        } else if (mode === 'multi') {
+          isSelected = selectedDatesMap.has(dayKey(cell.date));
         } else {
           const cellMs = cell.date.getTime();
           if (effectiveStart !== null && isSameDay(cell.date, effectiveStart)) {
@@ -182,12 +194,13 @@ export class CalendarEngine {
     this._monthsToDisplay.set(Math.max(1, Math.floor(n)));
   }
 
-  /** Switches selection mode and resets all selection state to avoid cross-mode leakage. */
-  setSelectionMode(mode: 'single' | 'range'): void {
+  /** Switches selection mode and resets all selection state to avoid cross-mode leakage (Decision 11). */
+  setSelectionMode(mode: 'single' | 'range' | 'multi'): void {
     this._selectionMode.set(mode);
     this._selectedDate.set(null);
     this._selectedRange.set(EMPTY_RANGE);
     this._draftStart.set(null);
+    this._selectedDates.set(new Map());
   }
 
   /** Whether re-selecting the already-selected date clears it (constitution §4). */
@@ -221,6 +234,21 @@ export class CalendarEngine {
     const ds = this._draftStart();
     if (ds !== null && this.isDateDisabled(ds)) {
       this._draftStart.set(null);
+    }
+
+    const currentDates = this._selectedDates();
+    if (currentDates.size > 0) {
+      const next = new Map(currentDates);
+      let changed = false;
+      for (const [key, date] of next) {
+        if (this.isDateDisabled(date)) {
+          next.delete(key);
+          changed = true;
+        }
+      }
+      if (changed) {
+        this._selectedDates.set(next);
+      }
     }
   }
 
@@ -379,7 +407,9 @@ export class CalendarEngine {
       return;
     }
 
-    if (this._selectionMode() === 'single') {
+    const mode = this._selectionMode();
+
+    if (mode === 'single') {
       const current = this._selectedDate();
       if (current !== null && isSameDay(current, date)) {
         if (this._allowDeselect()) {
@@ -388,6 +418,19 @@ export class CalendarEngine {
         return;
       }
       this._selectedDate.set(date);
+      return;
+    }
+
+    // Multi mode: toggle — always, regardless of allowDeselect (Decision 11).
+    if (mode === 'multi') {
+      const key = dayKey(date);
+      const current = new Map(this._selectedDates());
+      if (current.has(key)) {
+        current.delete(key);
+      } else {
+        current.set(key, date);
+      }
+      this._selectedDates.set(current);
       return;
     }
 
@@ -470,12 +513,49 @@ export class CalendarEngine {
 
   /** §8: clears the selection only — viewDate is deliberately left untouched. */
   clearSelection(): void {
-    if (this._selectionMode() === 'single') {
+    const mode = this._selectionMode();
+    if (mode === 'single') {
       this._selectedDate.set(null);
+    } else if (mode === 'multi') {
+      this._selectedDates.set(new Map());
     } else {
       this._selectedRange.set(EMPTY_RANGE);
       this._draftStart.set(null);
     }
+  }
+
+  /**
+   * M6 / Decision 11: programmatic single-item removal for multi mode (e.g. a "remove"
+   * button in a selection chip list, distinct from the click-toggle path).
+   * No-op when the date is not in the collection. Throws in non-multi modes because
+   * there is no meaningful "remove one from a non-collection" operation — a caller bug.
+   */
+  removeDate(date: Date): void {
+    if (this._selectionMode() !== 'multi') {
+      throw new Error('removeDate() is only valid in multi selection mode');
+    }
+    const key = dayKey(date);
+    const current = this._selectedDates();
+    if (!current.has(key)) return;
+    const next = new Map(current);
+    next.delete(key);
+    this._selectedDates.set(next);
+  }
+
+  /**
+   * R7 / Decision 13: programmatic bulk write for multi mode. Each date is
+   * individually checked against the disabled matcher — disabled dates are silently
+   * dropped from the write (same silent-reject contract as setSelectedDate/setSelectedRange).
+   * Duplicate dates (same calendar day) are deduplicated by the Map key.
+   */
+  setSelectedDates(dates: Date[]): void {
+    const next = new Map<string, Date>();
+    for (const date of dates) {
+      if (!this.isDateDisabled(date)) {
+        next.set(dayKey(date), date);
+      }
+    }
+    this._selectedDates.set(next);
   }
 
   /** Supports both direct queries (external, tests) and the engine's own I2 enforcement. */

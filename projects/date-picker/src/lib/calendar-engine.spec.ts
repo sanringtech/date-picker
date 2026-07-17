@@ -763,4 +763,151 @@ describe('Range Selection (§4 / Decision 3)', () => {
       expect(isSameDay(engine.selectedRange().end!, new Date(2026, 6, 2))).toBe(true);
     });
   });
+
+  describe('Multi-dates Selection (M6 / Decision 11 / I6)', () => {
+    it('selectedDates is empty by default', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      expect(engine.selectedDates()).toEqual([]);
+    });
+
+    it('selectDate accumulates non-contiguous dates', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      const d1 = new Date(2026, 1, 10);
+      const d2 = new Date(2026, 1, 20);
+      engine.selectDate(d1);
+      engine.selectDate(d2);
+      expect(engine.selectedDates()).toHaveLength(2);
+      expect(engine.selectedDates().some((d) => isSameDay(d, d1))).toBe(true);
+      expect(engine.selectedDates().some((d) => isSameDay(d, d2))).toBe(true);
+    });
+
+    it('selectDate on an already-selected date removes it (toggle, Decision 11)', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      const d = new Date(2026, 1, 10);
+      engine.selectDate(d);
+      engine.selectDate(d);
+      expect(engine.selectedDates()).toHaveLength(0);
+    });
+
+    it('toggle removal is NOT gated by allowDeselect (Decision 11 decoupling)', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      engine.setAllowDeselect(false);
+      const d = new Date(2026, 1, 10);
+      engine.selectDate(d);
+      engine.selectDate(d); // should still toggle off
+      expect(engine.selectedDates()).toHaveLength(0);
+    });
+
+    it('isSelected is true for all selected dates in the grid', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      const d1 = new Date(2026, 1, 10);
+      const d2 = new Date(2026, 1, 20);
+      engine.selectDate(d1);
+      engine.selectDate(d2);
+      const grid = engine.monthGrids()[0];
+      expect(grid.find((c) => isSameDay(c.date, d1))?.isSelected).toBe(true);
+      expect(grid.find((c) => isSameDay(c.date, d2))?.isSelected).toBe(true);
+    });
+
+    it('selectDate is a no-op on a disabled date in multi mode (I2)', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      const d = new Date(2026, 1, 10);
+      engine.setDisabled(d);
+      engine.selectDate(d);
+      expect(engine.selectedDates()).toHaveLength(0);
+    });
+
+    it('clearSelection empties all selected dates', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      engine.selectDate(new Date(2026, 1, 10));
+      engine.selectDate(new Date(2026, 1, 20));
+      engine.clearSelection();
+      expect(engine.selectedDates()).toHaveLength(0);
+    });
+
+    it('setSelectionMode resets selectedDates when switching away from multi', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      engine.selectDate(new Date(2026, 1, 10));
+      engine.setSelectionMode('single');
+      expect(engine.selectedDates()).toHaveLength(0);
+    });
+
+    it('setSelectionMode from single/range to multi resets prior selection', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.selectDate(new Date(2026, 1, 10));
+      engine.setSelectionMode('multi');
+      expect(engine.selectedDate()).toBeNull();
+      expect(engine.selectedDates()).toHaveLength(0);
+    });
+
+    it('removeDate removes an existing date from the collection', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      const d1 = new Date(2026, 1, 10);
+      const d2 = new Date(2026, 1, 20);
+      engine.selectDate(d1);
+      engine.selectDate(d2);
+      engine.removeDate(d1);
+      expect(engine.selectedDates()).toHaveLength(1);
+      expect(engine.selectedDates().some((d) => isSameDay(d, d2))).toBe(true);
+    });
+
+    it('removeDate is a no-op for a date not in the collection', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      engine.selectDate(new Date(2026, 1, 10));
+      expect(() => engine.removeDate(new Date(2026, 1, 20))).not.toThrow();
+      expect(engine.selectedDates()).toHaveLength(1);
+    });
+
+    it('removeDate throws when called outside multi mode', () => {
+      const engine = createEngine({ today: fixedToday });
+      expect(() => engine.removeDate(new Date(2026, 1, 10))).toThrow();
+    });
+
+    it('setSelectedDates writes multiple dates programmatically (R7)', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      const dates = [new Date(2026, 1, 5), new Date(2026, 1, 15), new Date(2026, 1, 25)];
+      engine.setSelectedDates(dates);
+      expect(engine.selectedDates()).toHaveLength(3);
+    });
+
+    it('setSelectedDates silently drops disabled dates (I2 / R7)', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      const disabled = new Date(2026, 1, 15);
+      engine.setDisabled(disabled);
+      engine.setSelectedDates([new Date(2026, 1, 5), disabled, new Date(2026, 1, 25)]);
+      expect(engine.selectedDates()).toHaveLength(2);
+      expect(engine.selectedDates().some((d) => isSameDay(d, disabled))).toBe(false);
+    });
+
+    it('setSelectedDates deduplicates same calendar day', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      engine.setSelectedDates([new Date(2026, 1, 10), new Date(2026, 1, 10)]);
+      expect(engine.selectedDates()).toHaveLength(1);
+    });
+
+    it('setDisabled removes newly-disabled dates from selectedDates (I2)', () => {
+      const engine = createEngine({ today: fixedToday });
+      engine.setSelectionMode('multi');
+      const d1 = new Date(2026, 1, 10);
+      const d2 = new Date(2026, 1, 20);
+      engine.selectDate(d1);
+      engine.selectDate(d2);
+      engine.setDisabled(d1);
+      expect(engine.selectedDates()).toHaveLength(1);
+      expect(engine.selectedDates().some((d) => isSameDay(d, d2))).toBe(true);
+    });
+  });
 });
