@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { differenceInCalendarDays } from 'date-fns/differenceInCalendarDays';
 import { isSameDay } from 'date-fns/isSameDay';
 import { CalendarEngine } from './calendar-engine';
 import { CALENDAR_LOCALE, CALENDAR_TODAY } from './calendar.tokens';
@@ -908,6 +909,91 @@ describe('Range Selection (§4 / Decision 3)', () => {
       engine.setDisabled(d1);
       expect(engine.selectedDates()).toHaveLength(1);
       expect(engine.selectedDates().some((d) => isSameDay(d, d2))).toBe(true);
+    });
+  });
+
+  describe('moveFocus — multi-month regression (2026-07-18)', () => {
+    /**
+     * The pre-fix implementation indexed a flattened [grid0 cells..., grid1
+     * cells...] array. That's only a valid model when adjacent month grids
+     * tile with no overlap — false in general: a 42-cell month grid pads with
+     * leading/trailing overflow days to fill 6 full weeks, so neighboring
+     * months' grids commonly share several actual dates (once as the "real"
+     * month, once as the neighbor's overflow), each at a different flat
+     * position. Stepping through the flattened array could therefore revisit
+     * an already-seen date or jump backward at a grid boundary. These tests
+     * assert the invariant a keyboard user actually depends on: every
+     * left/right/up/down press moves focus by exactly ±1/±7 calendar days,
+     * with monthsToDisplay > 1 (where the bug was invisible at
+     * monthsToDisplay=1, since a single 42-cell grid can't overlap itself).
+     */
+    it('150 consecutive ArrowRight presses each move focus exactly 1 day forward (monthsToDisplay=2)', () => {
+      const engine = createEngine({ today: new Date(2026, 1, 15) });
+      engine.setMonthsToDisplay(2);
+      const dates: Date[] = [];
+      for (let i = 0; i < 150; i++) {
+        engine.moveFocus('right');
+        dates.push(engine.focusedDate()!);
+      }
+      expect(dates.every((d, i) => i === 0 || differenceInCalendarDays(d, dates[i - 1]) === 1)).toBe(
+        true,
+      );
+    });
+
+    it('200 consecutive ArrowLeft presses each move focus exactly 1 day backward (monthsToDisplay=3)', () => {
+      const engine = createEngine({ today: new Date(2026, 5, 15) });
+      engine.setMonthsToDisplay(3);
+      const dates: Date[] = [];
+      for (let i = 0; i < 200; i++) {
+        engine.moveFocus('left');
+        dates.push(engine.focusedDate()!);
+      }
+      expect(dates.every((d, i) => i === 0 || differenceInCalendarDays(d, dates[i - 1]) === -1)).toBe(
+        true,
+      );
+    });
+
+    it('ArrowDown presses each move focus exactly 7 days forward (monthsToDisplay=3)', () => {
+      const engine = createEngine({ today: new Date(2026, 5, 15) });
+      engine.setMonthsToDisplay(3);
+      const dates: Date[] = [];
+      for (let i = 0; i < 40; i++) {
+        engine.moveFocus('down');
+        dates.push(engine.focusedDate()!);
+      }
+      expect(dates.every((d, i) => i === 0 || differenceInCalendarDays(d, dates[i - 1]) === 7)).toBe(
+        true,
+      );
+    });
+
+    it('a mixed random walk of moves always changes focus by the exact expected day delta (monthsToDisplay=4)', () => {
+      const engine = createEngine({ today: new Date(2026, 5, 15) });
+      engine.setMonthsToDisplay(4);
+      const dirs = ['left', 'right', 'up', 'down'] as const;
+      const deltas = { left: -1, right: 1, up: -7, down: 7 } as const;
+      let seed = 42;
+      const rand = () => {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        return seed / 0x7fffffff;
+      };
+      for (let i = 0; i < 500; i++) {
+        const before = engine.focusedDate();
+        const dir = dirs[Math.floor(rand() * 4)];
+        engine.moveFocus(dir);
+        if (before !== null) {
+          expect(differenceInCalendarDays(engine.focusedDate()!, before)).toBe(deltas[dir]);
+        }
+      }
+    });
+
+    it('Home/End still resolve within the current calendar week when monthsToDisplay > 1', () => {
+      const engine = createEngine({ today: new Date(2026, 1, 15) }); // Sunday
+      engine.setMonthsToDisplay(2);
+      engine.moveFocus('home');
+      expect(isSameDay(engine.focusedDate()!, new Date(2026, 1, 9))).toBe(true); // Monday of that week
+
+      engine.moveFocus('end');
+      expect(isSameDay(engine.focusedDate()!, new Date(2026, 1, 15))).toBe(true); // Sunday of that week
     });
   });
 });

@@ -1,9 +1,12 @@
 import { Injectable, Injector, computed, inject, signal } from '@angular/core';
+import { addDays } from 'date-fns/addDays';
 import { differenceInCalendarDays } from 'date-fns/differenceInCalendarDays';
+import { endOfWeek } from 'date-fns/endOfWeek';
 import { isSameDay } from 'date-fns/isSameDay';
 import { isValid } from 'date-fns/isValid';
+import { startOfWeek } from 'date-fns/startOfWeek';
 import { isDisabledByAny } from './calendar-disabled';
-import { buildMonthGrid, GRID_SIZE } from './calendar-grid';
+import { buildMonthGrid } from './calendar-grid';
 import { CALENDAR_LOCALE, CALENDAR_TODAY } from './calendar.tokens';
 import type {
   CalendarDay,
@@ -298,8 +301,17 @@ export class CalendarEngine {
    * a month boundary.  PageUp/PageDown change month explicitly and carry
    * focus to the same day-of-month, clamped to the shorter month.
    *
-   * Multi-month (Decision 8): the visible window is N × 42 cells; the
-   * flat-index calculation spans all N grids before triggering a page.
+   * Multi-month (Decision 8): left/right/up/down/home/end are computed by
+   * plain calendar-day arithmetic (addDays/startOfWeek/endOfWeek) rather than
+   * indexing into the flattened N-grid array. The flat-index approach this
+   * replaced assumed each month's independently-built 42-cell grid tiled
+   * cleanly after the previous one — false whenever monthsToDisplay > 1:
+   * adjacent months' grids commonly *overlap* (e.g. Feb's trailing overflow
+   * days and March's leading overflow days can both be early-March dates,
+   * each at a different flat position), so stepping through the flat array
+   * could revisit already-seen dates or skip backward at grid boundaries.
+   * Day arithmetic sidesteps this entirely — a date is a date regardless of
+   * which grid(s) happen to also display it as overflow.
    */
   moveFocus(direction: FocusMoveDirection): void {
     if (direction === 'pageup' || direction === 'pagedown') {
@@ -325,70 +337,56 @@ export class CalendarEngine {
       return;
     }
 
-    const grids = this.monthGrids();
     const baseline = this._focusedDate() ?? this._selectedDate() ?? this.todayFn();
+    const weekStartsOn = this.resolvedLocale().weekStartsOn;
 
-    // Locate baseline across all visible grids.
-    let baselineG = 0;
-    let baselineC = 0;
-    search: for (let g = 0; g < grids.length; g++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
-        if (isSameDay(grids[g][c].date, baseline)) {
-          baselineG = g;
-          baselineC = c;
-          break search;
-        }
-      }
-    }
-
-    // Home/End: move within the SAME grid's week row, never cross a month.
+    // Home/End: the week containing the focused date, regardless of which
+    // grid(s) render that week — never crosses a month boundary by definition
+    // (a calendar week's days are fixed; only which month "owns" each cell varies).
     if (direction === 'home') {
-      this._focusedDate.set(grids[baselineG][Math.floor(baselineC / 7) * 7].date);
+      this._focusedDate.set(startOfWeek(baseline, { weekStartsOn }));
       return;
     }
     if (direction === 'end') {
-      this._focusedDate.set(grids[baselineG][Math.floor(baselineC / 7) * 7 + 6].date);
+      this._focusedDate.set(endOfWeek(baseline, { weekStartsOn }));
       return;
     }
 
-    // Flat index across the full N-month visible window.
-    const currentFlat = baselineG * GRID_SIZE + baselineC;
-    const totalCells = grids.length * GRID_SIZE;
-
-    // Definite assignment: initialize to currentFlat as an unreachable fallback
-    // (home/end/pageup/pagedown all returned above; this covers TypeScript's
-    // control-flow analysis which can't see that).
-    let targetFlat = currentFlat;
+    let target: Date;
     switch (direction) {
       case 'left':
-        targetFlat = currentFlat - 1;
+        target = addDays(baseline, -1);
         break;
       case 'right':
-        targetFlat = currentFlat + 1;
+        target = addDays(baseline, 1);
         break;
       case 'up':
-        targetFlat = currentFlat - 7;
+        target = addDays(baseline, -7);
         break;
       case 'down':
-        targetFlat = currentFlat + 7;
+        target = addDays(baseline, 7);
         break;
     }
 
-    if (targetFlat < 0) {
-      // Cross-month: slide window back one month, land on the corresponding cell.
-      this.prevMonth();
-      const newGrids = this.monthGrids();
-      const newFlat = newGrids.length * GRID_SIZE + targetFlat;
-      this._focusedDate.set(newGrids[Math.floor(newFlat / GRID_SIZE)][newFlat % GRID_SIZE].date);
-    } else if (targetFlat >= totalCells) {
-      // Cross-month: slide window forward one month.
-      this.nextMonth();
-      const newGrids = this.monthGrids();
-      const newFlat = targetFlat - totalCells;
-      this._focusedDate.set(newGrids[Math.floor(newFlat / GRID_SIZE)][newFlat % GRID_SIZE].date);
-    } else {
-      this._focusedDate.set(grids[Math.floor(targetFlat / GRID_SIZE)][targetFlat % GRID_SIZE].date);
+    // Page the window one month at a time (Decision 8: nextMonth()/prevMonth()
+    // always shift by exactly one month) until target's month falls inside the
+    // visible [viewDate, viewDate + monthsToDisplay) range. A single ±7-day step
+    // only ever crosses one month boundary, but the loop (rather than assuming
+    // exactly one page) also self-corrects if focus had gone stale relative to
+    // the current view (e.g. after mouse-driven prevMonth()/nextMonth() clicks).
+    for (;;) {
+      const viewDate = this._viewDate();
+      const monthsAhead =
+        (target.getFullYear() - viewDate.getFullYear()) * 12 + (target.getMonth() - viewDate.getMonth());
+      if (monthsAhead < 0) {
+        this.prevMonth();
+      } else if (monthsAhead >= this._monthsToDisplay()) {
+        this.nextMonth();
+      } else {
+        break;
+      }
     }
+    this._focusedDate.set(target);
   }
 
   /**

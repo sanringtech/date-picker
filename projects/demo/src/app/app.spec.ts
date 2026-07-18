@@ -170,6 +170,34 @@ describe('App', () => {
     expect(chips).toHaveLength(2);
   });
 
+  it('Multi-month scenario (⑤): repeated ArrowRight moves the rendered focus ring exactly 1 day forward each press (2026-07-18 regression)', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const gridEl = compiled.querySelector<HTMLElement>('[data-testid="calendar-grid-multimonth"]');
+    expect(gridEl).toBeTruthy();
+
+    const pressKey = (key: string) =>
+      gridEl!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+
+    const focusedDates: Date[] = [];
+    for (let i = 0; i < 100; i++) {
+      pressKey('ArrowRight');
+      fixture.detectChanges();
+      const focusedCell = gridEl!.querySelector<HTMLElement>('[data-testid^="calendar-day-multimonth-"].ring-primary');
+      expect(focusedCell).toBeTruthy();
+      const dateStr = focusedCell!.dataset['testid']!.replace('calendar-day-multimonth-', '');
+      focusedDates.push(new Date(dateStr + 'T00:00:00'));
+    }
+
+    for (let i = 1; i < focusedDates.length; i++) {
+      const diffDays = (focusedDates[i].getTime() - focusedDates[i - 1].getTime()) / 86_400_000;
+      expect(diffDays).toBe(1);
+    }
+  });
+
   it('Month-picker scenario: keyboard arrows/Enter select a month via GranularityGridDirective (M7)', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
