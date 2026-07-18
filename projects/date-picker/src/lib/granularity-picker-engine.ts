@@ -84,12 +84,18 @@ export class GranularityPickerEngine {
     return this.injector.get(CALENDAR_QUARTER_STARTS_ON);
   }
 
-  private equalsFnFor(granularity: PickerGranularity): DateEqualsFn {
+  /**
+   * `quarterStartMonth` is an optional pre-resolved value so hot paths that
+   * already read the token once (granularityGrids()) don't trigger a second/third
+   * injector.get() for the same recompute — callers that don't have it handy
+   * (selectDate(), removeDate(), etc.) fall back to resolving it themselves.
+   */
+  private equalsFnFor(granularity: PickerGranularity, quarterStartMonth?: QuarterStartMonth): DateEqualsFn {
     switch (granularity) {
       case 'month':
         return isSameMonth;
       case 'quarter': {
-        const qsm = this.resolveQuarterStartMonth();
+        const qsm = quarterStartMonth ?? this.resolveQuarterStartMonth();
         return (a, b) => isSameFiscalQuarter(a, b, qsm);
       }
       case 'year':
@@ -97,12 +103,12 @@ export class GranularityPickerEngine {
     }
   }
 
-  private keyFnFor(granularity: PickerGranularity): DateKeyFn {
+  private keyFnFor(granularity: PickerGranularity, quarterStartMonth?: QuarterStartMonth): DateKeyFn {
     switch (granularity) {
       case 'month':
         return (date) => `${date.getFullYear()}-${date.getMonth()}`;
       case 'quarter': {
-        const qsm = this.resolveQuarterStartMonth();
+        const qsm = quarterStartMonth ?? this.resolveQuarterStartMonth();
         return (date) => fiscalQuarterKey(date, qsm);
       }
       case 'year':
@@ -126,8 +132,11 @@ export class GranularityPickerEngine {
     const today = this.todayFn();
     const viewDate = this._viewDate();
     const selectedDatesMap = this._selectedDates();
-    const equalsFn = this.equalsFnFor(granularity);
-    const keyFn = this.keyFnFor(granularity);
+    // Resolved once per recompute (not once each inside equalsFnFor/keyFnFor/the
+    // switch below) — three injector.get() calls for the same value was wasted work.
+    const quarterStartMonth = granularity === 'quarter' ? this.resolveQuarterStartMonth() : undefined;
+    const equalsFn = this.equalsFnFor(granularity, quarterStartMonth);
+    const keyFn = this.keyFnFor(granularity, quarterStartMonth);
 
     let cells: { date: Date }[];
     switch (granularity) {
@@ -135,7 +144,7 @@ export class GranularityPickerEngine {
         cells = buildMonthGranularityGrid(viewDate);
         break;
       case 'quarter':
-        cells = buildQuarterGranularityGrid(viewDate, this.resolveQuarterStartMonth());
+        cells = buildQuarterGranularityGrid(viewDate, quarterStartMonth!);
         break;
       case 'year':
         cells = buildYearGranularityGrid(viewDate, this._yearsToDisplay());
