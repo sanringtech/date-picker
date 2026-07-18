@@ -10,8 +10,8 @@ import axe from 'axe-core';
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CalendarGridDirective } from './calendar-grid.directive';
-import { CALENDAR_LOCALE, CALENDAR_TODAY } from './calendar.tokens';
-import type { CalendarDay, CalendarLocale } from './calendar.types';
+import { CALENDAR_LOCALE, CALENDAR_TODAY } from '../shared/calendar.tokens';
+import type { CalendarDay, CalendarLocale } from '../shared/calendar.types';
 
 const testLocale: CalendarLocale = {
   weekStartsOn: 1,

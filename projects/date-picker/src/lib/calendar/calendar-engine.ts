@@ -5,20 +5,19 @@ import { endOfWeek } from 'date-fns/endOfWeek';
 import { isSameDay } from 'date-fns/isSameDay';
 import { isValid } from 'date-fns/isValid';
 import { startOfWeek } from 'date-fns/startOfWeek';
-import { isDisabledByAny } from './calendar-disabled';
-import { buildMonthGrid } from './calendar-grid';
-import { CALENDAR_LOCALE, CALENDAR_TODAY } from './calendar.tokens';
+import { isDisabledByAny } from '../shared/calendar-disabled';
+import { CALENDAR_LOCALE, CALENDAR_TODAY } from '../shared/calendar.tokens';
 import type {
   CalendarDay,
   CalendarLocale,
   DateRange,
   DisabledInput,
+  FocusMoveDirection,
   RangeDayCountLimit,
-} from './calendar.types';
+} from '../shared/calendar.types';
+import { buildMonthGrid } from './calendar-grid';
 
-/** Full set of focus-movement directions exposed by CalendarEngine.moveFocus(). */
-export type FocusMoveDirection =
-  'up' | 'down' | 'left' | 'right' | 'home' | 'end' | 'pageup' | 'pagedown';
+export type { FocusMoveDirection } from '../shared/calendar.types';
 
 /** Normalises a Date to midnight for day-level range comparisons. */
 function dayMs(date: Date): number {

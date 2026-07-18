@@ -2,17 +2,15 @@ import { Injectable, Injector, computed, inject, signal } from '@angular/core';
 import { isSameMonth } from 'date-fns/isSameMonth';
 import { isSameYear } from 'date-fns/isSameYear';
 import { isValid } from 'date-fns/isValid';
-import { isDisabledByAny } from './calendar-disabled';
-import type { FocusMoveDirection } from './calendar-engine';
-import { CALENDAR_QUARTER_STARTS_ON, CALENDAR_TODAY } from './calendar.tokens';
-import type { DateRange, DisabledInput, GranularityCell, QuarterStartMonth } from './calendar.types';
-import {
-  buildMonthGranularityGrid,
-  buildQuarterGranularityGrid,
-  buildYearGranularityGrid,
-  fiscalQuarterKey,
-  isSameFiscalQuarter,
-} from './granularity-grid';
+import { isDisabledByAny } from '../shared/calendar-disabled';
+import { CALENDAR_QUARTER_STARTS_ON, CALENDAR_TODAY } from '../shared/calendar.tokens';
+import type {
+  DateRange,
+  DisabledInput,
+  FocusMoveDirection,
+  GranularityCell,
+  QuarterStartMonth,
+} from '../shared/calendar.types';
 import {
   advanceRangeDraft,
   filterSelectedDates,
@@ -20,7 +18,14 @@ import {
   toggleSingleSelection,
   type DateEqualsFn,
   type DateKeyFn,
-} from './selection-state';
+} from '../shared/selection-state';
+import {
+  buildMonthGranularityGrid,
+  buildQuarterGranularityGrid,
+  buildYearGranularityGrid,
+  fiscalQuarterKey,
+  isSameFiscalQuarter,
+} from './granularity-grid';
 
 /** GranularityPickerEngine's own domain — day granularity stays CalendarEngine's job. */
 export type PickerGranularity = 'month' | 'quarter' | 'year';

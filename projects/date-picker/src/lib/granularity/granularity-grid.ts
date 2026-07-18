@@ -1,7 +1,7 @@
 import { addMonths } from 'date-fns/addMonths';
 import { startOfMonth } from 'date-fns/startOfMonth';
 import { startOfYear } from 'date-fns/startOfYear';
-import type { QuarterStartMonth } from './calendar.types';
+import type { QuarterStartMonth } from '../shared/calendar.types';
 
 /**
  * Pure month/quarter/year grid math for GranularityPickerEngine (R6, ADR-0001).

@@ -2,8 +2,8 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { isSameDay } from 'date-fns/isSameDay';
 import { CalendarGridDirective } from './calendar-grid.directive';
-import { CALENDAR_LOCALE, CALENDAR_TODAY } from './calendar.tokens';
-import type { CalendarLocale } from './calendar.types';
+import { CALENDAR_LOCALE, CALENDAR_TODAY } from '../shared/calendar.tokens';
+import type { CalendarLocale } from '../shared/calendar.types';
 
 const testLocale: CalendarLocale = {
   weekStartsOn: 1,

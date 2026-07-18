@@ -2,7 +2,7 @@ import { addDays } from 'date-fns/addDays';
 import { isSameMonth } from 'date-fns/isSameMonth';
 import { startOfMonth } from 'date-fns/startOfMonth';
 import { startOfWeek } from 'date-fns/startOfWeek';
-import type { Day } from './calendar.types';
+import type { Day } from '../shared/calendar.types';
 
 /**
  * Pure 42-day grid math. No Angular, no selection state — just "which date

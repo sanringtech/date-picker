@@ -7,6 +7,14 @@
 export type { Day } from 'date-fns';
 import type { Day } from 'date-fns';
 
+/**
+ * Full set of focus-movement directions shared by CalendarEngine.moveFocus()
+ * and GranularityPickerEngine.moveFocus() — lives here (not in either engine's
+ * own file) so neither module has to import the other just to name this type.
+ */
+export type FocusMoveDirection =
+  'up' | 'down' | 'left' | 'right' | 'home' | 'end' | 'pageup' | 'pagedown';
+
 /** Minimal grid cell unit. One of exactly 42 cells produced per rendered month (R3 / I3). */
 export interface CalendarDay {
   /** Full Date object, time components zeroed (R2 extended to grid-cell granularity). */

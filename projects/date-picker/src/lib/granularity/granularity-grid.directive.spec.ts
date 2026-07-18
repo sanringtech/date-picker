@@ -1,7 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GranularityGridDirective } from './granularity-grid.directive';
-import { CALENDAR_TODAY } from './calendar.tokens';
+import { CALENDAR_TODAY } from '../shared/calendar.tokens';
 
 const fixedToday = new Date(2026, 5, 15); // June 2026
 

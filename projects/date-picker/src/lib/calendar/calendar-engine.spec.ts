@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { differenceInCalendarDays } from 'date-fns/differenceInCalendarDays';
 import { isSameDay } from 'date-fns/isSameDay';
 import { CalendarEngine } from './calendar-engine';
-import { CALENDAR_LOCALE, CALENDAR_TODAY } from './calendar.tokens';
-import type { CalendarLocale } from './calendar.types';
+import { CALENDAR_LOCALE, CALENDAR_TODAY } from '../shared/calendar.tokens';
+import type { CalendarLocale } from '../shared/calendar.types';
 
 const testLocale: CalendarLocale = {
   weekStartsOn: 1,

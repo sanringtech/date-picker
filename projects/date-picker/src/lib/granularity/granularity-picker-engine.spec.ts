@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { isSameMonth } from 'date-fns/isSameMonth';
 import { GranularityPickerEngine } from './granularity-picker-engine';
-import { CALENDAR_QUARTER_STARTS_ON, CALENDAR_TODAY } from './calendar.tokens';
+import { CALENDAR_QUARTER_STARTS_ON, CALENDAR_TODAY } from '../shared/calendar.tokens';
 
 function createEngine(options: { today?: Date; quarterStartMonth?: number } = {}): GranularityPickerEngine {
   const { today, quarterStartMonth } = options;
