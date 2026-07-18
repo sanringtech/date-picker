@@ -1,8 +1,8 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, Input, effect, inject, viewChild } from '@angular/core';
 import { format } from 'date-fns/format';
 import { LucideChevronLeft, LucideChevronRight, LucideX } from '@lucide/angular';
-import { CALENDAR_LOCALE, GranularityPickerEngine } from '@sanring/date-picker';
-import type { GranularityCell, PickerGranularity } from '@sanring/date-picker';
+import { CALENDAR_LOCALE, GranularityGridDirective } from '@sanring/date-picker';
+import type { GranularityCell, GranularityPickerEngine, PickerGranularity } from '@sanring/date-picker';
 import { ButtonDirective } from './components/ui/button';
 import {
   CardComponent,
@@ -13,11 +13,12 @@ import {
 
 /**
  * Self-contained assembly example for GranularityPickerEngine (M7 / ADR-0001):
- * each instance provides its own engine (component-scoped, same convention as
- * CalendarGridDirective), configures granularity + selection mode once on init,
- * and renders month/quarter/year cells from `granularityGrids()`. No keyboard
- * handling — GranularityPickerEngine intentionally has none yet (PRD §12 open
- * question on non-42-cell keyboard semantics is still unresolved).
+ * hosts `GranularityGridDirective` on its own grid element (component-scoped,
+ * same convention as CalendarGridDirective in app.html) for real keyboard
+ * navigation — arrows/Home/End/PageUp/PageDown/Enter/Space (2026-07-18 delta,
+ * resolving the M7 keyboard-semantics open question). `setGridColumns()` is
+ * kept in sync with the CSS grid-cols actually rendered below, since the
+ * engine has no visibility into the consumer's layout (R1).
  */
 @Component({
   selector: 'app-granularity-picker-demo',
@@ -31,11 +32,11 @@ import {
     LucideChevronLeft,
     LucideChevronRight,
     LucideX,
+    GranularityGridDirective,
   ],
-  providers: [GranularityPickerEngine],
   templateUrl: './granularity-picker-demo.component.html',
 })
-export class GranularityPickerDemoComponent implements OnInit {
+export class GranularityPickerDemoComponent {
   @Input({ required: true }) title!: string;
   @Input({ required: true }) description!: string;
   @Input({ required: true }) granularity!: PickerGranularity;
@@ -43,11 +44,16 @@ export class GranularityPickerDemoComponent implements OnInit {
   @Input({ required: true }) testId!: string;
 
   private readonly locale = inject(CALENDAR_LOCALE);
-  protected readonly engine = inject(GranularityPickerEngine);
+  protected readonly gridDirective = viewChild.required(GranularityGridDirective);
 
-  ngOnInit(): void {
-    this.engine.setSelectionGranularity(this.granularity);
-    this.engine.setSelectionMode(this.mode);
+  constructor() {
+    effect(() => {
+      const engine = this.gridDirective().engine;
+      engine.setSelectionGranularity(this.granularity);
+      engine.setSelectionMode(this.mode);
+      // Must match the `gridCols` CSS below — the engine has no way to infer it itself.
+      engine.setGridColumns(this.granularity === 'quarter' ? 2 : 3);
+    });
   }
 
   /** Grid column count per granularity — 12/4/N cells laid out as a compact grid. */
@@ -68,8 +74,8 @@ export class GranularityPickerDemoComponent implements OnInit {
   }
 
   /** Header above the grid: the year (month/year granularity) or fiscal year (quarter). */
-  protected headerLabel(): string {
-    const cells = this.engine.granularityGrids();
+  protected headerLabel(engine: GranularityPickerEngine): string {
+    const cells = engine.granularityGrids();
     if (cells.length === 0) return '';
     if (this.granularity === 'year') {
       return `${cells[0].date.getFullYear()} – ${cells[cells.length - 1].date.getFullYear()}`;
@@ -80,19 +86,11 @@ export class GranularityPickerDemoComponent implements OnInit {
     return `${cells[0].date.getFullYear()}`;
   }
 
-  protected prev(): void {
-    this.engine.prevYear();
-  }
-
-  protected next(): void {
-    this.engine.nextYear();
-  }
-
   protected cellTestId(date: Date): string {
     return `${this.testId}-${format(date, 'yyyy-MM-dd')}`;
   }
 
-  protected formatDate(date: Date): string {
+  protected formatDate(engine: GranularityPickerEngine, date: Date): string {
     switch (this.granularity) {
       case 'month':
         return `${date.getFullYear()} ${this.locale.monthLabels[date.getMonth()]}`;
@@ -100,16 +98,12 @@ export class GranularityPickerDemoComponent implements OnInit {
         // Look up this date's position in the current fiscal-quarter grid (Q1..Q4
         // in order) rather than deriving it from the month number, since the
         // quarter index depends on quarterStartMonth, not a fixed month/3 split.
-        const cells = this.engine.granularityGrids();
+        const cells = engine.granularityGrids();
         const index = cells.findIndex((c) => c.date.getTime() === date.getTime());
         return `FY${date.getFullYear()} Q${index >= 0 ? index + 1 : '?'}`;
       }
       case 'year':
         return `${date.getFullYear()}`;
     }
-  }
-
-  protected removeDate(date: Date): void {
-    this.engine.removeDate(date);
   }
 }

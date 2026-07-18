@@ -170,6 +170,28 @@ describe('App', () => {
     expect(chips).toHaveLength(2);
   });
 
+  it('Month-picker scenario: keyboard arrows/Enter select a month via GranularityGridDirective (M7)', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const gridEl = compiled.querySelector<HTMLElement>('[data-testid="granularity-grid-month-picker"]');
+    expect(gridEl).toBeTruthy();
+
+    const pressKey = (key: string) =>
+      gridEl!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+
+    pressKey('ArrowRight');
+    pressKey('ArrowRight');
+    pressKey('Enter');
+    fixture.detectChanges();
+
+    expect(compiled.querySelector('[data-testid="granularity-selected-value-month-picker"]')?.textContent).toContain(
+      '已選',
+    );
+  });
+
   it('drill-down scenario: zooming out to year, then back in through month, selects a day decades away (1996-08-17)', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();

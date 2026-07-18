@@ -3,6 +3,7 @@ import { isSameMonth } from 'date-fns/isSameMonth';
 import { isSameYear } from 'date-fns/isSameYear';
 import { isValid } from 'date-fns/isValid';
 import { isDisabledByAny } from './calendar-disabled';
+import type { FocusMoveDirection } from './calendar-engine';
 import { CALENDAR_QUARTER_STARTS_ON, CALENDAR_TODAY } from './calendar.tokens';
 import type { DateRange, DisabledInput, GranularityCell, QuarterStartMonth } from './calendar.types';
 import {
@@ -56,6 +57,14 @@ export class GranularityPickerEngine {
   private readonly _disabled = signal<DisabledInput | undefined>(undefined);
   /** M6-equivalent multi container: Map<periodKey, Date> — see selection-state.ts DateKeyFn. */
   private readonly _selectedDates = signal<ReadonlyMap<string, Date>>(new Map());
+  /**
+   * Column count for up/down keyboard focus math (2026-07-18 delta). Unlike the day
+   * grid's ±7, there is no structural "row unit" for month/quarter/year grids — column
+   * count is a pure presentation choice the consumer makes, not a business rule, so
+   * it gets a sensible default (3) rather than CALENDAR_QUARTER_STARTS_ON-style
+   * Zero-default treatment: no business assumption is being smuggled in by defaulting it.
+   */
+  private readonly _gridColumns = signal<number>(3);
 
   readonly selectedDate = this._selectedDate.asReadonly();
   readonly selectedRange = this._selectedRange.asReadonly();
@@ -218,6 +227,11 @@ export class GranularityPickerEngine {
     this._yearsToDisplay.set(Math.max(1, Math.floor(n)));
   }
 
+  /** Up/down keyboard focus step size — must match however the consumer lays out the grid. */
+  setGridColumns(n: number): void {
+    this._gridColumns.set(Math.max(1, Math.floor(n)));
+  }
+
   /** I1: viewDate must always be a valid Date; invalid input falls back to today. */
   setViewDate(date: Date): void {
     this._viewDate.set(isValid(date) ? date : this.todayFn());
@@ -232,6 +246,92 @@ export class GranularityPickerEngine {
   prevYear(): void {
     const current = this._viewDate();
     this.setViewDate(new Date(current.getFullYear() - 1, current.getMonth(), current.getDate()));
+  }
+
+  /**
+   * Moves keyboard focus (2026-07-18 delta — PRD §7 "粒度選取網格鍵盤互動對應表").
+   * Column count for up/down is consumer-supplied (setGridColumns()) since
+   * month/quarter/year grids have no day-grid-equivalent fixed row unit (a
+   * calendar week); Home/End jump to the whole grid's first/last cell rather than
+   * a "row" scope, which doesn't exist here; boundary-crossing arrow keys and
+   * PageUp/PageDown auto-page by one year (Decision 6 precedent), landing on the
+   * corresponding index in the new window (clamped — relevant mainly if a future
+   * caller shrinks yearsToDisplay between pages).
+   */
+  moveFocus(direction: FocusMoveDirection): void {
+    const grids = this.granularityGrids();
+    if (grids.length === 0) {
+      return;
+    }
+
+    const equalsFn = this.equalsFnFor(this._granularity());
+    const baseline = this._focusedDate() ?? this._selectedDate() ?? this.todayFn();
+    const baselineIndex = grids.findIndex((cell) => equalsFn(cell.date, baseline));
+    const currentIndex = baselineIndex === -1 ? 0 : baselineIndex;
+
+    if (direction === 'pageup' || direction === 'pagedown') {
+      if (direction === 'pageup') {
+        this.prevYear();
+      } else {
+        this.nextYear();
+      }
+      const newGrids = this.granularityGrids();
+      const clamped = Math.min(currentIndex, newGrids.length - 1);
+      this._focusedDate.set(newGrids[clamped]?.date ?? null);
+      return;
+    }
+
+    if (direction === 'home') {
+      this._focusedDate.set(grids[0].date);
+      return;
+    }
+    if (direction === 'end') {
+      this._focusedDate.set(grids[grids.length - 1].date);
+      return;
+    }
+
+    const columns = this._gridColumns();
+    let target = currentIndex;
+    switch (direction) {
+      case 'left':
+        target -= 1;
+        break;
+      case 'right':
+        target += 1;
+        break;
+      case 'up':
+        target -= columns;
+        break;
+      case 'down':
+        target += columns;
+        break;
+    }
+
+    // Month grid = 12 cells, quarter grid = 4 cells: both happen to span exactly the
+    // 1 year that nextYear()/prevYear() shifts by, so "wrap around by one full grid
+    // width" lands on the correct logical cell. Year grid does NOT share that property
+    // — its width is the consumer-set yearsToDisplay, but nextYear()/prevYear() always
+    // slides the window by exactly 1 year regardless (Decision 8 sliding-window
+    // precedent) — so a boundary crossing there reveals exactly one new edge cell
+    // rather than flipping to a same-relative-offset cell a full grid-width away.
+    const granularity = this._granularity();
+    if (target < 0) {
+      this.prevYear();
+      const newGrids = this.granularityGrids();
+      const newIndex =
+        granularity === 'year' ? 0 : Math.max(0, Math.min(newGrids.length + target, newGrids.length - 1));
+      this._focusedDate.set(newGrids[newIndex]?.date ?? null);
+    } else if (target >= grids.length) {
+      this.nextYear();
+      const newGrids = this.granularityGrids();
+      const newIndex =
+        granularity === 'year'
+          ? newGrids.length - 1
+          : Math.max(0, Math.min(target - grids.length, newGrids.length - 1));
+      this._focusedDate.set(newGrids[newIndex]?.date ?? null);
+    } else {
+      this._focusedDate.set(grids[target].date);
+    }
   }
 
   /**

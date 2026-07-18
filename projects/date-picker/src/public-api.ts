@@ -7,3 +7,4 @@ export * from './lib/calendar.tokens';
 export * from './lib/calendar-engine';
 export * from './lib/calendar-grid.directive';
 export * from './lib/granularity-picker-engine';
+export * from './lib/granularity-grid.directive';

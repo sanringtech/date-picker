@@ -3,7 +3,10 @@
     <div class="flex flex-col items-start gap-6 md:flex-row">
       <div class="w-full max-w-[20rem] shrink-0 sm:w-80">
         <div
-          class="rounded-lg border border-border bg-background p-4 shadow-inner"
+          sanringGranularityGrid
+          #grid="sanringGranularityGrid"
+          tabindex="0"
+          class="block rounded-lg border border-border bg-background p-4 shadow-inner outline-none focus-within:ring-2 focus-within:ring-primary"
           [attr.data-testid]="'granularity-grid-' + testId"
         >
           <!-- Navigation header -->
@@ -15,11 +18,11 @@
               type="button"
               [attr.data-testid]="'granularity-prev-' + testId"
               aria-label="上一頁"
-              (click)="prev()"
+              (click)="grid.engine.prevYear()"
             >
               <svg lucideChevronLeft [size]="18"></svg>
             </button>
-            <span class="font-semibold text-foreground">{{ headerLabel() }}</span>
+            <span class="font-semibold text-foreground">{{ headerLabel(grid.engine) }}</span>
             <button
               sanringBtn
               variant="ghost"
@@ -27,7 +30,7 @@
               type="button"
               [attr.data-testid]="'granularity-next-' + testId"
               aria-label="下一頁"
-              (click)="next()"
+              (click)="grid.engine.nextYear()"
             >
               <svg lucideChevronRight [size]="18"></svg>
             </button>
@@ -35,7 +38,7 @@
 
           <!-- Period cell grid -->
           <div [class]="'grid gap-1.5 ' + gridCols">
-            @for (cell of engine.granularityGrids(); track cell.date.getTime(); let i = $index) {
+            @for (cell of grid.engine.granularityGrids(); track cell.date.getTime(); let i = $index) {
               <button
                 type="button"
                 [disabled]="cell.isDisabled"
@@ -48,11 +51,13 @@
                 [class.text-primary-foreground]="cell.isSelected"
                 [class.bg-primary/20]="cell.isInRange && !cell.isSelected"
                 [class.font-bold]="cell.isCurrentPeriod && !cell.isSelected"
+                [class.ring-2]="cell.isFocused"
+                [class.ring-primary]="cell.isFocused"
                 [class.hover:bg-surface-strong]="!cell.isSelected && !cell.isDisabled && !cell.isInRange"
                 [class.opacity-40]="cell.isDisabled"
                 [class.cursor-not-allowed]="cell.isDisabled"
                 [class.line-through]="cell.isDisabled"
-                (click)="engine.selectDate(cell.date)"
+                (click)="grid.engine.selectDate(cell.date)"
               >
                 {{ cellLabel(cell, i) }}
               </button>
@@ -68,27 +73,28 @@
             class="min-w-0 flex-1 truncate text-muted"
             [attr.data-testid]="'granularity-selected-value-' + testId"
           >
-            @if (engine.selectedDate(); as selected) {
-              已選：{{ formatDate(selected) }}
-            } @else if (engine.isDraftActive()) {
-              起點：{{ formatDate(engine.draftStart()!) }}（請選終點）
-            } @else if (engine.selectedRange().start; as start) {
-              {{ formatDate(start) }} ～ {{ formatDate(engine.selectedRange().end!) }}
-            } @else if (engine.selectedDates().length > 0) {
-              已選 {{ engine.selectedDates().length }} 項
+            @if (grid.engine.selectedDate(); as selected) {
+              已選：{{ formatDate(grid.engine, selected) }}
+            } @else if (grid.engine.isDraftActive()) {
+              起點：{{ formatDate(grid.engine, grid.engine.draftStart()!) }}（請選終點）
+            } @else if (grid.engine.selectedRange().start; as start) {
+              {{ formatDate(grid.engine, start) }} ～
+              {{ formatDate(grid.engine, grid.engine.selectedRange().end!) }}
+            } @else if (grid.engine.selectedDates().length > 0) {
+              已選 {{ grid.engine.selectedDates().length }} 項
             } @else {
               尚未選取
             }
           </span>
           <div class="flex shrink-0 gap-1">
-            @if (engine.isDraftActive()) {
+            @if (grid.engine.isDraftActive()) {
               <button
                 sanringBtn
                 variant="ghost"
                 size="sm"
                 type="button"
                 [attr.data-testid]="'granularity-abort-draft-' + testId"
-                (click)="engine.abortRangeDraft()"
+                (click)="grid.engine.abortRangeDraft()"
               >
                 中止
               </button>
@@ -99,7 +105,7 @@
               size="sm"
               type="button"
               [attr.data-testid]="'granularity-clear-selection-' + testId"
-              (click)="engine.clearSelection()"
+              (click)="grid.engine.clearSelection()"
             >
               清空
             </button>
@@ -107,19 +113,19 @@
         </div>
 
         <!-- Multi mode: chip list demonstrating removeDate() (single-item removal) -->
-        @if (mode === 'multi' && engine.selectedDates().length > 0) {
+        @if (mode === 'multi' && grid.engine.selectedDates().length > 0) {
           <div class="mt-2 flex flex-wrap gap-1.5" [attr.data-testid]="'granularity-chips-' + testId">
-            @for (date of engine.selectedDates(); track date.getTime()) {
+            @for (date of grid.engine.selectedDates(); track date.getTime()) {
               <span
                 class="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs text-foreground"
               >
-                {{ formatDate(date) }}
+                {{ formatDate(grid.engine, date) }}
                 <button
                   type="button"
                   class="text-muted hover:text-foreground"
-                  [attr.aria-label]="'移除 ' + formatDate(date)"
+                  [attr.aria-label]="'移除 ' + formatDate(grid.engine, date)"
                   [attr.data-testid]="'granularity-remove-' + cellTestId(date)"
-                  (click)="removeDate(date)"
+                  (click)="grid.engine.removeDate(date)"
                 >
                   <svg lucideX [size]="12"></svg>
                 </button>

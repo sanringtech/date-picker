@@ -312,3 +312,163 @@ describe('GranularityPickerEngine — switching granularity/mode resets state', 
     expect(engine.selectedDates()).toHaveLength(0);
   });
 });
+
+describe('GranularityPickerEngine — moveFocus (2026-07-18, month granularity)', () => {
+  const fixedToday = new Date(2026, 5, 15); // June 2026 -> baseline focus lands on index 5
+
+  it('first move without prior focus baselines on the period containing CALENDAR_TODAY', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.moveFocus('right');
+    expect(engine.focusedDate()!.getMonth()).toBe(6); // July
+  });
+
+  it('left/right move by 1 cell, up/down move by setGridColumns() (default 3)', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.moveFocus('left');
+    expect(engine.focusedDate()!.getMonth()).toBe(4); // May
+
+    engine.moveFocus('down'); // +3 from May(4) -> August(7)
+    expect(engine.focusedDate()!.getMonth()).toBe(7);
+
+    engine.moveFocus('up'); // -3 -> back to May(4)
+    expect(engine.focusedDate()!.getMonth()).toBe(4);
+  });
+
+  it('setGridColumns() changes the up/down step size', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.setGridColumns(4);
+    engine.moveFocus('down'); // June(5) + 4 -> October(9)
+    expect(engine.focusedDate()!.getMonth()).toBe(9);
+  });
+
+  it('Home/End jump to the first/last cell of the whole grid (not a "row")', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.moveFocus('home');
+    expect(engine.focusedDate()!.getMonth()).toBe(0); // January
+
+    engine.moveFocus('end');
+    expect(engine.focusedDate()!.getMonth()).toBe(11); // December
+  });
+
+  it('crossing the right boundary pages to next year and lands on January (Decision 6 precedent)', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.moveFocus('end'); // December 2026
+    engine.moveFocus('right');
+
+    const focused = engine.focusedDate()!;
+    expect(focused.getFullYear()).toBe(2027);
+    expect(focused.getMonth()).toBe(0);
+  });
+
+  it('crossing the left boundary pages to previous year and lands on December', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.moveFocus('home'); // January 2026
+    engine.moveFocus('left');
+
+    const focused = engine.focusedDate()!;
+    expect(focused.getFullYear()).toBe(2025);
+    expect(focused.getMonth()).toBe(11);
+  });
+
+  it('PageDown/PageUp shift the year and carry the same grid index', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.moveFocus('right'); // July(6)
+    engine.moveFocus('pagedown');
+    let focused = engine.focusedDate()!;
+    expect(focused.getFullYear()).toBe(2027);
+    expect(focused.getMonth()).toBe(6);
+
+    engine.moveFocus('pageup');
+    focused = engine.focusedDate()!;
+    expect(focused.getFullYear()).toBe(2026);
+    expect(focused.getMonth()).toBe(6);
+  });
+
+  it('Enter-equivalent flow: moving focus does not itself select — selectDate(focusedDate) is a separate call', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.moveFocus('right');
+    expect(engine.selectedDate()).toBeNull();
+    engine.selectDate(engine.focusedDate()!);
+    expect(engine.selectedDate()).not.toBeNull();
+  });
+});
+
+describe('GranularityPickerEngine — moveFocus (quarter granularity, fiscal year)', () => {
+  const fixedToday = new Date(2026, 5, 15); // June 2026, quarterStartMonth=3 -> fiscal Q1 index
+
+  it('right/left move by 1 quarter within the fiscal year grid', () => {
+    const engine = createEngine({ today: fixedToday, quarterStartMonth: 3 });
+    engine.setSelectionGranularity('quarter');
+    engine.moveFocus('home'); // Q1 of FY2026 (April 2026)
+    expect(engine.focusedDate()!.getMonth()).toBe(3);
+
+    engine.moveFocus('right');
+    expect(engine.focusedDate()!.getMonth()).toBe(6); // Q2 (July)
+  });
+
+  it('crossing the right boundary pages to the next fiscal year, landing on Q1', () => {
+    const engine = createEngine({ today: fixedToday, quarterStartMonth: 3 });
+    engine.setSelectionGranularity('quarter');
+    engine.moveFocus('end'); // Q4 of FY2026 (Jan 2027)
+    engine.moveFocus('right');
+
+    const focused = engine.focusedDate()!;
+    expect(focused.getFullYear()).toBe(2027);
+    expect(focused.getMonth()).toBe(3); // Q1 of FY2027 (April 2027)
+  });
+});
+
+describe('GranularityPickerEngine — moveFocus (year granularity, sliding window)', () => {
+  const fixedToday = new Date(2026, 5, 15);
+
+  it('right/left move by 1 year within the visible window', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('year');
+    engine.moveFocus('right'); // window starts at 2026 -> index0=2026, right -> 2027
+    expect(engine.focusedDate()!.getFullYear()).toBe(2027);
+  });
+
+  it('crossing the right boundary reveals exactly one new edge year, not a full-window jump', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('year');
+    engine.setYearsToDisplay(3); // window [2026, 2027, 2028]
+    engine.moveFocus('end'); // 2028 (last index)
+    engine.moveFocus('right');
+
+    // nextYear() slides the window by exactly 1 -> [2027, 2028, 2029]; the newly
+    // revealed edge year is 2029, landing at the new last index — NOT a jump to
+    // 2030 (which the day-grid-style "wrap by full window width" formula would
+    // incorrectly produce here, since window width (3) != the 1-year page step).
+    expect(engine.focusedDate()!.getFullYear()).toBe(2029);
+  });
+
+  it('crossing the left boundary reveals exactly one new edge year', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('year');
+    engine.setYearsToDisplay(3);
+    engine.moveFocus('home'); // 2026 (first index)
+    engine.moveFocus('left');
+
+    expect(engine.focusedDate()!.getFullYear()).toBe(2025);
+  });
+
+  it('PageDown/PageUp shift the window and carry the same grid index', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('year');
+    engine.setYearsToDisplay(5);
+    engine.moveFocus('right'); // index1 = 2027
+    engine.moveFocus('pagedown');
+    expect(engine.focusedDate()!.getFullYear()).toBe(2028); // window slid to [2027..2031], index1
+
+    engine.moveFocus('pageup');
+    expect(engine.focusedDate()!.getFullYear()).toBe(2027);
+  });
+});
