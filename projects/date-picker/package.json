@@ -1,6 +1,6 @@
 {
   "name": "@sanring/date-picker",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Headless Angular calendar engine — pure logic, zero DOM/CSS assumptions",
   "keywords": [
     "angular",
