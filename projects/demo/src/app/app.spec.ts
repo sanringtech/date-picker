@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { CALENDAR_LOCALE } from '@sanring/date-picker';
+import { CALENDAR_LOCALE, CALENDAR_QUARTER_STARTS_ON } from '@sanring/date-picker';
 import type { CalendarLocale } from '@sanring/date-picker';
 import { App } from './app';
 
@@ -26,7 +26,10 @@ describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [{ provide: CALENDAR_LOCALE, useValue: testLocale }],
+      providers: [
+        { provide: CALENDAR_LOCALE, useValue: testLocale },
+        { provide: CALENDAR_QUARTER_STARTS_ON, useValue: 3 },
+      ],
     }).compileComponents();
   });
 
@@ -70,5 +73,149 @@ describe('App', () => {
       );
       expect(disabledCells).toHaveLength(0);
     }
+  });
+
+  it('Multi scenario: clicking two days shows removable chips, and the remove button removes just one (M6)', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const multiDays = Array.from(
+      compiled.querySelectorAll<HTMLButtonElement>(
+        '[data-testid="calendar-grid-multi"] [data-testid^="calendar-day-multi-"]:not([disabled])',
+      ),
+    );
+    multiDays[5].click();
+    multiDays[10].click();
+    fixture.detectChanges();
+
+    let chips = compiled.querySelectorAll('[data-testid="calendar-chips-multi"] [data-testid^="calendar-remove-multi-"]');
+    expect(chips).toHaveLength(2);
+    // The "已選 N 天" summary (previously missing when showInfoBlock defaulted to true) must render.
+    expect(compiled.querySelector('[data-testid="calendar-selected-value-multi"]')?.textContent).toContain(
+      '已選 2 天',
+    );
+
+    (chips[0] as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    chips = compiled.querySelectorAll('[data-testid="calendar-chips-multi"] [data-testid^="calendar-remove-multi-"]');
+    expect(chips).toHaveLength(1);
+  });
+
+  it('renders one card per Granularity Selection scenario (M7)', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    for (const id of ['month-picker', 'quarter-picker', 'year-picker']) {
+      expect(compiled.querySelector(`[data-testid="granularity-grid-${id}"]`)).toBeTruthy();
+    }
+    // Month granularity: 12 cells.
+    expect(
+      compiled.querySelectorAll('[data-testid="granularity-grid-month-picker"] [data-testid^="granularity-cell-"]'),
+    ).toHaveLength(12);
+    // Quarter granularity: 4 cells.
+    expect(
+      compiled.querySelectorAll(
+        '[data-testid="granularity-grid-quarter-picker"] [data-testid^="granularity-cell-"]',
+      ),
+    ).toHaveLength(4);
+  });
+
+  it('Quarter-picker scenario: two clicks commit a range using the injected fiscal year (M7)', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const quarterCells = Array.from(
+      compiled.querySelectorAll<HTMLButtonElement>(
+        '[data-testid="granularity-grid-quarter-picker"] [data-testid^="granularity-cell-"]',
+      ),
+    );
+    quarterCells[0].click();
+    fixture.detectChanges();
+    expect(
+      compiled.querySelector('[data-testid="granularity-selected-value-quarter-picker"]')?.textContent,
+    ).toContain('起點');
+
+    quarterCells[2].click();
+    fixture.detectChanges();
+    expect(
+      compiled.querySelector('[data-testid="granularity-selected-value-quarter-picker"]')?.textContent,
+    ).toContain('～');
+  });
+
+  it('Year-picker scenario: multi mode accumulates cells and exposes per-item removal chips (M7)', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const yearCells = Array.from(
+      compiled.querySelectorAll<HTMLButtonElement>(
+        '[data-testid="granularity-grid-year-picker"] [data-testid^="granularity-cell-"]',
+      ),
+    );
+    yearCells[1].click();
+    yearCells[4].click();
+    fixture.detectChanges();
+
+    const chips = compiled.querySelectorAll(
+      '[data-testid="granularity-chips-year-picker"] [data-testid^="granularity-remove-year-picker-"]',
+    );
+    expect(chips).toHaveLength(2);
+  });
+
+  it('drill-down scenario: zooming out to year, then back in through month, selects a day decades away (1996-08-17)', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const section = compiled.querySelector('[data-testid="scenario-section-drilldown"]') as HTMLElement;
+    const header = () => section.querySelector('[data-testid="drilldown-header"]') as HTMLButtonElement;
+    const prevButton = () => section.querySelector('[data-testid="drilldown-prev"]') as HTMLButtonElement;
+
+    // day -> month (zoom out)
+    header().click();
+    fixture.detectChanges();
+    expect(section.querySelector('[data-testid="drilldown-month-grid"]')).toBeTruthy();
+
+    // month -> year (zoom out again)
+    header().click();
+    fixture.detectChanges();
+    expect(section.querySelector('[data-testid="drilldown-year-grid"]')).toBeTruthy();
+
+    // Page back with prevYear() until the 1996 cell is in the visible window.
+    let yearCell = section.querySelector<HTMLButtonElement>('[data-testid="drilldown-year-1996-01-01"]');
+    for (let guard = 0; !yearCell && guard < 50; guard++) {
+      prevButton().click();
+      fixture.detectChanges();
+      yearCell = section.querySelector<HTMLButtonElement>('[data-testid="drilldown-year-1996-01-01"]');
+    }
+    expect(yearCell).toBeTruthy();
+
+    // year -> month (zoom in, GranularityPickerEngine.setViewDate hands off the picked year)
+    yearCell!.click();
+    fixture.detectChanges();
+    const augustCell = section.querySelector<HTMLButtonElement>('[data-testid="drilldown-month-1996-08-01"]');
+    expect(augustCell).toBeTruthy();
+
+    // month -> day (zoom in again, CalendarEngine.setViewDate hands off the picked month)
+    augustCell!.click();
+    fixture.detectChanges();
+    const day17 = section.querySelector<HTMLButtonElement>('[data-testid="drilldown-day-1996-08-17"]');
+    expect(day17).toBeTruthy();
+
+    day17!.click();
+    fixture.detectChanges();
+
+    expect(section.querySelector('[data-testid="drilldown-selected-value"]')?.textContent).toContain(
+      '1996-08-17',
+    );
   });
 });

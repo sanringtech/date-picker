@@ -1,0 +1,133 @@
+<sanring-card class="w-full overflow-hidden" data-testid="scenario-section-drilldown">
+  <sanring-card-content class="p-5 md:p-6">
+    <div class="flex flex-col items-start gap-6 md:flex-row">
+      <div class="w-full max-w-[20rem] shrink-0 sm:w-80">
+        <div class="rounded-lg border border-border bg-background p-4 shadow-inner" data-testid="drilldown-panel">
+          <!-- Navigation header — clicking the label zooms out one level (day -> month -> year) -->
+          <div class="mb-4 flex items-center justify-between">
+            <button
+              sanringBtn
+              variant="ghost"
+              size="icon"
+              type="button"
+              data-testid="drilldown-prev"
+              aria-label="上一頁"
+              (click)="prev()"
+            >
+              <svg lucideChevronLeft [size]="18"></svg>
+            </button>
+            <button
+              sanringBtn
+              variant="ghost"
+              size="sm"
+              type="button"
+              data-testid="drilldown-header"
+              [disabled]="viewMode() === 'year'"
+              [attr.aria-label]="viewMode() === 'day' ? '切換到月份選單' : viewMode() === 'month' ? '切換到年份選單' : null"
+              (click)="zoomOut()"
+            >
+              {{ headerLabel() }}
+            </button>
+            <button
+              sanringBtn
+              variant="ghost"
+              size="icon"
+              type="button"
+              data-testid="drilldown-next"
+              aria-label="下一頁"
+              (click)="next()"
+            >
+              <svg lucideChevronRight [size]="18"></svg>
+            </button>
+          </div>
+
+          @switch (viewMode()) {
+            @case ('year') {
+              <div class="grid grid-cols-3 gap-1.5" data-testid="drilldown-year-grid">
+                @for (cell of granularityEngine.granularityGrids(); track cell.date.getTime()) {
+                  <button
+                    type="button"
+                    [attr.data-testid]="'drilldown-year-' + dayTestId(cell.date)"
+                    class="rounded px-2 py-2.5 text-center text-sm text-foreground transition-colors hover:bg-surface-strong active:brightness-90"
+                    [class.font-bold]="cell.isCurrentPeriod"
+                    (click)="onYearCellClick(cell)"
+                  >
+                    {{ yearCellLabel(cell) }}
+                  </button>
+                }
+              </div>
+            }
+            @case ('month') {
+              <div class="grid grid-cols-3 gap-1.5" data-testid="drilldown-month-grid">
+                @for (cell of granularityEngine.granularityGrids(); track cell.date.getTime()) {
+                  <button
+                    type="button"
+                    [attr.data-testid]="'drilldown-month-' + dayTestId(cell.date)"
+                    class="rounded px-2 py-2.5 text-center text-sm text-foreground transition-colors hover:bg-surface-strong active:brightness-90"
+                    [class.font-bold]="cell.isCurrentPeriod"
+                    (click)="onMonthCellClick(cell)"
+                  >
+                    {{ monthCellLabel(cell) }}
+                  </button>
+                }
+              </div>
+            }
+            @case ('day') {
+              <div>
+                <div
+                  class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted"
+                  role="row"
+                  aria-hidden="true"
+                >
+                  @for (label of weekdayLabels; track label) {
+                    <span>{{ label }}</span>
+                  }
+                </div>
+                <div class="grid grid-cols-7 gap-1" role="grid" data-testid="drilldown-day-grid">
+                  @for (week of toWeeks(dayEngine.monthGrids()[0]); track $index) {
+                    <div role="row" class="contents">
+                      @for (day of week; track day.date.getTime()) {
+                        <button
+                          role="gridcell"
+                          type="button"
+                          [attr.data-testid]="'drilldown-day-' + dayTestId(day.date)"
+                          [attr.aria-selected]="day.isSelected ? true : null"
+                          class="aspect-square rounded text-sm transition-colors active:brightness-90"
+                          [class.text-muted]="!day.isCurrentMonth && !day.isSelected"
+                          [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
+                          [class.bg-primary]="day.isSelected"
+                          [class.text-primary-foreground]="day.isSelected"
+                          [class.font-bold]="day.isToday && !day.isSelected"
+                          [class.hover:bg-surface-strong]="!day.isSelected"
+                          (click)="onDayCellClick(day)"
+                        >
+                          {{ day.date.getDate() }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+
+        <div
+          class="mt-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-muted"
+          data-testid="drilldown-selected-value"
+        >
+          已選：{{ formatSelected() }}
+        </div>
+      </div>
+
+      <div class="flex-1 pt-1 md:pt-2">
+        <h3 sanringCardTitle class="text-base">⑩ 年→月→日逐層收斂（跨引擎組裝範例）</h3>
+        <p sanringCardDescription class="mt-1 text-sm text-muted">
+          CalendarEngine 與 GranularityPickerEngine 是互不知情的 sibling 引擎（ADR-0001）——這個卡片是消費端自己接線的組裝範例：點上方標題向外縮小（日→月→年），點年/月格向內收斂，兩個引擎之間唯一的橋接是
+          <code class="rounded bg-surface-strong px-1">setViewDate()</code>。試著從今天一路縮小到 1996 年
+          8 月，再選 17 日。
+        </p>
+      </div>
+    </div>
+  </sanring-card-content>
+</sanring-card>

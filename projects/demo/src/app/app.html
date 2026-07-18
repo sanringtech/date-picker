@@ -220,6 +220,8 @@
                       } @else if (grid.engine.selectedRange().start; as start) {
                         {{ formatDate(start) }} ～
                         {{ formatDate(grid.engine.selectedRange().end!) }}
+                      } @else if (grid.engine.selectedDates().length > 0) {
+                        已選 {{ grid.engine.selectedDates().length }} 天：{{ formatDates(grid.engine.selectedDates()) }}
                       } @else {
                         尚未選取
                       }
@@ -250,6 +252,31 @@
                     </div>
                   </div>
                 }
+
+                <!-- Multi mode: chip list demonstrating removeDate() (single-item removal, M6) -->
+                @if (scenario.id === 'multi' && grid.engine.selectedDates().length > 0) {
+                  <div
+                    class="mt-2 flex flex-wrap gap-1.5"
+                    [attr.data-testid]="'calendar-chips-' + scenario.id"
+                  >
+                    @for (date of grid.engine.selectedDates(); track date.getTime()) {
+                      <span
+                        class="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs text-foreground"
+                      >
+                        {{ formatDate(date) }}
+                        <button
+                          type="button"
+                          class="text-muted hover:text-foreground"
+                          [attr.aria-label]="'移除 ' + formatDate(date)"
+                          [attr.data-testid]="'calendar-remove-' + dayTestId(scenario.id, date)"
+                          (click)="grid.engine.removeDate(date)"
+                        >
+                          <svg lucideX [size]="12"></svg>
+                        </button>
+                      </span>
+                    }
+                  </div>
+                }
               </div>
 
               <div class="flex-1 pt-1 md:pt-2">
@@ -265,5 +292,17 @@
         </sanring-card>
       </section>
     }
+
+    @for (scenario of granularityScenarios; track scenario.id) {
+      <app-granularity-picker-demo
+        [title]="scenario.title"
+        [description]="scenario.description"
+        [granularity]="scenario.granularity"
+        [mode]="scenario.mode"
+        [testId]="scenario.id"
+      />
+    }
+
+    <app-drilldown-picker-demo />
   </section>
 </main>

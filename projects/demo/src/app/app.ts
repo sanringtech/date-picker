@@ -1,8 +1,8 @@
 import { Component, effect, inject, signal, viewChildren } from '@angular/core';
 import { format } from 'date-fns/format';
-import { LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
+import { LucideChevronLeft, LucideChevronRight, LucideX } from '@lucide/angular';
 import { CALENDAR_LOCALE, CalendarGridDirective } from '@sanring/date-picker';
-import type { CalendarDay, CalendarEngine, DateInterval } from '@sanring/date-picker';
+import type { CalendarDay, CalendarEngine, DateInterval, PickerGranularity } from '@sanring/date-picker';
 import { ButtonDirective } from './components/ui/button';
 import {
   CardComponent,
@@ -10,6 +10,8 @@ import {
   CardDescriptionDirective,
   CardTitleDirective,
 } from './components/ui/card';
+import { GranularityPickerDemoComponent } from './granularity-picker-demo.component';
+import { DrillDownPickerDemoComponent } from './drilldown-picker-demo.component';
 import { FIXED_TODAY } from './app.config';
 
 /** R4 / Decision 5: an OR-combined disabled matcher — weekends (predicate) + a fixed holiday block (DateInterval). */
@@ -76,8 +78,47 @@ const SCENARIOS: readonly DemoScenario[] = [
     id: 'multi',
     title: '⑥ 多選日期（Multi-dates，M6）',
     description:
-      '累積點選任意不連續日期，再次點擊同一天立即移除（toggle 語意，不受 allowDeselect 影響，Decision 11 / I6）。',
+      '累積點選任意不連續日期，再次點擊同一天立即移除（toggle 語意，不受 allowDeselect 影響，Decision 11 / I6）；下方標籤可用 removeDate() 個別移除，或用「清空」整批歸零。',
     configure: (engine) => engine.setSelectionMode('multi'),
+  },
+];
+
+interface GranularityDemoScenario {
+  readonly id: string;
+  readonly title: string;
+  readonly description: string;
+  readonly granularity: PickerGranularity;
+  readonly mode: 'single' | 'range' | 'multi';
+}
+
+/**
+ * M7 / ADR-0001 assembly examples — GranularityPickerEngine, a sibling engine
+ * to CalendarEngine, so each card here provides its own instance directly
+ * rather than going through CalendarGridDirective (see
+ * granularity-picker-demo.component.ts).
+ */
+const GRANULARITY_SCENARIOS: readonly GranularityDemoScenario[] = [
+  {
+    id: 'month-picker',
+    title: '⑦ 月份選取（Month-picker，M7）',
+    description: '12 格月網格，單選模式，語意與日網格的 single 完全對稱（Decision 12）。',
+    granularity: 'month',
+    mode: 'single',
+  },
+  {
+    id: 'quarter-picker',
+    title: '⑧ 季度區間選取（Quarter-picker，M7）',
+    description:
+      '4 格季網格，財年起始月注入為 4 月（CALENDAR_QUARTER_STARTS_ON = 3，非公曆 1 月起算），示範 Story 11 財年 vs 公曆季度歧義；區間模式：先選起點再選終點。',
+    granularity: 'quarter',
+    mode: 'range',
+  },
+  {
+    id: 'year-picker',
+    title: '⑨ 年份多選（Year-picker，M7）',
+    description: 'N 格年網格（滑動視窗，比照 Decision 8），多選模式累積不連續年份。',
+    granularity: 'year',
+    mode: 'multi',
   },
 ];
 
@@ -92,6 +133,9 @@ const SCENARIOS: readonly DemoScenario[] = [
     CardDescriptionDirective,
     LucideChevronLeft,
     LucideChevronRight,
+    LucideX,
+    GranularityPickerDemoComponent,
+    DrillDownPickerDemoComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -101,6 +145,7 @@ export class App {
   private readonly grids = viewChildren(CalendarGridDirective);
 
   protected readonly scenarios = SCENARIOS;
+  protected readonly granularityScenarios = GRANULARITY_SCENARIOS;
   protected readonly fixedToday = FIXED_TODAY;
   /** Controls whether the selection info renders as a separate block below the calendar. */
   protected readonly showInfoBlock = signal(true);

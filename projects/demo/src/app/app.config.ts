@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { CALENDAR_LOCALE, CALENDAR_TODAY } from '@sanring/date-picker';
+import { CALENDAR_LOCALE, CALENDAR_QUARTER_STARTS_ON, CALENDAR_TODAY } from '@sanring/date-picker';
 import type { CalendarLocale } from '@sanring/date-picker';
 
 /**
@@ -29,10 +29,19 @@ const zhTwLocale: CalendarLocale = {
   ],
 };
 
+/**
+ * Fiscal year starting April (Decision 12 / PRD Story 11) — deliberately NOT
+ * January, so the Quarter-picker demo visibly proves CALENDAR_QUARTER_STARTS_ON
+ * was actually injected rather than silently defaulting to a calendar quarter
+ * (there is no default — ADR-0001 sub-decision 1).
+ */
+const FISCAL_QUARTER_STARTS_ON = 3;
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     { provide: CALENDAR_LOCALE, useValue: zhTwLocale },
     { provide: CALENDAR_TODAY, useValue: () => FIXED_TODAY },
+    { provide: CALENDAR_QUARTER_STARTS_ON, useValue: FISCAL_QUARTER_STARTS_ON },
   ],
 };
