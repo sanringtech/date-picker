@@ -56,6 +56,47 @@ export interface RangeDayCountLimit {
   maxDays?: number;
 }
 
+/**
+ * Selection unit for GranularityPickerEngine (R6 / Decision 12 / ADR-0001).
+ * 'day' is CalendarEngine's existing (implicit) granularity, included here only
+ * so the union is complete for callers that need to name all four; GranularityPickerEngine
+ * itself only accepts 'month' | 'quarter' | 'year'.
+ */
+export type Granularity = 'day' | 'month' | 'quarter' | 'year';
+
+/**
+ * Minimal grid cell unit for month/quarter/year granularity (R6). Deliberately not
+ * a rename/reuse of CalendarDay — CalendarDay is the day-grid cell (constitution §6
+ * Glossary); reusing it here would blur that existing term. All three granularities
+ * share this one interface rather than splitting into MonthCell/QuarterCell/YearCell
+ * (constitution §4 Granularity Selection: "no separate rules per granularity").
+ * No `granularity` discriminant field (ADR-0001 sub-decision 2) — a given
+ * GranularityPickerEngine instance is only ever in one granularity at a time
+ * (setSelectionGranularity() resets state on switch, mirroring setSelectionMode()),
+ * so callers already know the granularity from the signal/method they used.
+ */
+export interface GranularityCell {
+  /** Anchor Date for the period this cell represents (first day of the month/quarter/year), time zeroed (R2). */
+  date: Date;
+  /** Whether this cell's period contains "today", per the CALENDAR_TODAY injection basis (Decision 4). */
+  isCurrentPeriod: boolean;
+  isSelected: boolean;
+  isRangeStart: boolean;
+  isRangeEnd: boolean;
+  isInRange: boolean;
+  isDisabled: boolean;
+  isFocused: boolean;
+}
+
+/**
+ * Quarter start month (Decision 12: calendar-quarter vs fiscal-quarter ambiguity).
+ * 0 = January ... 11 = December.
+ * ADR-0001 sub-decision 1: no default — CALENDAR_QUARTER_STARTS_ON has no default
+ * factory, mirroring CALENDAR_LOCALE's Zero-default (I4) precedent, because which
+ * month starts a "quarter" is a business calendar convention, not a neutral fact.
+ */
+export type QuarterStartMonth = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
+
 /** Externally-injected localization contract (I4 / Decision 7). No built-in defaults. */
 export interface CalendarLocale {
   /** Week start day. Mirrors date-fns startOfWeek() options.weekStartsOn; 0=Sunday...6=Saturday. */
