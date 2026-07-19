@@ -19,6 +19,26 @@ function createEngine(
   return TestBed.inject(GranularityPickerEngine);
 }
 
+describe('GranularityPickerEngine — setViewDate validity (I1, granularity-generic form)', () => {
+  it('falls back to today when given an invalid Date', () => {
+    const fixedToday = new Date(2026, 5, 15);
+    const engine = createEngine({ today: fixedToday });
+
+    engine.setViewDate(new Date('not-a-date'));
+
+    expect(engine.granularityGrids()[0].date.getFullYear()).toBe(2026);
+    expect(engine.granularityGrids()[0].date.getMonth()).toBe(0); // Jan 2026 (start of month grid year)
+  });
+
+  it('accepts a valid Date and reflects it in the grid', () => {
+    const engine = createEngine({ today: new Date(2026, 5, 15) });
+
+    engine.setViewDate(new Date(2030, 0, 1));
+
+    expect(engine.granularityGrids()[0].date.getFullYear()).toBe(2030);
+  });
+});
+
 describe('GranularityPickerEngine — grid sizes (R6)', () => {
   const fixedToday = new Date(2026, 5, 15);
 
