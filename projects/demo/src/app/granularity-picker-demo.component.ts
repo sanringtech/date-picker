@@ -2,7 +2,11 @@ import { Component, Input, effect, inject, viewChild } from '@angular/core';
 import { format } from 'date-fns/format';
 import { LucideChevronLeft, LucideChevronRight, LucideX } from '@lucide/angular';
 import { CALENDAR_LOCALE, GranularityGridDirective } from '@sanring/date-picker';
-import type { GranularityCell, GranularityPickerEngine, PickerGranularity } from '@sanring/date-picker';
+import type {
+  GranularityCell,
+  GranularityPickerEngine,
+  PickerGranularity,
+} from '@sanring/date-picker';
 import { ButtonDirective } from './components/ui/button';
 import {
   CardComponent,

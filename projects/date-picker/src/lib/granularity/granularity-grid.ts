@@ -66,9 +66,14 @@ export function quarterIndexOf(date: Date, quarterStartMonth: QuarterStartMonth)
 }
 
 /** Do `a` and `b` fall in the same fiscal quarter (same fiscal year AND same quarter index)? */
-export function isSameFiscalQuarter(a: Date, b: Date, quarterStartMonth: QuarterStartMonth): boolean {
+export function isSameFiscalQuarter(
+  a: Date,
+  b: Date,
+  quarterStartMonth: QuarterStartMonth,
+): boolean {
   return (
-    fiscalYearStart(a, quarterStartMonth).getTime() === fiscalYearStart(b, quarterStartMonth).getTime() &&
+    fiscalYearStart(a, quarterStartMonth).getTime() ===
+      fiscalYearStart(b, quarterStartMonth).getTime() &&
     quarterIndexOf(a, quarterStartMonth) === quarterIndexOf(b, quarterStartMonth)
   );
 }
@@ -76,4 +81,29 @@ export function isSameFiscalQuarter(a: Date, b: Date, quarterStartMonth: Quarter
 /** Stable per-fiscal-quarter identity string, for use as a multi-selection Map key. */
 export function fiscalQuarterKey(date: Date, quarterStartMonth: QuarterStartMonth): string {
   return `${fiscalYearStart(date, quarterStartMonth).getFullYear()}-Q${quarterIndexOf(date, quarterStartMonth)}`;
+}
+
+/**
+ * Monotonically increasing integer identifying which period `date` falls in,
+ * for a given granularity — e.g. periodOrdinal(Feb2026, 'month') <
+ * periodOrdinal(Mar2026, 'month'). Subtracting two ordinals gives an exclusive
+ * period distance; RangePeriodCountLimit callers add 1 for an inclusive count
+ * (mirrors CalendarEngine's differenceInCalendarDays(end, start) + 1 pattern).
+ * `quarterStartMonth` is required only for granularity 'quarter'.
+ */
+export function periodOrdinal(
+  date: Date,
+  granularity: 'month' | 'quarter' | 'year',
+  quarterStartMonth?: QuarterStartMonth,
+): number {
+  switch (granularity) {
+    case 'month':
+      return date.getFullYear() * 12 + date.getMonth();
+    case 'quarter': {
+      const qsm = quarterStartMonth!;
+      return fiscalYearStart(date, qsm).getFullYear() * 4 + quarterIndexOf(date, qsm);
+    }
+    case 'year':
+      return date.getFullYear();
+  }
 }

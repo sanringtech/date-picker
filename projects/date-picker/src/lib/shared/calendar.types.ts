@@ -65,6 +65,20 @@ export interface RangeDayCountLimit {
 }
 
 /**
+ * Optional period-count bound on GranularityPickerEngine range selections —
+ * the month/quarter/year-granularity counterpart to RangeDayCountLimit (R8's
+ * day-count bound doesn't transfer directly: "days" isn't a meaningful unit
+ * once the selectable unit is itself a month/quarter/year). Zero-default,
+ * same as RangeDayCountLimit: both bounds undefined means unbounded.
+ * Count is inclusive of both endpoints, e.g. selecting Jan–Mar counts as 3
+ * months; selecting the same quarter twice counts as 1.
+ */
+export interface RangePeriodCountLimit {
+  minPeriods?: number;
+  maxPeriods?: number;
+}
+
+/**
  * Selection unit for GranularityPickerEngine (R6 / Decision 12 / ADR-0001).
  * 'day' is CalendarEngine's existing (implicit) granularity, included here only
  * so the union is complete for callers that need to name all four; GranularityPickerEngine

@@ -10,6 +10,7 @@ import type {
   FocusMoveDirection,
   GranularityCell,
   QuarterStartMonth,
+  RangePeriodCountLimit,
 } from '../shared/calendar.types';
 import {
   advanceRangeDraft,
@@ -25,12 +26,41 @@ import {
   buildYearGranularityGrid,
   fiscalQuarterKey,
   isSameFiscalQuarter,
+  periodOrdinal,
 } from './granularity-grid';
 
 /** GranularityPickerEngine's own domain — day granularity stays CalendarEngine's job. */
 export type PickerGranularity = 'month' | 'quarter' | 'year';
 
 const EMPTY_RANGE: DateRange = { start: null, end: null };
+
+/**
+ * Period-count counterpart to calendar-engine.ts's isWithinDayCountLimit
+ * (R8 / Decision 14 precedent). Inclusive count via periodOrdinal difference + 1,
+ * e.g. Jan–Mar counts as 3 months. No limit configured always passes.
+ */
+function isWithinPeriodCountLimit(
+  start: Date,
+  end: Date,
+  granularity: PickerGranularity,
+  quarterStartMonth: QuarterStartMonth | undefined,
+  limit: RangePeriodCountLimit | undefined,
+): boolean {
+  if (limit === undefined) {
+    return true;
+  }
+  const periodCount =
+    periodOrdinal(end, granularity, quarterStartMonth) -
+    periodOrdinal(start, granularity, quarterStartMonth) +
+    1;
+  if (limit.minPeriods !== undefined && periodCount < limit.minPeriods) {
+    return false;
+  }
+  if (limit.maxPeriods !== undefined && periodCount > limit.maxPeriods) {
+    return false;
+  }
+  return true;
+}
 
 /**
  * Headless Month/Quarter/Year-picker state machine (R6, Decision 12, ADR-0001).
@@ -62,6 +92,8 @@ export class GranularityPickerEngine {
   private readonly _disabled = signal<DisabledInput | undefined>(undefined);
   /** M6-equivalent multi container: Map<periodKey, Date> — see selection-state.ts DateKeyFn. */
   private readonly _selectedDates = signal<ReadonlyMap<string, Date>>(new Map());
+  /** R8-equivalent optional bound on range selections — see RangePeriodCountLimit. */
+  private readonly _rangePeriodCountLimit = signal<RangePeriodCountLimit | undefined>(undefined);
   /**
    * Column count for up/down keyboard focus math (2026-07-18 delta). Unlike the day
    * grid's ±7, there is no structural "row unit" for month/quarter/year grids — column
@@ -95,7 +127,10 @@ export class GranularityPickerEngine {
    * injector.get() for the same recompute — callers that don't have it handy
    * (selectDate(), removeDate(), etc.) fall back to resolving it themselves.
    */
-  private equalsFnFor(granularity: PickerGranularity, quarterStartMonth?: QuarterStartMonth): DateEqualsFn {
+  private equalsFnFor(
+    granularity: PickerGranularity,
+    quarterStartMonth?: QuarterStartMonth,
+  ): DateEqualsFn {
     switch (granularity) {
       case 'month':
         return isSameMonth;
@@ -108,7 +143,10 @@ export class GranularityPickerEngine {
     }
   }
 
-  private keyFnFor(granularity: PickerGranularity, quarterStartMonth?: QuarterStartMonth): DateKeyFn {
+  private keyFnFor(
+    granularity: PickerGranularity,
+    quarterStartMonth?: QuarterStartMonth,
+  ): DateKeyFn {
     switch (granularity) {
       case 'month':
         return (date) => `${date.getFullYear()}-${date.getMonth()}`;
@@ -139,7 +177,8 @@ export class GranularityPickerEngine {
     const selectedDatesMap = this._selectedDates();
     // Resolved once per recompute (not once each inside equalsFnFor/keyFnFor/the
     // switch below) — three injector.get() calls for the same value was wasted work.
-    const quarterStartMonth = granularity === 'quarter' ? this.resolveQuarterStartMonth() : undefined;
+    const quarterStartMonth =
+      granularity === 'quarter' ? this.resolveQuarterStartMonth() : undefined;
     const equalsFn = this.equalsFnFor(granularity, quarterStartMonth);
     const keyFn = this.keyFnFor(granularity, quarterStartMonth);
 
@@ -246,6 +285,29 @@ export class GranularityPickerEngine {
     this._gridColumns.set(Math.max(1, Math.floor(n)));
   }
 
+  /**
+   * R8-equivalent: optional min/max period-count bound on range selections.
+   * Zero-default — undefined means unbounded, same precedent as
+   * CalendarEngine.setRangeDayCountLimit(). I2-style proactive clear: a limit
+   * that the currently committed selectedRange now violates destroys that
+   * selection outright rather than masking a now-invalid stable value.
+   */
+  setRangePeriodCountLimit(limit: RangePeriodCountLimit | undefined): void {
+    this._rangePeriodCountLimit.set(limit);
+
+    const range = this._selectedRange();
+    if (range.start !== null && range.end !== null) {
+      const granularity = this._granularity();
+      const quarterStartMonth =
+        granularity === 'quarter' ? this.resolveQuarterStartMonth() : undefined;
+      if (
+        !isWithinPeriodCountLimit(range.start, range.end, granularity, quarterStartMonth, limit)
+      ) {
+        this._selectedRange.set(EMPTY_RANGE);
+      }
+    }
+  }
+
   /** I1: viewDate must always be a valid Date; invalid input falls back to today. */
   setViewDate(date: Date): void {
     this._viewDate.set(isValid(date) ? date : this.todayFn());
@@ -333,7 +395,9 @@ export class GranularityPickerEngine {
       this.prevYear();
       const newGrids = this.granularityGrids();
       const newIndex =
-        granularity === 'year' ? 0 : Math.max(0, Math.min(newGrids.length + target, newGrids.length - 1));
+        granularity === 'year'
+          ? 0
+          : Math.max(0, Math.min(newGrids.length + target, newGrids.length - 1));
       this._focusedDate.set(newGrids[newIndex]?.date ?? null);
     } else if (target >= grids.length) {
       this.nextYear();
@@ -406,21 +470,43 @@ export class GranularityPickerEngine {
 
     if (mode === 'single') {
       this._selectedDate.set(
-        toggleSingleSelection(this._selectedDate(), date, this._allowDeselect(), this.equalsFnFor(granularity)),
+        toggleSingleSelection(
+          this._selectedDate(),
+          date,
+          this._allowDeselect(),
+          this.equalsFnFor(granularity),
+        ),
       );
       return;
     }
 
     if (mode === 'multi') {
-      this._selectedDates.set(toggleMultiSelection(this._selectedDates(), date, this.keyFnFor(granularity)));
+      this._selectedDates.set(
+        toggleMultiSelection(this._selectedDates(), date, this.keyFnFor(granularity)),
+      );
       return;
     }
 
     const result = advanceRangeDraft(this._draftStart(), date);
-    this._draftStart.set(result.draftStart);
     if (result.committedRange !== null) {
+      const quarterStartMonth =
+        granularity === 'quarter' ? this.resolveQuarterStartMonth() : undefined;
+      if (
+        !isWithinPeriodCountLimit(
+          result.committedRange.start!,
+          result.committedRange.end!,
+          granularity,
+          quarterStartMonth,
+          this._rangePeriodCountLimit(),
+        )
+      ) {
+        // R8-equivalent (Decision 14 precedent): an out-of-bound endpoint is
+        // rejected outright — the draft stays open at its original start.
+        return;
+      }
       this._selectedRange.set(result.committedRange);
     }
+    this._draftStart.set(result.draftStart);
   }
 
   /**
@@ -453,7 +539,23 @@ export class GranularityPickerEngine {
       return;
     }
     const [start, end] =
-      range.start.getTime() <= range.end.getTime() ? [range.start, range.end] : [range.end, range.start];
+      range.start.getTime() <= range.end.getTime()
+        ? [range.start, range.end]
+        : [range.end, range.start];
+    const granularity = this._granularity();
+    const quarterStartMonth =
+      granularity === 'quarter' ? this.resolveQuarterStartMonth() : undefined;
+    if (
+      !isWithinPeriodCountLimit(
+        start,
+        end,
+        granularity,
+        quarterStartMonth,
+        this._rangePeriodCountLimit(),
+      )
+    ) {
+      return;
+    }
     this._selectedRange.set({ start, end });
     this._draftStart.set(null);
   }
@@ -465,7 +567,9 @@ export class GranularityPickerEngine {
    */
   setSelectedDates(dates: Date[]): void {
     this._selectedDates.set(
-      filterSelectedDates(dates, this.keyFnFor(this._granularity()), (date) => this.isDateDisabled(date)),
+      filterSelectedDates(dates, this.keyFnFor(this._granularity()), (date) =>
+        this.isDateDisabled(date),
+      ),
     );
   }
 

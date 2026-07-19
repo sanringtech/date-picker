@@ -935,9 +935,9 @@ describe('Range Selection (§4 / Decision 3)', () => {
         engine.moveFocus('right');
         dates.push(engine.focusedDate()!);
       }
-      expect(dates.every((d, i) => i === 0 || differenceInCalendarDays(d, dates[i - 1]) === 1)).toBe(
-        true,
-      );
+      expect(
+        dates.every((d, i) => i === 0 || differenceInCalendarDays(d, dates[i - 1]) === 1),
+      ).toBe(true);
     });
 
     it('200 consecutive ArrowLeft presses each move focus exactly 1 day backward (monthsToDisplay=3)', () => {
@@ -948,9 +948,9 @@ describe('Range Selection (§4 / Decision 3)', () => {
         engine.moveFocus('left');
         dates.push(engine.focusedDate()!);
       }
-      expect(dates.every((d, i) => i === 0 || differenceInCalendarDays(d, dates[i - 1]) === -1)).toBe(
-        true,
-      );
+      expect(
+        dates.every((d, i) => i === 0 || differenceInCalendarDays(d, dates[i - 1]) === -1),
+      ).toBe(true);
     });
 
     it('ArrowDown presses each move focus exactly 7 days forward (monthsToDisplay=3)', () => {
@@ -961,9 +961,9 @@ describe('Range Selection (§4 / Decision 3)', () => {
         engine.moveFocus('down');
         dates.push(engine.focusedDate()!);
       }
-      expect(dates.every((d, i) => i === 0 || differenceInCalendarDays(d, dates[i - 1]) === 7)).toBe(
-        true,
-      );
+      expect(
+        dates.every((d, i) => i === 0 || differenceInCalendarDays(d, dates[i - 1]) === 7),
+      ).toBe(true);
     });
 
     it('a mixed random walk of moves always changes focus by the exact expected day delta (monthsToDisplay=4)', () => {

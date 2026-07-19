@@ -3,7 +3,9 @@ import { isSameMonth } from 'date-fns/isSameMonth';
 import { GranularityPickerEngine } from './granularity-picker-engine';
 import { CALENDAR_QUARTER_STARTS_ON, CALENDAR_TODAY } from '../shared/calendar.tokens';
 
-function createEngine(options: { today?: Date; quarterStartMonth?: number } = {}): GranularityPickerEngine {
+function createEngine(
+  options: { today?: Date; quarterStartMonth?: number } = {},
+): GranularityPickerEngine {
   const { today, quarterStartMonth } = options;
   TestBed.configureTestingModule({
     providers: [
@@ -470,5 +472,97 @@ describe('GranularityPickerEngine — moveFocus (year granularity, sliding windo
 
     engine.moveFocus('pageup');
     expect(engine.focusedDate()!.getFullYear()).toBe(2027);
+  });
+});
+
+describe('GranularityPickerEngine — setRangePeriodCountLimit (R8-equivalent, month granularity)', () => {
+  const fixedToday = new Date(2026, 5, 15);
+
+  it('period count is inclusive of both endpoints (Jan-Mar = 3 months)', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.setSelectionMode('range');
+    engine.setRangePeriodCountLimit({ maxPeriods: 3 });
+
+    engine.selectDate(new Date(2026, 0, 1));
+    engine.selectDate(new Date(2026, 2, 1)); // Jan-Mar, exactly at the 3-month boundary
+
+    expect(engine.isDraftActive()).toBe(false);
+    expect(engine.selectedRange().end!.getMonth()).toBe(2);
+  });
+
+  it('selectDate rejects an endpoint that exceeds maxPeriods, keeping the draft open', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.setSelectionMode('range');
+    engine.setRangePeriodCountLimit({ maxPeriods: 3 });
+
+    engine.selectDate(new Date(2026, 0, 1)); // draft start
+    engine.selectDate(new Date(2026, 3, 1)); // Jan-Apr = 4 months, exceeds limit
+
+    expect(engine.isDraftActive()).toBe(true);
+    expect(engine.draftStart()!.getMonth()).toBe(0);
+    expect(engine.selectedRange()).toEqual({ start: null, end: null });
+  });
+
+  it('selectDate rejects an endpoint below minPeriods', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.setSelectionMode('range');
+    engine.setRangePeriodCountLimit({ minPeriods: 3 });
+
+    engine.selectDate(new Date(2026, 0, 1));
+    engine.selectDate(new Date(2026, 1, 1)); // Jan-Feb = 2 months, below minimum
+
+    expect(engine.isDraftActive()).toBe(true);
+    expect(engine.selectedRange()).toEqual({ start: null, end: null });
+  });
+
+  it('setSelectedRange rejects a write that violates the configured limit', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.setSelectionMode('range');
+    engine.setRangePeriodCountLimit({ maxPeriods: 3 });
+
+    engine.setSelectedRange({ start: new Date(2026, 0, 1), end: new Date(2026, 9, 1) });
+
+    expect(engine.selectedRange()).toEqual({ start: null, end: null });
+  });
+
+  it('setRangePeriodCountLimit proactively clears an already-committed range it now violates', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.setSelectionMode('range');
+    engine.selectDate(new Date(2026, 0, 1));
+    engine.selectDate(new Date(2026, 9, 1)); // 10-month range, committed while unbounded
+
+    engine.setRangePeriodCountLimit({ maxPeriods: 3 });
+
+    expect(engine.selectedRange()).toEqual({ start: null, end: null });
+  });
+
+  it('setRangePeriodCountLimit leaves a still-valid committed range untouched', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.setSelectionMode('range');
+    engine.selectDate(new Date(2026, 0, 1));
+    engine.selectDate(new Date(2026, 1, 1)); // 2-month range
+
+    engine.setRangePeriodCountLimit({ maxPeriods: 3 });
+
+    expect(engine.selectedRange().start!.getMonth()).toBe(0);
+    expect(engine.selectedRange().end!.getMonth()).toBe(1);
+  });
+
+  it('is unbounded by default (Zero-default) — a large range commits fine with no limit configured', () => {
+    const engine = createEngine({ today: fixedToday });
+    engine.setSelectionGranularity('month');
+    engine.setSelectionMode('range');
+
+    engine.selectDate(new Date(2026, 0, 1));
+    engine.selectDate(new Date(2030, 0, 1)); // a huge span
+
+    expect(engine.isDraftActive()).toBe(false);
+    expect(engine.selectedRange().start).not.toBeNull();
   });
 });

@@ -170,7 +170,9 @@
                             {{ formatDate(start) }} ～
                             {{ formatDate(grid.engine.selectedRange().end!) }}
                           } @else if (grid.engine.selectedDates().length > 0) {
-                            已選 {{ grid.engine.selectedDates().length }} 天：{{ formatDates(grid.engine.selectedDates()) }}
+                            已選 {{ grid.engine.selectedDates().length }} 天：{{
+                              formatDates(grid.engine.selectedDates())
+                            }}
                           } @else {
                             尚未選取
                           }
@@ -221,7 +223,9 @@
                         {{ formatDate(start) }} ～
                         {{ formatDate(grid.engine.selectedRange().end!) }}
                       } @else if (grid.engine.selectedDates().length > 0) {
-                        已選 {{ grid.engine.selectedDates().length }} 天：{{ formatDates(grid.engine.selectedDates()) }}
+                        已選 {{ grid.engine.selectedDates().length }} 天：{{
+                          formatDates(grid.engine.selectedDates())
+                        }}
                       } @else {
                         尚未選取
                       }

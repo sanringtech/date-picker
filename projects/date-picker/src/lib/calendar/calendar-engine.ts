@@ -376,7 +376,8 @@ export class CalendarEngine {
     for (;;) {
       const viewDate = this._viewDate();
       const monthsAhead =
-        (target.getFullYear() - viewDate.getFullYear()) * 12 + (target.getMonth() - viewDate.getMonth());
+        (target.getFullYear() - viewDate.getFullYear()) * 12 +
+        (target.getMonth() - viewDate.getMonth());
       if (monthsAhead < 0) {
         this.prevMonth();
       } else if (monthsAhead >= this._monthsToDisplay()) {

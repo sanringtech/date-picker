@@ -439,6 +439,8 @@ export class CalendarEngine {
 | `GranularityPickerEngine.setSelectionGranularity()` | Method | 切換粒度（day/month/quarter/year），比照 `setSelectionMode()` 切換時一律重置選取狀態的既有慣例 | R6, §4 粒度選取, Decision 12 |
 | `GranularityPickerEngine.granularityGrids` | `Signal<GranularityCell[]>` | 月=12格/季=4格/年=N格（R6） | R6, §4 粒度選取, Decision 12 |
 | `GranularityGridDirective`（selector `sanringGranularityGrid`，`exportAs: 'sanringGranularityGrid'`） | Standalone Directive | 掛載 `GranularityPickerEngine` 的鍵盤導覽，比照 `CalendarGridDirective`（2026-07-18，見下方鍵盤互動對應表） | R6, Decision 6 精神延伸 |
+| `RangePeriodCountLimit` | Interface | Range 選取的期數（月/季/年）上下限，`RangeDayCountLimit`（R8）在粒度選取的對應物——「天數」對月/季/年粒度不是有意義的單位，故另立型別而非重用 `RangeDayCountLimit`（2026-07-19 delta） | R8 精神延伸至粒度選取 |
+| `GranularityPickerEngine.setRangePeriodCountLimit()` | Method | 預設 undefined = 無限制（I4 Zero-default 精神延伸，同 R8）；計數含頭尾兩端點；Draft 終點超限時拒絕提交、Draft 維持原起點；設定新限制時對已提交且違反的 `selectedRange` 主動清空（I2 風格），比照 `setRangeDayCountLimit()` 既有慣例（2026-07-19 delta） | R8 精神延伸至粒度選取 |
 
 **實作排程備註**：M7 第一輪實作範圍為「新增 `GranularityPickerEngine` + 共用純函式模組」，`CalendarEngine` 內嵌邏輯改呼叫同一組純函式的 refactor **暫不隨 M7 一併進行**（owner 2026-07-18 拍板：先降低對 M0-M6 既有測試覆蓋程式碼的變動風險，接受 ADR-0001 Option B 提及的短期輕度重複，refactor 留待後續獨立任務/Task Charter 評估）。
 

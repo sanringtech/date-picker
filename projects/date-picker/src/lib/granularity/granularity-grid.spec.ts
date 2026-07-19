@@ -6,6 +6,7 @@ import {
   buildYearGranularityGrid,
   fiscalQuarterKey,
   isSameFiscalQuarter,
+  periodOrdinal,
   quarterIndexOf,
 } from './granularity-grid';
 
@@ -87,5 +88,37 @@ describe('quarterIndexOf / isSameFiscalQuarter / fiscalQuarterKey', () => {
     const c = fiscalQuarterKey(new Date(2026, 6, 1), 3);
     expect(a).toBe(b);
     expect(a).not.toBe(c);
+  });
+});
+
+describe('periodOrdinal', () => {
+  it('month: strictly increasing across a year boundary', () => {
+    const dec = periodOrdinal(new Date(2026, 11, 1), 'month');
+    const jan = periodOrdinal(new Date(2027, 0, 1), 'month');
+    expect(jan).toBe(dec + 1);
+  });
+
+  it('month: same value for any day within the same month', () => {
+    expect(periodOrdinal(new Date(2026, 3, 1), 'month')).toBe(
+      periodOrdinal(new Date(2026, 3, 28), 'month'),
+    );
+  });
+
+  it('year: strictly increasing by 1 per year, independent of month', () => {
+    expect(
+      periodOrdinal(new Date(2027, 0, 1), 'year') - periodOrdinal(new Date(2026, 5, 15), 'year'),
+    ).toBe(1);
+  });
+
+  it('quarter: strictly increasing across a fiscal-year boundary (quarterStartMonth=3)', () => {
+    const q4 = periodOrdinal(new Date(2027, 0, 1), 'quarter', 3); // Jan 2027 -> FY2026 Q4
+    const q1next = periodOrdinal(new Date(2027, 3, 1), 'quarter', 3); // Apr 2027 -> FY2027 Q1
+    expect(q1next).toBe(q4 + 1);
+  });
+
+  it('quarter: same value for any date within the same fiscal quarter', () => {
+    expect(periodOrdinal(new Date(2026, 3, 1), 'quarter', 3)).toBe(
+      periodOrdinal(new Date(2026, 5, 20), 'quarter', 3),
+    );
   });
 });

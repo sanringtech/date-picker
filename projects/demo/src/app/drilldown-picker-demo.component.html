@@ -2,7 +2,10 @@
   <sanring-card-content class="p-5 md:p-6">
     <div class="flex flex-col items-start gap-6 md:flex-row">
       <div class="w-full max-w-[20rem] shrink-0 sm:w-80">
-        <div class="rounded-lg border border-border bg-background p-4 shadow-inner" data-testid="drilldown-panel">
+        <div
+          class="rounded-lg border border-border bg-background p-4 shadow-inner"
+          data-testid="drilldown-panel"
+        >
           <!-- Navigation header — clicking the label zooms out one level (day -> month -> year) -->
           <div class="mb-4 flex items-center justify-between">
             <button
@@ -23,7 +26,13 @@
               type="button"
               data-testid="drilldown-header"
               [disabled]="viewMode() === 'year'"
-              [attr.aria-label]="viewMode() === 'day' ? '切換到月份選單' : viewMode() === 'month' ? '切換到年份選單' : null"
+              [attr.aria-label]="
+                viewMode() === 'day'
+                  ? '切換到月份選單'
+                  : viewMode() === 'month'
+                    ? '切換到年份選單'
+                    : null
+              "
               (click)="zoomOut()"
             >
               {{ headerLabel() }}
@@ -123,9 +132,10 @@
       <div class="flex-1 pt-1 md:pt-2">
         <h3 sanringCardTitle class="text-base">⑩ 年→月→日逐層收斂（跨引擎組裝範例）</h3>
         <p sanringCardDescription class="mt-1 text-sm text-muted">
-          CalendarEngine 與 GranularityPickerEngine 是互不知情的 sibling 引擎（ADR-0001）——這個卡片是消費端自己接線的組裝範例：點上方標題向外縮小（日→月→年），點年/月格向內收斂，兩個引擎之間唯一的橋接是
-          <code class="rounded bg-surface-strong px-1">setViewDate()</code>。試著從今天一路縮小到 1996 年
-          8 月，再選 17 日。
+          CalendarEngine 與 GranularityPickerEngine 是互不知情的 sibling
+          引擎（ADR-0001）——這個卡片是消費端自己接線的組裝範例：點上方標題向外縮小（日→月→年），點年/月格向內收斂，兩個引擎之間唯一的橋接是
+          <code class="rounded bg-surface-strong px-1">setViewDate()</code>。試著從今天一路縮小到
+          1996 年 8 月，再選 17 日。
         </p>
       </div>
     </div>

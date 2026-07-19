@@ -39,7 +39,8 @@ export function advanceRangeDraft(
   if (draftStart === null) {
     return { draftStart: date, committedRange: null };
   }
-  const [start, end] = draftStart.getTime() <= date.getTime() ? [draftStart, date] : [date, draftStart];
+  const [start, end] =
+    draftStart.getTime() <= date.getTime() ? [draftStart, date] : [date, draftStart];
   return { draftStart: null, committedRange: { start, end } };
 }
 

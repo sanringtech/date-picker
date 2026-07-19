@@ -43,13 +43,19 @@ describe('advanceRangeDraft', () => {
   it('commits and orders endpoints chronologically on the second pick (forward)', () => {
     const result = advanceRangeDraft(new Date(2026, 3, 1), new Date(2026, 5, 1));
     expect(result.draftStart).toBeNull();
-    expect(result.committedRange).toEqual({ start: new Date(2026, 3, 1), end: new Date(2026, 5, 1) });
+    expect(result.committedRange).toEqual({
+      start: new Date(2026, 3, 1),
+      end: new Date(2026, 5, 1),
+    });
   });
 
   it('commits and orders endpoints chronologically on the second pick (reversed)', () => {
     const result = advanceRangeDraft(new Date(2026, 5, 1), new Date(2026, 3, 1));
     expect(result.draftStart).toBeNull();
-    expect(result.committedRange).toEqual({ start: new Date(2026, 3, 1), end: new Date(2026, 5, 1) });
+    expect(result.committedRange).toEqual({
+      start: new Date(2026, 3, 1),
+      end: new Date(2026, 5, 1),
+    });
   });
 });
 
