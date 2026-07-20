@@ -440,6 +440,8 @@ export class CalendarEngine {
 | `GranularityPickerEngine.granularityGrids` | `Signal<GranularityCell[]>` | 月=12格/季=4格/年=N格（R6） | R6, §4 粒度選取, Decision 12 |
 | `GranularityGridDirective`（selector `sanringGranularityGrid`，`exportAs: 'sanringGranularityGrid'`） | Standalone Directive | 掛載 `GranularityPickerEngine` 的鍵盤導覽，比照 `CalendarGridDirective`（2026-07-18，見下方鍵盤互動對應表） | R6, Decision 6 精神延伸 |
 | `RangePeriodCountLimit` | Interface | Range 選取的期數（月/季/年）上下限，`RangeDayCountLimit`（R8）在粒度選取的對應物——「天數」對月/季/年粒度不是有意義的單位，故另立型別而非重用 `RangeDayCountLimit`（2026-07-19 delta） | R8 精神延伸至粒度選取 |
+| `DayGranularity` / `PeriodGranularity` / `GranularityEngineKind` | Type | `Granularity` 的子集判別型別（`'day'` / `'month'\|'quarter'\|'year'` / `'calendar'\|'period'`），供整合層（如未來 Composed Widget）判斷該用哪個引擎 | R6, Decision 12（2026-07-20 追加，從 `GranularityPickerEngine` 內部重複定義的 `PickerGranularity` literal union 抽成共用型別） |
+| `isDayGranularity()` / `isPeriodGranularity()` / `engineKindForGranularity()` | Function | 把 `Granularity` 路由到對應引擎（`day` → `CalendarEngine`／其餘 → `GranularityPickerEngine`）的純函式，避免每個消費端各自重刻同一組判斷 | R6, Decision 12（2026-07-20 追加） |
 | `GranularityPickerEngine.setRangePeriodCountLimit()` | Method | 預設 undefined = 無限制（I4 Zero-default 精神延伸，同 R8）；計數含頭尾兩端點；Draft 終點超限時拒絕提交、Draft 維持原起點；設定新限制時對已提交且違反的 `selectedRange` 主動清空（I2 風格），比照 `setRangeDayCountLimit()` 既有慣例（2026-07-19 delta） | R8 精神延伸至粒度選取 |
 
 **實作排程備註**：M7 第一輪實作範圍為「新增 `GranularityPickerEngine` + 共用純函式模組」，`CalendarEngine` 內嵌邏輯改呼叫同一組純函式的 refactor **暫不隨 M7 一併進行**（owner 2026-07-18 拍板：先降低對 M0-M6 既有測試覆蓋程式碼的變動風險，接受 ADR-0001 Option B 提及的短期輕度重複，refactor 留待後續獨立任務/Task Charter 評估）。

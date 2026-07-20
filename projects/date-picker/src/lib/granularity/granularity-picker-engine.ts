@@ -9,9 +9,10 @@ import type {
   DisabledInput,
   FocusMoveDirection,
   GranularityCell,
-  QuarterStartMonth,
   RangePeriodCountLimit,
+  QuarterStartMonth,
 } from '../shared/calendar.types';
+import type { PeriodGranularity } from '../shared/granularity';
 import {
   advanceRangeDraft,
   filterSelectedDates,
@@ -30,7 +31,7 @@ import {
 } from './granularity-grid';
 
 /** GranularityPickerEngine's own domain — day granularity stays CalendarEngine's job. */
-export type PickerGranularity = 'month' | 'quarter' | 'year';
+export type PickerGranularity = PeriodGranularity;
 
 const EMPTY_RANGE: DateRange = { start: null, end: null };
 
