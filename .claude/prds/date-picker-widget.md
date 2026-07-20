@@ -2,22 +2,22 @@
 schema_version: 1
 feature_id: date-picker-widget
 feature_name: Sanring Composed DatePicker Widget (@sanring/date-picker-widget)
-status: draft
+status: active
 owner: jack755051
-last_updated: 2026-07-15
+last_updated: 2026-07-20
 related_constitution: .claude/constitutions/date-picker.md
 related_adrs: []
 ---
 
 # PRD: Composed Widget — @sanring/date-picker-widget
 
-> ⚠️ 此文件由 `/supervisor:prd date-picker-widget` 訪談模式產出。§1-3、§5 的技術選型欄位為使用者親口拍板（T1/T2 verbatim，見文末審查清單）；§4、§6-11 因使用者於訪談中明確表示「交回主 Claude 擬草稿」，內容為 **AI 草稿・尚未經使用者確認**，寫作時已標記 🔶，**不算拍板內容**，需要使用者審查後才能視為定案。`status` 維持 `draft`，待使用者審查完 AI 草稿章節後才由使用者親自拍板改 `active`。
+> ⚠️ 此文件由 `/supervisor:prd date-picker-widget` 訪談模式產出。§1-3、§5 的技術選型欄位為使用者親口拍板（T1/T2 verbatim，見文末審查清單）；§4、§6-11 原為「交回主 Claude 擬草稿」的 AI 草稿，2026-07-20 經兩輪對話（四項 API 形狀關鍵決策逐一拍板 → AI 依決策展開具體草稿 → 使用者對展開後的完整草稿含 AI 自行判斷的兩點（Range 預設雙月並排、Overlay 錨定定位）一併確認「同意，先定案」）正式拍板，`status` 因此轉為 `active`。文中殘留的 🔶 標記僅為歷史留痕，不代表仍待確認。
 
 ## 1. 背景 (Background)
 
 依憲法 `.claude/constitutions/date-picker.md` §7 Decision 9（兩層終局願景）與新增 Decision 10（雙消費模式承諾），本產品最終將產出兩層獨立產出物：
 
-1. **Headless Engine 層**（現狀）—— 已有獨立 PRD：`.claude/prds/date-picker.md`（status: accepted，M0-M4 已完成，M5 npm 發布準備中）。
+1. **Headless Engine 層**（現狀）—— 已有獨立 PRD：`.claude/prds/date-picker.md`（status: accepted，M0-M7 全數完成並已發布至 `0.4.0`，見該 PRD 第 10 節里程碑）。
 2. **Composed Widget 層**（本 PRD 對應的產出物）—— 比照 `vue3-datepicker`，開箱即用、含 input + popover/overlay + 預設可覆寫樣式，可被獨立安裝直接使用。
 
 **業務目標**（使用者原話，T1）：讓 `@sanring/date-picker` 從「只服務 sanring/ui 內部組裝」升級為「可獨立發布使用的完整 DatePicker 產品」，達到類似 vue3-datepicker 的市場定位——任何 Angular 專案不需要依賴 sanring/ui、也不用自己重新組裝 Popover/Input，`npm install` 完即可直接用一個功能完整的 DatePicker/RangePicker。同時保留 shadcn 式複製所有權轉移模式，讓有深度客製化需求的開發者能直接接手原始碼，不被黑盒鎖死（呼應 R1 精神與新增的 100% 可覆寫不變量）。
@@ -78,7 +78,7 @@ related_adrs: []
 
 ## 4. 使用者故事 (User Stories)
 
-> 🔶 **AI 草稿，待使用者確認** —— 使用者訪談中表示此節交回主 Claude 擬草稿，以下內容尚未拍板。
+> ✅ **2026-07-20 使用者確認拍板**（原為 AI 草稿）。四個故事方向沿用已拍板的 §1/§2 業務目標推導，Acceptance Criteria 依同日拍板的四項 API 決策補齊。
 
 ### Story 1（黑盒安裝消費者）
 - **As a** 想快速上線的 Angular 開發者
@@ -87,7 +87,7 @@ related_adrs: []
 
 ### Story 2（黑盒安裝消費者，Range 模式）
 - **As a** 需要日期區間選取的開發者
-- **I want to** 用 `<sanring-date-range-picker>` 並綁定 `[(range)]`
+- **I want to** 用 `<sanring-date-range-picker>` 並綁定 `[(selectedRange)]`（見第 7 節，2026-07-20 命名隨 `model()` 綁定風格拍板統一）
 - **So that** 取得雙輸入框 + 雙月並排 popover 的完整 RangePicker，行為與憲法 §4 Range Selection 狀態機一致
 
 ### Story 3（複製模式消費者）
@@ -100,7 +100,18 @@ related_adrs: []
 - **I want to** 透過 `format` input 覆寫預設顯示格式
 - **So that** Input 欄位顯示的字串符合我的地區/產品慣例，呼應憲法 I5「100% 可覆寫」不變量
 
-**Acceptance Criteria 細節（Given/When/Then）**：TODO，待使用者審查上述故事方向後，由主 Claude 或下一輪訪談補齊。
+**Acceptance Criteria 細節（Given/When/Then，2026-07-20 補齊並拍板）**：
+
+- Story 1：Given 未提供 `format` input，when 元件初始化並選取某天，then Input 顯示 `DEFAULT_DATE_FORMAT_CONFIG` 格式化字串（見第 6 節），Overlay 內容符合 engine 既有 WAI-ARIA 屬性（沿用 `.claude/prds/date-picker.md` M4 驗收）
+- Story 1：Given Input 取得焦點，when 尚未點擊任何日期，then Overlay 開啟且焦點落在網格內今天或已選取日期
+- Story 2：Given `<sanring-date-range-picker>` 綁定 `[(selectedRange)]`，when 使用者完成起訖點選取，then `selectedRange` 更新為 `{ start, end }`，雙輸入框分別顯示對應格式化字串
+- Story 2：Given Range Draft 進行中，when 使用者點擊 Overlay 外部，then 呼叫 `abortRangeDraft()`，Draft 回溯、Overlay 關閉，兩個輸入框維持中止前的舊值
+- Story 3：Given 開發者依文件複製原始碼進自己專案，when 直接改動樣式/markup，then 元件行為（狀態機/鍵盤/a11y）不受影響，因為所有業務邏輯仍委派給 `@sanring/date-picker`（複製的只是外殼）
+- Story 4：Given 消費端提供自訂 `format` input（例如 `dd/MM/yyyy`），when 元件渲染已選取日期，then Input 顯示字串符合自訂格式，且手動輸入符合該格式的字串可被 `parse` 正確解析回 `Date`
+
+## 4a. 元件間共用邏輯（AI 分析，✅ 2026-07-20 隨整份草稿一併確認）
+
+`DatePickerComponent`／`DateRangePickerComponent` 共用的「Input 格式化/解析、Overlay 開關、focus 管理」邏輯，實作時建議抽成內部（非 public API）的 composable/service，避免兩個元件各自重複一份 Overlay 生命週期管理程式碼；此為實作細節，不影響本節已定案的 Public API 形狀。
 
 ## 5. 技術選型 (Tech Stack)
 
@@ -126,7 +137,7 @@ related_adrs: []
 
 ## 6. 資料模型 (Data Model)
 
-> 🔶 **AI 草稿，待使用者確認** —— 以下型別草案重用 engine 已定義的 Public Domain Types（`.claude/prds/date-picker.md` §6），未經使用者逐條確認。
+> ✅ **2026-07-20 使用者確認拍板**。型別重用 engine 已定義的 Public Domain Types（`.claude/prds/date-picker.md` §6）。
 
 ```typescript
 // --- 沿用 engine 既有型別（不重新定義，直接 import） ---
@@ -143,6 +154,22 @@ export interface DateFormatConfig {
   parse: (value: string) => Date | null;
 }
 
+/**
+ * `format` input 未提供時的內建預設值（2026-07-20 拍板：提供合理預設，而非
+ * 比照 `CALENDAR_LOCALE` 的 Zero-default 強制注入）。用 date-fns 實作，格式
+ * 固定為 ISO `yyyy-MM-dd`——刻意不跟隨 `CalendarLocale` 動態變化，因為
+ * locale 只決定「月曆怎麼顯示」，不隱含「Input 字串格式該用哪種」，兩者是
+ * 兩個獨立維度；消費端若要在地化字串格式，透過覆寫 `format` input 自行決定。
+ * 100% 可覆寫（憲法 I5），不影響 engine 的 Date 資料契約本身。
+ */
+export const DEFAULT_DATE_FORMAT_CONFIG: DateFormatConfig = {
+  format: (date) => formatDate(date, 'yyyy-MM-dd'), // date-fns format()
+  parse: (value) => {
+    const parsed = parseDate(value, 'yyyy-MM-dd', new Date()); // date-fns parse()
+    return isValid(parsed) ? parsed : null;
+  },
+};
+
 export interface DatePickerWidgetTheme {
   /** CSS Custom Properties 覆寫（黑盒安裝模式使用，見第 5 節） */
   [cssVariable: `--sanring-dp-${string}`]: string;
@@ -151,19 +178,46 @@ export interface DatePickerWidgetTheme {
 
 ## 7. API 契約 (API Contract)
 
-> 🔶 **AI 草稿，待使用者確認**。
+> ✅ **2026-07-20 使用者確認拍板**。綁定風格用 `model()` 雙向綁定；engine 設定（disabled/locale/today 等）由 widget 自己包一層 Input 轉呼叫 engine，消費端不需碰 DI token；selector 命名維持草案。下方完整 Input/Output 清單依此四項決策展開，含 AI 自行判斷並經使用者確認的兩點（`monthsToDisplay` 預設 2、Overlay 錨定定位）。
+
+### `DatePickerComponent`（selector `sanring-date-picker`，✅ 命名已拍板）
+
+| Signal | 方向 | 型別 | 預設 | 說明 |
+|---|---|---|---|---|
+| `selectedDate` | `model()` 雙向 | `Date \| null` | `null` | 對應 engine `selectedDate`/`selectDate()`；`[(selectedDate)]` |
+| `locale` | `input.required()` | `CalendarLocale` | 無（Zero-default，比照 engine `CALENDAR_LOCALE`） | 轉呼叫 engine 對應注入，未提供時 Angular 拋錯，不靜默套用預設 |
+| `disabled` | `input()` | `DisabledInput \| undefined` | `undefined` | 轉呼叫 `CalendarEngine.setDisabled()` |
+| `allowDeselect` | `input()` | `boolean` | `false` | 轉呼叫 `CalendarEngine.setAllowDeselect()`（沿用 engine 既有預設） |
+| `today` | `input()` | `Date \| undefined` | 未提供時委由 engine 退回 `CALENDAR_TODAY`/`new Date()`（Decision 4） | 供測試/SSR 固定「今天」使用 |
+| `format` | `input()` | `DateFormatConfig` | `DEFAULT_DATE_FORMAT_CONFIG`（見第 6 節） | Input 欄位格式化/解析設定 |
+| `placeholder` | `input()` | `string` | `''` | Input 無值時顯示 |
+| `openedChange` | `output()` | `boolean` | — | Overlay 開關狀態變化，供消費端做額外 UI 聯動（非必要監聽） |
+
+### `DateRangePickerComponent`（selector `sanring-date-range-picker`，✅ 命名已拍板）
+
+同 `DatePickerComponent` 的 `locale`/`disabled`/`today`/`format`/`placeholder`/`openedChange`，另外：
+
+| Signal | 方向 | 型別 | 預設 | 說明 |
+|---|---|---|---|---|
+| `selectedRange` | `model()` 雙向 | `DateRange` | `EMPTY_RANGE`（沿用 engine 定義） | `[(selectedRange)]` |
+| `rangeDayCountLimit` | `input()` | `RangeDayCountLimit \| undefined` | `undefined`（Zero-default，同 engine R8） | 轉呼叫 `CalendarEngine.setRangeDayCountLimit()` |
+| `monthsToDisplay` | `input()` | `number` | `2` | 轉呼叫 `CalendarEngine.setMonthsToDisplay()`；Widget 層預設雙月並排（Engine 本身預設 1，此為 Widget UX 決定，非 engine 行為變更） |
+
+### 共用型別
 
 | 匯出符號 | 型別 | 用途 | 已知約束 |
 |---|---|---|---|
-| `DatePickerComponent`（暫定選擇器 `sanring-date-picker`） | Standalone Component | Single 模式黑盒元件，內部組裝 `CalendarEngine` + CDK Overlay + Input | 內部實作只能呼叫 engine `.claude/prds/date-picker.md` §7 列出的 Public API Surface（憲法 R5） |
-| `DateRangePickerComponent`（暫定選擇器 `sanring-date-range-picker`） | Standalone Component | Range 模式黑盒元件 | 同上 |
 | `DateFormatConfig` | Interface | 格式化/解析設定，見第 6 節 | 憲法 I5：預設值必須可覆寫 |
+| `DEFAULT_DATE_FORMAT_CONFIG` | `DateFormatConfig` 常數 | `format` input 的內建預設值，見第 6 節 | 2026-07-20 拍板 |
+| `DatePickerWidgetTheme` | Interface | CSS Custom Properties 型別提示，見第 6 節 | 非執行期強制，純 TS 型別輔助 |
 
-TODO：完整 Input/Output signal 清單、預設 `DateFormatConfig` 內容、CDK Overlay 定位策略細節——待下一輪訪談或使用者直接補充。
+### Overlay 定位（AI 決定，✅ 2026-07-20 使用者確認）
+
+錨定到觸發用的 Input 元素（CDK `flexibleConnectedTo`），預設偏好 `bottom-start`，空間不足時自動翻轉 `top-start`；`hasBackdrop: true`，backdrop click／Range 模式下 Draft 中 backdrop click 呼叫 `abortRangeDraft()`（§3 已拍板範圍），Escape 鍵語意沿用 engine `CalendarGridDirective` 既有行為（Draft 中止／非 Draft 不消費事件，讓外層決定是否連動關閉 Overlay）。W0 骨架用的是 global-center 定位（純驗證 Overlay 生命週期），W1 開始才會換成這裡描述的錨定策略——這裡先寫下來避免 W1 動工時才臨時決定。
 
 ## 8. UI 流程 (UI Flow)
 
-> 🔶 **AI 草稿，待使用者確認**。
+> ✅ **2026-07-20 使用者確認拍板**（原為 AI 草稿）。
 
 | 狀態 | Single/Range 共通行為 |
 |---|---|
@@ -172,11 +226,11 @@ TODO：完整 Input/Output signal 清單、預設 `DateFormatConfig` 內容、CD
 | Error | 使用者於 Input 手動輸入無法被 `DateFormatConfig.parse` 解析的字串時，顯示驗證錯誤狀態（非阻斷式，不清空既有 `selectedDate`） |
 | Success | 已選取日期正確顯示於 Input，Overlay 正確關閉，聚焦回 Input |
 
-TODO：實際 error 狀態的 ARIA live region 文案、視覺樣式細節——待下一輪訪談。
+TODO（小項，不擋 W1 開工）：實際 error 狀態的 ARIA live region 文案、視覺樣式細節——留待 W1 實作時一併決定，非架構性決策。
 
 ## 9. 風險與相依 (Risks & Dependencies)
 
-> 🔶 **AI 草稿，待使用者確認**。
+> ✅ **2026-07-20 使用者確認拍板**（原為 AI 草稿）。
 
 ### 風險
 
@@ -194,7 +248,7 @@ TODO：實際 error 狀態的 ARIA live region 文案、視覺樣式細節——
 
 ## 10. 里程碑 (Milestones)
 
-> 🔶 **AI 草稿，待使用者確認**。草案參考 engine PRD 的 Vertical Slice 排序原則。
+> ✅ **2026-07-20 使用者確認拍板**（原為 AI 草稿）。草案參考 engine PRD 的 Vertical Slice 排序原則。
 
 | Milestone | 內容 | 驗收門檻（草案） |
 |---|---|---|
@@ -208,9 +262,9 @@ TODO：實際 error 狀態的 ARIA live region 文案、視覺樣式細節——
 
 ## 11. 後續追蹤 (Follow-ups)
 
-> 🔶 **AI 草稿，待使用者確認**。
+> ✅ **2026-07-20 使用者確認拍板**（原為 AI 草稿）。
 
-- 待團隊確定投入時程後，針對第 5 節標 TODO 的技術選型（monorepo 結構、測試框架、版本發布策略）與第 4/7/8 節細節，回頭走一輪聚焦訪談補齊。
+- ~~待團隊確定投入時程後，針對第 5 節標 TODO 的技術選型...與第 4/7/8 節細節，回頭走一輪聚焦訪談補齊~~ —— 已於 2026-07-20 完成，見第 12 節。
 - 上線後追蹤：黑盒安裝與複製模式兩者的實際採用比例，作為未來是否投資 CLI 工具（比照 shadcn）的決策依據。
 
 ## 12. 開放問題 (Open Questions)
@@ -218,11 +272,11 @@ TODO：實際 error 狀態的 ARIA live region 文案、視覺樣式細節——
 - [x] Monorepo 結構：新套件加入現有 Angular workspace（`projects/date-picker-widget`）還是獨立 repo？→ **加入現有 workspace**（2026-07-20 拍板，見第 5 節）
 - [x] 測試框架是否沿用 Vitest？→ **是**（2026-07-20 拍板，見第 5 節）
 - [x] 套件版本/發布策略是否與 engine 版本鎖定同步？→ **不鎖定，獨立版號**（2026-07-20 拍板，見第 5 節）
-- [ ] User Stories 完整 Acceptance Criteria（第 4 節，AI 草稿待確認）
-- [ ] API 契約完整 Input/Output signal 清單、預設 `DateFormatConfig` 內容（第 7 節，AI 草稿待確認）
-- [ ] UI Flow error 狀態文案/樣式細節（第 8 節，AI 草稿待確認）
-- [ ] 風險清單、里程碑分期（第 9-10 節，AI 草稿待確認）
-- [ ] 何時啟動下一輪訪談補齊上述 TODO？取決於團隊資源投入時程。
+- [x] 元件綁定風格 → **`model()` 雙向綁定**（2026-07-20 拍板，見第 7 節）
+- [x] engine 設定（disabled/locale/today）轉接方式 → **widget 自己包一層 Input**（2026-07-20 拍板，見第 7 節）
+- [x] `DateFormatConfig` 是否有預設值 → **提供合理預設（ISO `yyyy-MM-dd`）**（2026-07-20 拍板，見第 6 節 `DEFAULT_DATE_FORMAT_CONFIG`）
+- [x] 元件 selector 命名 → **維持 `sanring-date-picker`／`sanring-date-range-picker`**（2026-07-20 拍板，見第 7 節）
+- [x] 第 4/4a/6/7/8/9/10/11 節整份草稿（含 AI 自行判斷的 Range `monthsToDisplay` 預設 2、Overlay 錨定定位兩點）→ **使用者已於 2026-07-20 確認拍板（「同意，先定案」）**，`status` 轉 `active`（見第 8 節 ARIA live region 文案為僅存的非架構性 TODO，留待 W1 實作時決定）
 - [ ] `time-picker` / `week-picker` 是否排入未來 Milestone？可行性結論見第 3 節「已識別但未排入本輪範圍的功能」——兩者皆確認為 widget-only、不需憲法修訂，僅待業務需求觸發排程。
 
 ---
@@ -239,22 +293,31 @@ TODO：實際 error 狀態的 ARIA live region 文案、視覺樣式細節——
 - shadcn 比喻澄清：AI 提出 4 個候選解讀，使用者選擇「借用消費模式當比喻，非字面 Vue 互通」並補充完整說明
 - 「兩消費模式歸屬憲法或 PRD」：AI 提出 3 個候選，使用者選擇「兩邊都寫：憲法寫承諾，PRD 寫實現」
 - 「R5 在複製模式下是否仍適用」：AI 提出 3 個候選，使用者選擇「仍然成立」
+- （2026-07-20）Monorepo 結構：AI 提出「加入現有 workspace」vs「獨立 repo」，使用者選擇加入現有 workspace
+- （2026-07-20）測試框架：AI 提出「沿用 Vitest」vs「其他框架」，使用者選擇沿用 Vitest
+- （2026-07-20）套件版本策略：AI 提出「獨立版號」vs「鎖定同步 engine 版號」，使用者選擇獨立版號
+- （2026-07-20）元件綁定風格：AI 提出「`model()` 雙向綁定」vs「Input+Output 分離」，使用者選擇 `model()`
+- （2026-07-20）engine 設定轉接方式：AI 提出「widget 包一層 Input」vs「沿用 engine DI Token」，使用者選擇 widget 包一層 Input
+- （2026-07-20）`DateFormatConfig` 預設值：AI 提出「提供合理預設」vs「Zero-default 強制注入」，使用者選擇提供合理預設
+- （2026-07-20）元件 selector 命名：AI 提出「維持草案」vs「改用其他命名」，使用者選擇維持草案
+- （2026-07-20）AI 依上述七項決策把 §4/§4a/§6/§7 展開成具體草稿（Acceptance Criteria、完整 Input/Output 清單、`DEFAULT_DATE_FORMAT_CONFIG` 實作、Overlay 錨定定位策略，含 AI 自行判斷的 `monthsToDisplay` 預設 2 兩點），連同既有 §8-11 AI 草稿一併整份提交使用者審查；使用者回應「同意，先定案」，整份草稿正式拍板。
 
-### 🔶 AI 草稿・尚未經使用者確認（本 PRD 特有標記，非三層 provenance 正式 Tier，需額外標示）
-- §4 使用者故事（含 Acceptance Criteria）
-- §6 資料模型
-- §7 API 契約
-- §8 UI 流程
+### ✅ 原「AI 草稿」章節，已於 2026-07-20 使用者確認拍板
+- §4 使用者故事與 Acceptance Criteria、§4a 元件間共用邏輯
+- §6 資料模型（含 `DatePickerWidgetTheme`、`DEFAULT_DATE_FORMAT_CONFIG`）
+- §7 API 契約（完整 Input/Output signal 清單、Overlay 定位策略）
+- §8 UI 流程（ARIA live region 文案細節為僅存非架構性 TODO，見該節）
 - §9 風險與相依
-- §10 里程碑
+- §10 里程碑（W1-W4 內容/驗收門檻；W0 已實際完成並驗收）
 - §11 後續追蹤
 
-以上章節使用者在訪談中明確表示「先標 TODO，交回主 Claude 擬草稿」，AI 依已拍板的業務規則/技術選型推導出草稿，**但使用者尚未逐條確認**，不可視為拍板內容，`status` 因此維持 `draft` 不轉 `active`。
+以上章節原為使用者在訪談中表示「先標 TODO，交回主 Claude 擬草稿」的內容；2026-07-20 這輪對話中，使用者先就七項會決定 API 形狀的關鍵問題逐一拍板（見上方 T2），AI 依拍板結果展開具體草稿後整份提交審查，使用者確認整份定案，`status` 因此由 `draft` 轉為 `active`。
 
-### 📌 訪談中標 TODO 的章節（未來待訪談，非本輪 AI 草稿範圍）
-- Monorepo 結構、測試框架、版本發布策略（第 5 節）— 使用者未被問到，AI 主動識別為缺口並列入 Open Questions，未替使用者假設答案
+### 📌 訪談中標 TODO 的章節（已於 2026-07-20 收斂，非仍待訪談）
+- Monorepo 結構、測試框架、版本發布策略（第 5 節）— 使用者原未被問到，AI 主動識別為缺口列入 Open Questions；2026-07-20 由使用者拍板收斂，見上方 T2
 
 ### ❌ AI 確定未做
-- 未替 §4/§6-11 的 AI 草稿內容拍板為最終決策——已明確標記 🔶 待確認，且 frontmatter `status` 維持 `draft`
-- 未替使用者假設 monorepo 結構、測試框架、版本策略——標 TODO，未靜默套用任何預設（含未套用 engine PRD 的 Vitest 選擇，僅列為「AI 建議」而非拍板）
+- 未在使用者拍板前，自行替 §4/§6-11 的 AI 草稿內容蓋章定案——2026-07-20 之前全程標記 🔶 待確認、frontmatter `status` 維持 `draft`，直到使用者當面確認整份草稿才轉 `active`
+- 未替使用者假設 monorepo 結構、測試框架、版本策略、元件綁定風格、engine 設定轉接方式、格式預設值、selector 命名——七項皆先列出候選方案讓使用者選，未靜默套用任何預設
 - 未把「shadcn/vue」比喻誤植為字面上與 Vue 生態系互通——訪談中主動要求使用者澄清後才記錄
+- `monthsToDisplay` 預設 2、Overlay 錨定定位兩項雖為 AI 自行判斷（非原七題選項之一），仍主動點名向使用者說明理由並取得明確同意，未夾帶在其他內容中悄悄定案
