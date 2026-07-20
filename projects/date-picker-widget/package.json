@@ -14,7 +14,7 @@
     "@angular/core": "^22.0.0"
   },
   "dependencies": {
-    "@sanring/date-picker": "^0.3.1",
+    "@sanring/date-picker": "^0.4.0",
     "tslib": "^2.3.0"
   },
   "sideEffects": false,
