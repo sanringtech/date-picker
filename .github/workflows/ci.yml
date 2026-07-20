@@ -31,5 +31,11 @@ jobs:
       - name: Unit tests (includes axe-core WAI-ARIA gate)
         run: npm test -- --project date-picker --no-watch
 
+      - name: Unit tests (date-picker-widget)
+        run: npm test -- --project date-picker-widget --no-watch
+
       - name: Build library
         run: npx ng build date-picker
+
+      - name: Build library (date-picker-widget)
+        run: npx ng build date-picker-widget

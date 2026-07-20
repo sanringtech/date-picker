@@ -15,9 +15,10 @@
     "release": "ng build date-picker && npm publish ./dist/date-picker --access public"
   },
   "private": true,
-  "workspaces": ["projects/date-picker"],
+  "workspaces": ["projects/date-picker", "projects/date-picker-widget"],
   "packageManager": "npm@11.16.0",
   "dependencies": {
+    "@angular/cdk": "^22.0.0",
     "@angular/common": "^22.0.0",
     "@angular/compiler": "^22.0.0",
     "@angular/core": "^22.0.0",

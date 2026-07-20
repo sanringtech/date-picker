@@ -1,0 +1,24 @@
+{
+  "name": "@sanring/date-picker-widget",
+  "version": "0.1.0",
+  "description": "Composed Angular DatePicker/RangePicker widget — CDK Overlay + Input assembled on top of @sanring/date-picker",
+  "keywords": ["angular", "calendar", "datepicker", "widget", "overlay"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanring/date-picker.git"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@angular/cdk": "^22.0.0",
+    "@angular/common": "^22.0.0",
+    "@angular/core": "^22.0.0"
+  },
+  "dependencies": {
+    "@sanring/date-picker": "^0.3.1",
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}

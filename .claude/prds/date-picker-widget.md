@@ -112,9 +112,9 @@ related_adrs: []
 | 套件命名/結構 | 新獨立套件 `@sanring/date-picker-widget`（`dependencies` 指向 `@sanring/date-picker`） | ✅ 拍板 | 使用者訪談確認 |
 | 複製模式發布方式 | 只提供文件/repo，讓使用者手動複製；**不**自建 CLI 工具（如 `npx` 指令） | ✅ 拍板 | 使用者訪談確認 |
 | 消費框架/狀態管理/曆法運算 | 沿用 engine 已拍板技術棧：Angular ^22（Standalone + Signals）、date-fns | ✅ 沿用既有拍板（非本輪新決策） | `.claude/prds/date-picker.md` §5；本 PRD 未重新訪談，因為 Composed Widget 直接依賴 `@sanring/date-picker`，技術棧必然一致 |
-| Monorepo 結構（新套件與既有 `projects/date-picker` 是否同一 workspace） | TODO | ❌ 未訪談 | 需另外拍板：新增 `projects/date-picker-widget` library 到現有 Angular workspace，或另開獨立 repo |
-| 測試框架 | TODO | ❌ 未訪談 | 建議沿用既有 Vitest（見 engine PRD §5），但未經使用者確認，不視為拍板 |
-| 套件版本/發布策略（是否與 engine 版本鎖定同步） | TODO | ❌ 未訪談 | — |
+| Monorepo 結構（新套件與既有 `projects/date-picker` 是否同一 workspace） | 加入現有 Angular workspace，新增 `projects/date-picker-widget` library | ✅ 拍板（2026-07-20） | 與 engine 共用 CI/tooling/changesets 基礎建設，開發追 engine 改動較方便 |
+| 測試框架 | 沿用 Vitest（比照 engine PRD §5） | ✅ 拍板（2026-07-20） | 與 engine 一致，測試寫法/CI 設定可直接參考現有 `date-picker` 套件 |
+| 套件版本/發布策略（是否與 engine 版本鎖定同步） | 獨立版號，`package.json` 以相依版本範圍約束 `@sanring/date-picker`，不強制隨 engine 每次發版同步 bump | ✅ 拍板（2026-07-20） | widget 與 engine 各自的變更頻率/穩定性訴求不同，鎖定同步版號會讓「widget 沒改也要跟著 bump」或反過來卡住彼此發版節奏 |
 
 **被拒絕的替代方案（Popover/Input 實作來源，AI 分析・對話中經使用者確認方向）**：
 
@@ -198,7 +198,7 @@ TODO：實際 error 狀態的 ARIA live region 文案、視覺樣式細節——
 
 | Milestone | 內容 | 驗收門檻（草案） |
 |---|---|---|
-| W0 | Workspace/套件骨架建置（`@sanring/date-picker-widget`，依賴 `@sanring/date-picker`）；CDK Overlay 基本串接 | 空殼元件可 build，Overlay 開關可運作 |
+| W0（實際完成 2026-07-20） | Workspace/套件骨架建置（`@sanring/date-picker-widget`，依賴 `@sanring/date-picker`）；CDK Overlay 基本串接 | ✅ 空殼元件可 build（`ng build date-picker-widget`）；✅ `DatePickerOverlayShellComponent` 完成 Overlay create/attach/dispose 開關驗證，5 個單元測試全綠；✅ `ng lint`/`prettier --check` 零違規；沿用既有 workspace（`projects/date-picker-widget`）與 Vitest，獨立版號 `0.1.0` 起跑（未發布） |
 | W1 | Single 模式黑盒元件（`DatePickerComponent`）+ 預設 Tailwind 樣式 + CSS Custom Properties 主題變數 | demo 可安裝黑盒套件並完成單日選取 |
 | W2 | Range 模式黑盒元件（`DateRangePickerComponent`）+ 雙月並排視覺 | demo 可完成區間選取，行為對齊 engine §4 Range 狀態機 |
 | W3 | 複製模式文件與範例 repo（非 CLI 工具，純文件/repo 供手動複製） | 文件涵蓋複製步驟，複製後的元件可獨立運作 |
@@ -215,9 +215,9 @@ TODO：實際 error 狀態的 ARIA live region 文案、視覺樣式細節——
 
 ## 12. 開放問題 (Open Questions)
 
-- [ ] Monorepo 結構：新套件加入現有 Angular workspace（`projects/date-picker-widget`）還是獨立 repo？（第 5 節，未訪談）
-- [ ] 測試框架是否沿用 Vitest？（第 5 節，未訪談，AI 建議沿用但未拍板）
-- [ ] 套件版本/發布策略是否與 engine 版本鎖定同步？（第 5 節，未訪談）
+- [x] Monorepo 結構：新套件加入現有 Angular workspace（`projects/date-picker-widget`）還是獨立 repo？→ **加入現有 workspace**（2026-07-20 拍板，見第 5 節）
+- [x] 測試框架是否沿用 Vitest？→ **是**（2026-07-20 拍板，見第 5 節）
+- [x] 套件版本/發布策略是否與 engine 版本鎖定同步？→ **不鎖定，獨立版號**（2026-07-20 拍板，見第 5 節）
 - [ ] User Stories 完整 Acceptance Criteria（第 4 節，AI 草稿待確認）
 - [ ] API 契約完整 Input/Output signal 清單、預設 `DateFormatConfig` 內容（第 7 節，AI 草稿待確認）
 - [ ] UI Flow error 狀態文案/樣式細節（第 8 節，AI 草稿待確認）

@@ -43,6 +43,42 @@
         }
       }
     },
+    "date-picker-widget": {
+      "projectType": "library",
+      "root": "projects/date-picker-widget",
+      "sourceRoot": "projects/date-picker-widget/src",
+      "prefix": "sanring",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/date-picker-widget/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/date-picker-widget/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/date-picker-widget/tsconfig.spec.json"
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/date-picker-widget/**/*.ts",
+              "projects/date-picker-widget/**/*.html"
+            ],
+            "eslintConfig": "projects/date-picker-widget/eslint.config.js"
+          }
+        }
+      }
+    },
     "demo": {
       "projectType": "application",
       "schematics": {},
