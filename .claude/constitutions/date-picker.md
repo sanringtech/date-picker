@@ -4,7 +4,7 @@ constitution_id: date-picker
 constitution_name: Sanring Headless Date/Calendar Engine
 status: active           # draft | active | superseded | archived
 owner: jack755051
-last_updated: 2026-07-16  # Decision 13/14 追加（Programmatic Value Setting、Range Day-Count Limit）
+last_updated: 2026-07-22  # Decision 15 追加（Time-of-Day 作為複合維度、R9、§4 時間調整）
 scope: date-picker-engine     # Angular headless calendar/date-picker 核心引擎
 related_prds: [date-picker, date-picker-widget]
 supersedes:
@@ -25,6 +25,7 @@ supersedes:
 - **這個領域服務的對象**：打造一個專為 sanring-ui 及其企業專案服務的 Angular Headless 日曆核心引擎，服務對象是「上層開發者」（消費此套件的工程師）以及「終端使用者」（含依賴輔助技術者）。
 - **這個領域要解決的核心問題**：將複雜的曆法運算、狀態機與無障礙導航完全封裝，讓上層開發者能以 Tailwind CSS 自由且無痛地組合出具備極致彈性的 Calendar 與 DatePicker 元件。
 - **服務範圍的時間粒度**（AI 提案・使用者拍板，T2，見 §7 Decision 12，2026-07-15 delta）：本引擎服務範圍不僅限於「日期選取」，而是涵蓋任意時間粒度的選取（日 / 月 / 季 / 年），Single、Range、Multi 三種選取模式對所有粒度一體適用。
+- **時/分作為附加於日期選取之上的複合維度**（AI 提案・使用者拍板，T2 + 使用者親口理由，T1，見 §7 Decision 15，2026-07-22 delta）：本引擎服務範圍額外涵蓋「時/分（Time-of-Day）」，作為附加在日期選取結果之上的第二軸——使用者先完成日期選取，再對已選定的 `selectedDate` 補上時/分，兩者合成一個完整 `Date`。時/分**不是** `Granularity` 的新成員，不取代、不混入日/月/季/年既有的粒度定義（見上一條）。此需求的實際消費端是 sanring-ui 本身（憲法一開始即點名的服務對象，見上方「這個領域服務的對象」），非假設性的未來需求。
 - **明確不在這個領域內的問題**：
   - **非公曆曆法系統**：本引擎專注於標準公曆（Gregorian calendar），明確排除農曆、伊斯蘭曆、佛曆等多重曆法的轉換與渲染支援。
   - **字串解析與格式化 (String Parsing & Formatting)**：本引擎的輸入與輸出只接受且只吐出標準 JavaScript `Date` 物件。將後端 `YYYY-MM-DD` 字串轉為 `Date`，或將選取結果格式化顯示在 Input 上的職責，明確歸屬於外層應用與狀態容器，引擎內部不包裝任何字串處理邏輯。
@@ -49,6 +50,7 @@ supersedes:
 - **R6**（AI 提案・使用者拍板，T2，見 §7 Decision 12，2026-07-15 delta）：網格尺寸依選取粒度而定，不強制套用 R3 的「42 天」規則：月粒度網格固定輸出 12 格（對應一年 12 個月）；季粒度網格固定輸出 4 格（對應一年 4 季）；年粒度網格輸出 N 格，N 的範圍由消費端決定，不由引擎內建固定值。
 - **R7**（AI 提案・使用者拍板，T2，見 §7 Decision 13，2026-07-16 delta）：程式化寫值（如外部直接設定選取值，而非透過使用者互動觸發）與使用者互動路徑必須遵守完全相同的合法性規則：命中 Disabled 規則時一律靜默拒絕、不寫入（呼應 I2），且必須通過與使用者互動路徑相同的 §4 狀態機合法轉換檢查；不存在任何繞過既有業務規則的特權寫入路徑。
 - **R8**（AI 提案・使用者拍板，T2，見 §7 Decision 14，2026-07-16 delta）：Range 選取支援可注入的天數上下限限制（例如「最多選 30 天」），此參數比照 I4 `weekStartsOn` 的 Zero-default 精神，預設無限制，需消費端明確注入才生效；使用者於 Draft 狀態（起點已定、終點未定）選擇超出限制的終點時，該次選取一律被拒絕、終點不提交，Draft 維持在原有起點、等待使用者重新選擇合法終點。
+- **R9**（AI 提案・使用者拍板，T2 + 使用者親口理由，T1，見 §7 Decision 15，2026-07-22 delta）：時/分調整採獨立於日期選取的 Draft/Confirm 機制，並擁有自己獨立的 guard hook（與日期層級的 Disabled Dates 機制 R4 平行、互不合併）；guard hook 命中時比照既有一致性原則（呼應 I2、R7、Decision 13），一律靜默拒絕、時間 Draft 維持原狀不寫入。此機制對 Single/Range/Multi 三種選取模式一體適用：Range 模式起訖點、Multi 模式集合中每一筆日期，各自獨立管理自己的時/分 Draft/Confirm 生命週期，不共用；「多筆選取共用同一時/分」的批次邏輯不屬於 engine 職責，委派給上層應用（呼應 R1）。時/分調整介面須提供與既有日期網格對等的無障礙/鍵盤操作保證；顆粒度精度（如僅小時、或小時+分鐘）須可配置，不得由引擎寫死單一層級。
 
 ## 4. 業務狀態機 (State Machines)
 
@@ -134,6 +136,36 @@ supersedes:
 **備註**：
 - 此節規則對 Single / Range / Multi / 粒度選取（Month/Quarter/Year）一體適用，不分別另立規則。
 - I2（Selected ∩ Disabled = Ø）在此路徑下同樣視為全域恆等式，不因寫值來源不同而放寬（見 §5 I2 更新註記）。
+
+### 時間調整 (Time Adjustment，AI 提案・使用者拍板，T2 + 使用者親口理由，T1，見 §7 Decision 15，2026-07-22 delta)
+
+```
+[已選取日期，時間分量 = 00:00:00 或前次 committed 值] ──調整時/分──> [時間 Draft：暫定新值，尚未提交]
+[時間 Draft] ──confirm──> [已選取日期，時間分量更新為 Draft 值（committed）]
+[時間 Draft] ──中止（未 confirm 即離開）──> [已選取日期，時間分量回溯到 Draft 產生前的 committed 舊值，Draft 銷毀]
+```
+
+**合法轉換**：
+- 已選取日期 → 時間 Draft：使用者開始調整時/分
+- 時間 Draft → 已選取日期（新值提交）：confirm
+- 時間 Draft → 已選取日期（回溯舊值）：中止事件——比照 §4 Range Selection、§7 Decision 3 既有「未完成交易視為從未發生」精神
+
+**業務語意**：
+- 時/分是複合於日期選取之上的第二軸，不是獨立於日期存在的選取值；沒有日期被選取時，時/分調整不適用（無從產生 Draft）。
+- 時/分調整（示意用語 `updateTime`，非最終方法名）是獨立於 `selectDate()` 的合法轉換，不等同重新觸發一次日期選取，不影響已選定的日期本身（見 R9）。
+- 時/分 guard hook 命中時，一律靜默拒絕、時間 Draft 維持原狀，等待使用者重新調整合法值——與命中 Disabled Dates 規則時的拒絕邏輯一致（呼應 I2、R7、Decision 13）。
+
+**適用範圍與模式差異**：
+- Single 模式：`selectedDate` 的時/分即為上述狀態機描述的唯一實體。
+- Range 模式：起點與終點的時/分各自獨立，各自擁有獨立的 Draft/Confirm 生命週期，互不影響。
+- Multi 模式：選取集合中每一筆日期各自獨立擁有自己的時/分 Draft/Confirm 生命週期，不共用。
+- 「多筆選取共用同一時/分」（例如批次套用同一時段）不在 engine 職責範圍內，委派給上層應用自行實作（呼應 R1）。
+
+**備註**：
+- 精度顆粒度（僅小時 / 小時+分鐘 / 是否含秒）須可配置，engine 不得寫死單一精度層級（使用者親口追加要求，見 R9）。
+- 時/分調整介面須提供與既有日期網格對等的無障礙/鍵盤操作保證，不因為是新軸線而降低無障礙水準（使用者親口追加要求，呼應 §7 Decision 6 既有無障礙精神）。
+- 時/分不做任何時區猜測或 UTC 強制轉換，比照 §1 既有「跨時區動態換算不在服務範圍內」原則延伸適用（使用者親口追加要求，另見 §9）。
+- 具體方法命名（`updateTime()`/`confirmTime()`/`abortTimeDraft()` 等）、guard hook 型別簽章、精度參數形狀（enum vs numeric step）、engine 架構落地方式（併入既有 `CalendarEngine`/`GranularityPickerEngine` 或獨立模組，比照 Decision 12 先例）——皆屬技術實作細節，留待 PRD/ADR 階段定義，不寫入憲法。
 
 ## 5. 不可變約束 (Invariants)
 
@@ -336,6 +368,36 @@ supersedes:
 
 - **註記**：此參數的具體命名（如 `minRangeDays`/`maxRangeDays`）、注入機制（Signal input vs setter 方法）屬於技術實作細節，留待 PRD 階段定義，不寫入憲法。
 
+### Decision 15: 新增時/分（Time-of-Day）作為附加於日期選取之上的複合維度（AI 提案・使用者拍板，T2 + 使用者親口理由，T1，2026-07-22 delta）
+
+- **決策**：
+  1. **定位為複合維度，非新粒度**：時/分是附加在日期選取之上的第二軸，不是 `Granularity` 的新成員——使用者先完成日期選取（日粒度），再對已選定的 `selectedDate` 補上時/分，兩者合成一個完整 `Date`（見 §1、§7 Decision 12 對照）。
+  2. **預設值**：時/分調整前，`selectedDate` 的時間分量預設為 `00:00:00`。
+  3. **Draft/Confirm 機制**：時/分調整先寫入獨立的時間 Draft，只有明確 confirm 後才提交、覆寫 `selectedDate` 的時間分量；未 confirm 前中止，比照 §4 Range Selection、§7 Decision 3 既有精神，時間 Draft 一律作廢，回到中止前的 committed 舊值（見新增 §4 時間調整）。
+  4. **獨立合法轉換**：時/分調整是獨立於 `selectDate()` 之外的合法狀態轉換，不等同重新觸發一次日期選取。
+  5. **獨立 guard hook**：時/分擁有自己獨立的禁用判斷（guard hook），與日期層級的 Disabled Dates 機制（R4）平行、互不合併；engine 不在此 guard hook 內建任何商業規則（例如「不能選過去時段」），比照 §9 Zero Opinion 精神完全委派給外殼。guard hook 命中時，比照 I2/R7/Decision 13 既有一致性原則，一律靜默拒絕、時間 Draft 不變。
+  6. **模式適用範圍**：Single/Range/Multi 三種選取模式一體適用；Range 模式起訖點的時/分各自獨立管理；Multi 模式選取集合中每一筆日期各自獨立擁有自己的時/分，不共用。
+  7. **共用時間不進 engine core**：「多筆選取共用同一時/分」（例如 Multi 模式批次套用同一時段）不屬於 engine 職責，委派給上層應用自行實作批次邏輯（呼應 R1）。
+  8. **追加業務要求**（使用者親口列出）：
+     - 時/分調整介面須提供與既有日期網格對等的無障礙/鍵盤操作保證，不因為是新軸線而降低無障礙水準。
+     - 時/分的顆粒度精度須可配置（例如僅到小時、或到小時+分鐘），engine 不得寫死單一精度層級。
+     - 時/分同樣不做任何時區猜測或 UTC 強制轉換，比照 §1 既有「跨時區動態換算不在服務範圍內」原則延伸適用。
+  9. **新增 R9**（見 §3）將本決策核心規則升格為正式 Rule。
+
+- **理由**（使用者原話，T1，回應本輪對話中「engine 是否該補上時/分」的訪談提問）：
+  > sanring/ui 是憲法 §1 點名的服務對象本人，不是假設性的第二消費者，這個需求現在就存在，不是預先設計。
+
+  補充脈絡：本輪訪談前段一度把「Composed Widget 層」（`@sanring/date-picker-widget`，服務於 sanring-ui 之外的獨立消費者，見 §7 Decision 9）與 sanring-ui 本身（憲法 §1 開宗明義點名的服務對象，透過 headless primitive 直接消費 engine 組裝自己的 DatePicker/Calendar）混為一談，AI 一度誤判時/分需求屬於「沒有具體消費者的預先設計」。使用者澄清後，時/分需求的實際消費端確認是 sanring-ui 本身——這是憲法從一開始就承諾服務的既有對象（呼應 §1「這個領域服務的對象」原文），不是需要額外驗證的假設性未來需求，因此判斷理由與 Decision 12（比照 vue3-datepicker 完整功能集）性質相通：目標消費者的真實需求變化支撐服務範圍擴大。
+
+- **替代方案（拒絕）**：
+  - 選項「時/分作為 `Granularity` 的新成員（獨立粒度，比照 day/month/quarter/year）」——拒絕，使用者選擇複合維度模式，日期與時/分是分開但可組合的兩軸，不是取代或並列日期粒度的第五種選項。
+  - 選項「時/分共用日期層級既有的 Disabled Dates guard」——拒絕，使用者選擇時/分擁有獨立 guard hook，與 R4 機制平行存在，不合併判斷邏輯。
+  - 選項「時/分中止行為與日期 Draft 不同（例如保留未確認的草稿供下次接續）」——拒絕，使用者選擇比照既有 Decision 3 Range Draft 精神，未 confirm 一律作廢回溯舊值，維持行為一致性、避免幽靈草稿。
+  - 選項「Range/Multi 模式下時/分共用單一值」——拒絕，使用者選擇 Range 起訖點各自獨立、Multi 集合中每筆各自獨立；「共用」邏輯留給上層批次功能自行實作，不進 engine core。
+  - 選項「時/分放 Composed Widget 層而非 engine」（本輪訪談前段的初始方向）——拒絕，使用者澄清實際消費端是 sanring-ui 本身，需要 engine 層提供可重用的狀態機，Widget 層路徑無法滿足「多個 headless 組件重用同一套時/分邏輯」的需求。
+
+- **註記**：Draft/Confirm 機制與 guard hook 的具體型別命名、precision granularity 參數形狀（enum vs numeric step）、engine 架構落地方式（併入既有 `CalendarEngine`/`GranularityPickerEngine` 或獨立模組，比照 Decision 12 `GranularityPickerEngine` 先例）、時/分是否新增 Glossary 正式術語——皆屬技術實作細節，留待 PRD/ADR 階段定義，不寫入憲法（比照 Decision 12 先例，本次不新增 Glossary 術語）。
+
 ## 8. 取消 / 沖銷 / 退回的規矩 (Reversal Semantics)
 
 - **清空選取（Clear Selection）**：屬於完全合法的業務事件。系統必須允許使用者（或外部 API）觸發清空指令，這會將 `selectedDate` 重置為 `null` 或未選取狀態。**核心約束**：清空選取絕對不能連帶重置 `viewDate`（即日曆畫面不能因為清空而擅自跳回預設月份或今天）。
@@ -348,6 +410,7 @@ supersedes:
   - 後備機制：只有在外殼未明確提供此基準時，引擎才會退而求其次，讀取當前執行環境的 `new Date()` 作為「今天」。
   - 引擎邊界（免責聲明）：引擎內部絕對不實作任何 SSR 偵測或 Hydration 延遲補償機制。解決伺服器與客戶端時區不一致的職責，完全歸屬於呼叫端（應用程式開發者）。
 - **預設邊界的「零立場」（Zero Opinion）**：本引擎內建零業務立場。預設情況下，時間軸是無限的，沒有「不能選取過去」或「不能選取週末」的內建規則。系統將所有的時效性判斷與邊界限制（如 `minDate`、`maxDate`）100% 委派給外殼透過 Disabled Dates API 來決定。引擎只負責執行「判斷該日期是否落在傳入的禁用規則中」，不擁有自己的時間邊界意志。
+- **時/分同樣不做時區猜測（AI 提案・使用者拍板，T2，見 §7 Decision 15，2026-07-22 delta）**：時/分調整的輸出值比照日期分量的本地時區信任原則（見 §1 跨時區動態換算排除項）——不做任何時區猜測或 UTC 強制轉換，永遠信任傳入 `Date` 物件所帶有的本地系統時區。
 
 ## 10. 開放問題 (Open Questions)
 
@@ -362,6 +425,7 @@ supersedes:
 > - 多月聯動與高階視圖服務範圍 → §1 Out of Scope / §7 Decision 8
 > - 程式化寫值與 Disabled/狀態機的合法性一致性（2026-07-16 delta）→ §3 R7 / §4 程式化寫值 / §7 Decision 13
 > - Range 天數上下限限制（2026-07-16 delta）→ §3 R8 / §4 Range Selection / §7 Decision 14
+> - 時/分（Time-of-Day）作為複合維度、Draft/Confirm 機制、獨立 guard hook（2026-07-22 delta）→ §1 / §3 R9 / §4 時間調整 / §7 Decision 15 / §9
 >
 > 若後續實作或 PRD 階段浮現新的業務規則問題，回來這個章節新增 TODO。
 
@@ -393,6 +457,9 @@ supersedes:
 - §7 Decision 9 理由段落：使用者針對「Composed 層是否可碰 engine 內部 API」的完整原話論證（拒絕特權後門、拒絕雙重標準、要求升格為正式 Rule R5 的理由）
 - §7 Decision 10 理由段落：使用者針對「為何 Composed Widget 需同時支援 npm 黑盒與 shadcn 複製所有權轉移兩種消費模式」的完整原話論證（兩模式同源於「不鎖死使用者」核心承諾，呼應 R1 與 I5）
 - §4/§7 Decision 12 季度起始月參數：使用者主動補充「額外在這套通用規則裡加一個像 weekStartsOn 那樣的可注入參數（例如『季度起始月』），專門處理季度定義的歧義，而不是為了這一個小差異就把整套規則拆成三份重複的東西」（原話）
+- §1/§7 Decision 15 拍板理由：「sanring/ui 是憲法 §1 點名的服務對象本人，不是假設性的第二消費者，這個需求現在就存在，不是預先設計」（原話，回應時/分需求該放 engine 還是 Widget 的訪談澄清）
+- §4/§7 Decision 15 時間調整細節：使用者親口回答「預設時間 00:00:00；寫入機制為 draft 先變、confirm 才 commit；時分有獨立 guard hook、engine 不內建商業規則；`updateTime` 是獨立的合法 transition，不等同重新呼叫 `selectDate()`」（原話）
+- §4/§7 Decision 15 模式適用範圍：使用者親口回答「Single/Range/Multi 全部適用；Range 的 start/end 各自獨立；Multi 集合中每個 item 各自獨立；未 confirm 的 time draft 一律作廢、回到 committed 舊值；多筆共用同一時間的批次邏輯不放 engine core，交給上層」（原話）
 
 ### ⚠️ AI 改寫成 invariant 形式（內容對應使用者原話）
 - 無——使用者本次回答已直接以斷言式（assertive）業務規則格式提供，AI 僅做章節歸位，未改寫用詞。
@@ -428,6 +495,15 @@ supersedes:
 - §3/§7 Decision 14（Range 天數限制應開新 Rule 或套用 Disabled Dates 機制）：AI 提出 2 個候選（開獨立新 Rule / 用 Disabled Dates 機制組合表達）+ 推薦「開獨立新 Rule」，使用者選擇推薦選項
 - §3/§7 Decision 14（天數限制參數是否強制注入或有預設）：AI 提出 2 個候選（預設無限制,需要才注入 / 強制注入比照 CALENDAR_LOCALE）+ 推薦「預設無限制」，使用者選擇推薦選項
 - §4/§7 Decision 14（Draft 狀態下終點超出天數限制時的處理）：AI 提出 3 個候選（拒絕該次選取,終點不提交 / 自動 clamp 到上限對應日期 / 視為新起點重新開始 Draft）+ 推薦「拒絕該次選取」，使用者選擇推薦選項
+- §1/§7 Decision 15（時/分在 engine 裡的定位）：AI 提出 3 個候選（獨立粒度，比照 day/month/quarter/year / 複合維度，附加於日期之上 / 兩者都要）+ 未特別推薦，使用者選擇「選項 2：複合維度」
+- §3/§4/§7 Decision 15（時/分 guard hook 命中時的拒絕行為）：AI 提出「比照既有 I2/R7/Decision 13 一致性原則，靜默拒絕」作為對照選項，使用者確認採用「靜默拒絕，draft 不變」
+- §4/§7 Decision 15（時/分 Draft 中止行為）：AI 提出「是否比照 Decision 3 Range Draft 中止即作廢的既有精神」作為對照問題，使用者確認採用「未 confirm 的 time draft 一律作廢，回到 committed 舊值」
+
+### 🔶 AI 依使用者關鍵字展開為條文（需使用者最終覆核字句，非逐字提案選擇）
+- §3 R9/§4/§7 Decision 15「a11y keyboard」：使用者親口列出關鍵字「a11y keyboard」，AI 展開為「時/分調整介面須提供與既有日期網格對等的無障礙/鍵盤操作保證，不因為是新軸線而降低無障礙水準」，具體鍵盤互動對應表留待 PRD 定義
+- §3 R9/§4/§7 Decision 15「precision granularity」：使用者親口列出關鍵字「precision granularity」，AI 展開為「顆粒度精度（如僅小時、或小時+分鐘）須可配置，engine 不得寫死單一精度層級」，具體參數形狀（enum vs numeric step）留待 PRD 定義
+- §4/§7/§9 Decision 15「timezone no-guessing」：使用者親口列出關鍵字「timezone no-guessing」，AI 展開為「時/分不做任何時區猜測或 UTC 強制轉換，比照 §1 既有跨時區動態換算排除項延伸適用」，並同步加註 §9
+- **審查提醒**：以上三條字句由 AI 展開、使用者尚未逐字覆核最終文字，性質介於 T2（有具體關鍵字錨定，非憑空生成）與需要業務 owner 二次確認之間；若展開後的措辭與原意有落差，請直接修改對應段落。
 
 ### ✅ 使用者自擬決策（自行提出「選項 + 決策 + 理由」，AI 僅拆分業務本質與技術細節後歸位，T1）
 - §3 R4 / §7 Decision 5：Disabled Dates 統一匹配原則（使用者原話提出「選項 B：萬能匹配器」並自行寫出決策與理由；`Matcher` 型別/`@Input()` 綁定等技術命名已拆出，留給 PRD）
