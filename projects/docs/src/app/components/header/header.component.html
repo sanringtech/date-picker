@@ -1,0 +1,19 @@
+<header class="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
+  <div class="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
+    <app-logo />
+
+    <div class="flex items-center gap-2">
+      <app-navigation />
+      <button
+        sanringBtn
+        variant="outline"
+        size="icon"
+        type="button"
+        [attr.aria-label]="isDark() ? '切換為淺色模式' : '切換為深色模式'"
+        (click)="toggleTheme()"
+      >
+        {{ isDark() ? '☀' : '☾' }}
+      </button>
+    </div>
+  </div>
+</header>

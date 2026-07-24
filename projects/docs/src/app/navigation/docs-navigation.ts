@@ -9,6 +9,16 @@ export interface DocsNavItem {
   readonly badge?: 'wip' | 'soon';
 }
 
+export interface DocsTopNavItem {
+  readonly label: string;
+  readonly path: string;
+}
+
+export const docsTopNavItems: readonly DocsTopNavItem[] = [
+  { label: 'Engine', path: '/engine' },
+  { label: 'Widget', path: '/widget' },
+];
+
 export const docsNavSections: readonly DocsNavSection[] = [
   {
     label: 'Engine',

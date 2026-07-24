@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ButtonDirective } from '../../components/ui/button';
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink],
+  imports: [RouterLink, ButtonDirective],
   template: `
     <div class="mx-auto max-w-5xl px-6 py-20">
       <div class="max-w-2xl">
@@ -18,15 +19,15 @@ import { RouterLink } from '@angular/router';
 
         <div class="flex gap-3">
           <a
+            sanringBtn
+            variant="default"
+            size="md"
             routerLink="/engine/calendar"
-            class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground no-underline transition-opacity hover:opacity-90"
+            class="no-underline"
           >
             開始使用 Engine
           </a>
-          <a
-            routerLink="/engine"
-            class="rounded-lg border border-border px-5 py-2.5 text-sm font-semibold text-foreground no-underline transition-colors hover:bg-surface"
-          >
+          <a sanringBtn variant="outline" size="md" routerLink="/engine" class="no-underline">
             Engine 總覽
           </a>
         </div>

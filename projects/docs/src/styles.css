@@ -22,6 +22,8 @@ body {
   font-family: var(--sanring-font-sans);
 }
 
-a {
-  color: inherit;
+@layer base {
+  a {
+    color: inherit;
+  }
 }

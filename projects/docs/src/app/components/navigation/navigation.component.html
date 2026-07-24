@@ -1,0 +1,16 @@
+<nav class="flex items-center gap-1">
+  @for (item of items; track item.path) {
+    <a
+      sanringBtn
+      variant="ghost"
+      size="sm"
+      [routerLink]="item.path"
+      routerLinkActive
+      #rla="routerLinkActive"
+      [routerLinkActiveOptions]="{ exact: false }"
+      [class]="rla.isActive ? 'bg-surface-strong text-foreground' : 'text-muted'"
+    >
+      {{ item.label }}
+    </a>
+  }
+</nav>
