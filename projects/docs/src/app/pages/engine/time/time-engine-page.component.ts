@@ -6,7 +6,7 @@ import {
   LucideChevronRight,
   LucideChevronUp,
 } from '@lucide/angular';
-import { CALENDAR_LOCALE, CalendarGridDirective } from '@sanring/date-picker';
+import { CALENDAR_LOCALE, CalendarGridDirective, TimeAdjustmentEngine } from '@sanring/date-picker';
 import type { CalendarDay } from '@sanring/date-picker';
 import { ButtonDirective } from '../../../components/ui/button';
 import {
@@ -32,19 +32,23 @@ type TimeHourCycle = 'h12' | 'h24';
     LucideChevronUp,
     LucideChevronDown,
   ],
+  providers: [TimeAdjustmentEngine],
   templateUrl: './time-engine-page.component.html',
 })
 export class TimeEnginePageComponent {
   private readonly locale = inject(CALENDAR_LOCALE);
   private readonly gridDirective = viewChild.required(CalendarGridDirective);
+  protected readonly timeEngine = inject(TimeAdjustmentEngine);
 
-  protected get engine() {
+  protected get calEngine() {
     return this.gridDirective().engine;
   }
 
-  protected readonly draftHours = signal(9);
+  // UI draft signals (display only — TimeAdjustmentEngine holds the real draft state)
+  protected readonly draftHours = signal(0);
   protected readonly draftMinutes = signal(0);
   protected readonly hourCycle = signal<TimeHourCycle>('h24');
+  protected readonly hasDraft = signal(false);
 
   protected readonly weekdayLabels = computed(() => [
     ...this.locale.weekdayLabels.slice(this.locale.weekStartsOn),
@@ -60,7 +64,7 @@ export class TimeEnginePageComponent {
 
   protected readonly format = format;
 
-  // Standalone time picker state
+  // Standalone time picker state (no engine involved — pure UI demo)
   protected readonly standaloneDraftHours = signal(9);
   protected readonly standaloneDraftMinutes = signal(30);
   protected readonly standaloneHourCycle = signal<TimeHourCycle>('h24');
@@ -81,18 +85,23 @@ export class TimeEnginePageComponent {
     return format(d, pattern);
   });
 
+  // ── Calendar day selection ──────────────────────────────────────────────
   protected onDayClick(day: CalendarDay): void {
-    this.engine.selectDate(day.date);
-    const selected = this.engine.selectedDate();
+    this.calEngine.selectDate(day.date);
+    const selected = this.calEngine.selectedDate();
     if (selected) {
       this.draftHours.set(selected.getHours());
       this.draftMinutes.set(selected.getMinutes());
     }
+    // Abort any pending time draft when switching to a new date
+    this.timeEngine.abortTimeDraft('single');
+    this.hasDraft.set(false);
   }
 
+  // ── Time adjustment — goes through TimeAdjustmentEngine draft lifecycle ──
   protected adjustHours(delta: number): void {
     this.draftHours.set((this.draftHours() + delta + 24) % 24);
-    this.applySelectedTime();
+    this.pushDraft();
   }
 
   protected adjustMinutes(delta: number): void {
@@ -100,14 +109,34 @@ export class TimeEnginePageComponent {
     const normalized = (total + 24 * 60) % (24 * 60);
     this.draftHours.set(Math.floor(normalized / 60));
     this.draftMinutes.set(normalized % 60);
-    this.applySelectedTime();
+    this.pushDraft();
   }
 
   protected toggleMeridiem(): void {
     this.draftHours.set((this.draftHours() + 12) % 24);
-    this.applySelectedTime();
+    this.pushDraft();
   }
 
+  protected confirmTime(): void {
+    const composed = this.timeEngine.confirmTimeDraft('single');
+    if (composed) {
+      this.calEngine.setSelectedDate(composed);
+    }
+    this.hasDraft.set(false);
+  }
+
+  protected abortTime(): void {
+    this.timeEngine.abortTimeDraft('single');
+    // Reset display back to the committed Date on CalendarEngine
+    const committed = this.calEngine.selectedDate();
+    if (committed) {
+      this.draftHours.set(committed.getHours());
+      this.draftMinutes.set(committed.getMinutes());
+    }
+    this.hasDraft.set(false);
+  }
+
+  // ── Standalone time picker ───────────────────────────────────────────────
   protected standaloneAdjustHours(delta: number): void {
     this.standaloneDraftHours.set((this.standaloneDraftHours() + delta + 24) % 24);
   }
@@ -128,6 +157,7 @@ export class TimeEnginePageComponent {
     this.standaloneDraftMinutes.set(30);
   }
 
+  // ── Helpers ─────────────────────────────────────────────────────────────
   protected toWeeks(grid: readonly CalendarDay[]): CalendarDay[][] {
     const weeks: CalendarDay[][] = [];
     for (let i = 0; i < 42; i += 7) weeks.push(grid.slice(i, i + 7) as CalendarDay[]);
@@ -139,7 +169,7 @@ export class TimeEnginePageComponent {
     return `${cell.date.getFullYear()} ${this.locale.monthLabels[cell.date.getMonth()]}`;
   }
 
-  protected formatSelectedDate(date: Date): string {
+  protected formatDate(date: Date): string {
     const pattern = this.hourCycle() === 'h24' ? 'yyyy-MM-dd HH:mm:ss' : 'yyyy-MM-dd hh:mm:ss a';
     return format(date, pattern);
   }
@@ -153,11 +183,13 @@ export class TimeEnginePageComponent {
     return this.pad(normalized === 0 ? 12 : normalized);
   }
 
-  private applySelectedTime(): void {
-    const selected = this.engine.selectedDate();
+  private pushDraft(): void {
+    const selected = this.calEngine.selectedDate();
     if (selected === null) return;
-    const next = new Date(selected);
-    next.setHours(this.draftHours(), this.draftMinutes(), 0, 0);
-    this.engine.setSelectedDate(next);
+    this.timeEngine.startOrUpdateTimeDraft('single', selected, {
+      hours: this.draftHours(),
+      minutes: this.draftMinutes(),
+    });
+    this.hasDraft.set(true);
   }
 }
