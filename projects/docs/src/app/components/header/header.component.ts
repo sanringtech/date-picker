@@ -1,11 +1,12 @@
 import { Component, signal } from '@angular/core';
 import { ButtonDirective } from '../ui/button';
+import { ToggleDirective } from '../ui/toggle';
 import { LogoComponent } from '../logo/logo.component';
 import { NavigationComponent } from '../navigation/navigation.component';
 
 @Component({
   selector: 'app-header',
-  imports: [ButtonDirective, LogoComponent, NavigationComponent],
+  imports: [ButtonDirective, ToggleDirective, LogoComponent, NavigationComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
 })

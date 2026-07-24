@@ -1,0 +1,8 @@
+{
+  "componentPath": "projects/docs/src/app/components/ui",
+  "installedHashes": {
+    "toggle/toggle.directive.ts": "bcb3a8b95fff75c9e14ebc14d76ec29b5162cb875b4e276f4c9bc33dcd550928",
+    "toggle/toggle.types.ts": "d6d46a1d93e2f958d1cbdcdbdbe7bed9aa6cb47ba88d48103fdcd99c093246ec",
+    "toggle/index.ts": "174866ee94824a820a0ec9814c39a18490091391dde97a9e49dee818f5012bf8"
+  }
+}
