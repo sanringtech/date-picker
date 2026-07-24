@@ -119,6 +119,37 @@ export interface GranularityCell {
  */
 export type QuarterStartMonth = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 
+// --- Time Adjustment (R9 / §4 time adjustment / Decision 15 / ADR-0003) ---
+
+/** Which time components are meaningful for a given picker instance (ADR-0002/0003: enum not numeric step). */
+export type TimePrecision = 'hour' | 'hour-minute' | 'hour-minute-second';
+
+/** Raw time components stored in a Draft. Fields beyond the current precision are zeroed at confirm time. */
+export interface TimeValue {
+  hours: number;
+  minutes?: number;
+  seconds?: number;
+}
+
+/**
+ * Guard predicate for time adjustment (ADR-0002/0003: single predicate, not matcher-based).
+ * Returns true to block the draft update (silent no-op), false to allow it.
+ * Receives both the base date and the proposed time so callers can encode business-hour
+ * or date-specific time constraints without the engine embedding any policy.
+ */
+export type TimeGuardMatcher = (date: Date, time: TimeValue) => boolean;
+
+/**
+ * One entry in TimeAdjustmentEngine's draft map (ADR-0003: baseDate + draftValue).
+ * The engine stores baseDate to reconstruct the full Date at confirm time without needing
+ * to know which CalendarEngine selection slot this draft belongs to.
+ */
+export interface TimeAdjustmentDraft {
+  /** Year/month/day source; overwritten with draftValue at confirm. Engine treats it as opaque. */
+  baseDate: Date;
+  draftValue: TimeValue;
+}
+
 /** Externally-injected localization contract (I4 / Decision 7). No built-in defaults. */
 export interface CalendarLocale {
   /** Week start day. Mirrors date-fns startOfWeek() options.weekStartsOn; 0=Sunday...6=Saturday. */

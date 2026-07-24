@@ -17,6 +17,7 @@ import {
 } from './components/ui/card';
 import { GranularityPickerDemoComponent } from './granularity-picker-demo.component';
 import { DrillDownPickerDemoComponent } from './drilldown-picker-demo.component';
+import { TimeAdjustmentDemoComponent } from './time-adjustment-demo.component';
 import { FIXED_TODAY } from './app.config';
 
 /** R4 / Decision 5: an OR-combined disabled matcher — weekends (predicate) + a fixed holiday block (DateInterval). */
@@ -141,6 +142,7 @@ const GRANULARITY_SCENARIOS: readonly GranularityDemoScenario[] = [
     LucideX,
     GranularityPickerDemoComponent,
     DrillDownPickerDemoComponent,
+    TimeAdjustmentDemoComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',

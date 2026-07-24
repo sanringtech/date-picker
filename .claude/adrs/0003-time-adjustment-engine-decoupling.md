@@ -2,7 +2,7 @@
 schema_version: 1
 adr_id: 0003
 title: time-adjustment-engine-decoupling
-status: Proposed
+status: Accepted
 date: 2026-07-23
 deciders: [jack755051]
 related: ["ADR-0001", "ADR-0002 (superseded by this ADR)", "PRD: .claude/prds/date-picker.md §6/§7/§12", "PRD: .claude/prds/date-picker-widget.md", "Constitution: .claude/constitutions/date-picker.md Decision 15/R9/§4"]

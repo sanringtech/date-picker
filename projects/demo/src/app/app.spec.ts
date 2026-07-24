@@ -233,6 +233,45 @@ describe('App', () => {
     ).toContain('已選');
   });
 
+  it('Time Adjustment demo: can switch between 24-hour and 12-hour display without changing Date composition', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const firstDay = compiled.querySelector<HTMLButtonElement>('[data-testid^="time-demo-day-"]');
+    expect(firstDay).toBeTruthy();
+
+    firstDay!.click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('[data-testid="time-demo-hours"]')?.textContent).toContain('00');
+
+    compiled.querySelector<HTMLButtonElement>('[data-testid="time-demo-hour-cycle-12"]')!.click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('[data-testid="time-demo-hours"]')?.textContent).toContain('12');
+    expect(compiled.querySelector('[data-testid="time-demo-meridiem"]')?.textContent).toContain(
+      'AM',
+    );
+
+    compiled.querySelector<HTMLButtonElement>('[data-testid="time-demo-meridiem"]')!.click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('[data-testid="time-demo-meridiem"]')?.textContent).toContain(
+      'PM',
+    );
+
+    compiled.querySelector<HTMLButtonElement>('[data-testid="time-demo-confirm"]')!.click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('[data-testid="time-demo-result"]')?.textContent).toContain(
+      '12:00:00 PM',
+    );
+
+    compiled.querySelector<HTMLButtonElement>('[data-testid="time-demo-hour-cycle-24"]')!.click();
+    fixture.detectChanges();
+    expect(compiled.querySelector('[data-testid="time-demo-result"]')?.textContent).toContain(
+      '12:00:00',
+    );
+  });
+
   it('drill-down scenario: zooming out to year, then back in through month, selects a day decades away (1996-08-17)', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
