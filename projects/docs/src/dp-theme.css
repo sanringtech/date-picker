@@ -6,8 +6,9 @@
  * published `@sanring/date-picker-widget` package ships its own separate
  * `dp-theme.css` (projects/date-picker-widget/src/dp-theme.css) since it's
  * a standalone artifact with its own consumers. The two share the same
- * eight core hex values (primary/primary-light/accent/danger/text-*/
- * bg-base) — kept in sync by hand, not imported, since they serve
+ * eight core hex values (primary/primary-light/accent/danger/text-main/
+ * text-muted/text-disabled/bg-base) — kept in sync by hand, not imported,
+ * since they serve
  * different packages.
  *
  * 深/淺色模式：預設（:root，沒有 data-theme 屬性）是深色；在 <html> 或
