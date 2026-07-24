@@ -12,6 +12,7 @@
     "lint": "ng lint",
     "format": "prettier --write \"projects/**/*.{ts,html}\"",
     "format:check": "prettier --check \"projects/**/*.{ts,html}\"",
+    "sync:theme": "bash scripts/sync-theme.sh",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "ng build date-picker && npm publish ./dist/date-picker --access public"
