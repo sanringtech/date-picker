@@ -1,0 +1,32 @@
+/*
+ * @sanring/date-picker-widget — default color tokens
+ *
+ * Standalone token set for the widget's own rendered output. Deliberately
+ * not tied to @sanring/ui's --sanring-* palette: consumers installing this
+ * widget package won't necessarily have that design system loaded. Import
+ * this file once in your global stylesheet, then override any --dp-*
+ * variable to re-theme the widget — component styles should only ever read
+ * these variables, never hardcode colors.
+ */
+
+:root {
+  /* 主色：選中的單日背景、主按鈕（如：確認） */
+  --dp-primary: #0d9488;
+  /* 區間背景：範圍選擇時的淺色過渡背景、Hover 效果 */
+  --dp-primary-light: #ccfbf1;
+
+  /* 今日標示：「今天」的日期文字或底部提示圓點 */
+  --dp-accent: #f59e0b;
+  /* 破壞操作：清除日期 (Clear)、取消按鈕 */
+  --dp-danger: #f43f5e;
+
+  /* 主要文字：日曆上的預設可選數字、一般文字 */
+  --dp-text-main: #334155;
+  /* 輔助文字：星期表頭 (Sun, Mon...)、月份切換箭頭 */
+  --dp-text-muted: #64748b;
+  /* 禁用狀態：非本月日期、不可選取的日期文字 */
+  --dp-text-disabled: #cbd5e1;
+
+  /* 反白/底色：日曆卡片底色、主色區塊上的反白文字 */
+  --dp-bg-base: #ffffff;
+}
