@@ -1,12 +1,12 @@
 /*
  * @sanring/date-picker-widget — default color tokens
  *
- * Standalone token set for the widget's own rendered output. Deliberately
- * not tied to @sanring/ui's --sanring-* palette: consumers installing this
- * widget package won't necessarily have that design system loaded. Import
- * this file once in your global stylesheet, then override any --dp-*
- * variable to re-theme the widget — component styles should only ever read
- * these variables, never hardcode colors.
+ * Standalone token set for the widget own rendered output. Deliberately
+ * not tied to the @sanring/ui --sanring-* palette: consumers installing
+ * this widget package may not have that design system loaded. Import this
+ * file once in your global stylesheet, then override any --dp-* variable
+ * to re-theme the widget — component styles should only ever read these
+ * variables, never hardcode colors.
  */
 
 :root {
