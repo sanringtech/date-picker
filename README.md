@@ -313,13 +313,13 @@ These are not deferred features — they are outside the engine's service bounda
 ```
 projects/
   date-picker/   publishable library  (ng-packagr → dist/date-picker)
-  demo/          Tailwind demo app    (ng serve → localhost:4200)
+  docs/          Tailwind docs site   (ng serve docs → localhost:4200)
 ```
 
 ## Development
 
 ```bash
-ng serve                          # demo app with live reload
+ng serve docs                     # docs site with live reload
 ng build date-picker              # build library → dist/date-picker
 ng test date-picker --no-watch    # unit tests + axe-core WAI-ARIA gate (78 tests)
 ng lint                           # ESLint
