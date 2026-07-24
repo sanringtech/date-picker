@@ -1,4 +1,9 @@
-import type { TimeAdjustmentDraft, TimeGuardMatcher, TimePrecision, TimeValue } from './calendar.types';
+import type {
+  TimeAdjustmentDraft,
+  TimeGuardMatcher,
+  TimePrecision,
+  TimeValue,
+} from './calendar.types';
 
 /**
  * Pure, immutable state-transition functions for TimeAdjustmentEngine (ADR-0003).

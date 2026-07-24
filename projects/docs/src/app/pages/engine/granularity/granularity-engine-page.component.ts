@@ -1,7 +1,11 @@
 import { Component, effect, inject, viewChildren } from '@angular/core';
 import { LucideChevronLeft, LucideChevronRight, LucideX } from '@lucide/angular';
 import { CALENDAR_LOCALE, GranularityGridDirective } from '@sanring/date-picker';
-import type { GranularityCell, GranularityPickerEngine, PickerGranularity } from '@sanring/date-picker';
+import type {
+  GranularityCell,
+  GranularityPickerEngine,
+  PickerGranularity,
+} from '@sanring/date-picker';
 import { ButtonDirective } from '../../../components/ui/button';
 import {
   CardComponent,
@@ -79,11 +83,18 @@ export class GranularityEnginePageComponent {
     return granularity === 'quarter' ? 'grid-cols-2' : 'grid-cols-3';
   }
 
-  protected cellLabel(granularity: PickerGranularity, cell: GranularityCell, index: number): string {
+  protected cellLabel(
+    granularity: PickerGranularity,
+    cell: GranularityCell,
+    index: number,
+  ): string {
     switch (granularity) {
-      case 'month': return this.locale.monthLabels[cell.date.getMonth()];
-      case 'quarter': return `Q${index + 1}`;
-      case 'year': return `${cell.date.getFullYear()}`;
+      case 'month':
+        return this.locale.monthLabels[cell.date.getMonth()];
+      case 'quarter':
+        return `Q${index + 1}`;
+      case 'year':
+        return `${cell.date.getFullYear()}`;
     }
   }
 
@@ -96,7 +107,11 @@ export class GranularityEnginePageComponent {
     return `${cells[0].date.getFullYear()}`;
   }
 
-  protected formatDate(granularity: PickerGranularity, engine: GranularityPickerEngine, date: Date): string {
+  protected formatDate(
+    granularity: PickerGranularity,
+    engine: GranularityPickerEngine,
+    date: Date,
+  ): string {
     switch (granularity) {
       case 'month':
         return `${date.getFullYear()} ${this.locale.monthLabels[date.getMonth()]}`;

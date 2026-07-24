@@ -25,12 +25,16 @@ import { docsNavSections } from '../navigation/docs-navigation';
                     >
                       {{ item.label }}
                       @if (item.badge === 'soon') {
-                        <span class="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted">
+                        <span
+                          class="rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted"
+                        >
                           soon
                         </span>
                       }
                       @if (item.badge === 'wip') {
-                        <span class="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                        <span
+                          class="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary"
+                        >
                           wip
                         </span>
                       }

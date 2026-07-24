@@ -1,7 +1,8 @@
 <div>
   <h1 class="mb-2 text-2xl font-bold text-foreground">GranularityPickerEngine</h1>
   <p class="mb-8 text-muted">
-    Month / Quarter / Year 粒度選取，與 CalendarEngine 共用同一套 Single / Range / Multi 語意，財年起始月可注入。
+    Month / Quarter / Year 粒度選取，與 CalendarEngine 共用同一套 Single / Range / Multi
+    語意，財年起始月可注入。
   </p>
 
   <div class="flex flex-col gap-6">
@@ -18,19 +19,37 @@
                 [attr.data-testid]="'granularity-grid-' + scenario.id"
               >
                 <div class="mb-4 flex items-center justify-between">
-                  <button sanringBtn variant="ghost" size="icon" type="button" aria-label="上一頁" (click)="grid.engine.prevYear()">
+                  <button
+                    sanringBtn
+                    variant="ghost"
+                    size="icon"
+                    type="button"
+                    aria-label="上一頁"
+                    (click)="grid.engine.prevYear()"
+                  >
                     <svg lucideChevronLeft [size]="18"></svg>
                   </button>
                   <span class="font-semibold text-foreground">
                     {{ headerLabel(scenario.granularity, grid.engine) }}
                   </span>
-                  <button sanringBtn variant="ghost" size="icon" type="button" aria-label="下一頁" (click)="grid.engine.nextYear()">
+                  <button
+                    sanringBtn
+                    variant="ghost"
+                    size="icon"
+                    type="button"
+                    aria-label="下一頁"
+                    (click)="grid.engine.nextYear()"
+                  >
                     <svg lucideChevronRight [size]="18"></svg>
                   </button>
                 </div>
 
                 <div [class]="'grid gap-1.5 ' + gridCols(scenario.granularity)">
-                  @for (cell of grid.engine.granularityGrids(); track cell.date.getTime(); let i = $index) {
+                  @for (
+                    cell of grid.engine.granularityGrids();
+                    track cell.date.getTime();
+                    let i = $index
+                  ) {
                     <button
                       type="button"
                       [disabled]="cell.isDisabled"
@@ -43,7 +62,9 @@
                       [class.font-bold]="cell.isCurrentPeriod && !cell.isSelected"
                       [class.ring-2]="cell.isFocused"
                       [class.ring-primary]="cell.isFocused"
-                      [class.hover:bg-surface-strong]="!cell.isSelected && !cell.isDisabled && !cell.isInRange"
+                      [class.hover:bg-surface-strong]="
+                        !cell.isSelected && !cell.isDisabled && !cell.isInRange
+                      "
                       [class.opacity-40]="cell.isDisabled"
                       [class.cursor-not-allowed]="cell.isDisabled"
                       (click)="grid.engine.selectDate(cell.date)"
@@ -54,15 +75,25 @@
                 </div>
               </div>
 
-              <div class="mt-2 flex items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+              <div
+                class="mt-2 flex items-center justify-between gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+              >
                 <span class="min-w-0 flex-1 truncate text-muted">
                   @if (grid.engine.selectedDate(); as selected) {
                     已選：{{ formatDate(scenario.granularity, grid.engine, selected) }}
                   } @else if (grid.engine.isDraftActive()) {
-                    起點：{{ formatDate(scenario.granularity, grid.engine, grid.engine.draftStart()!) }}（請選終點）
+                    起點：{{
+                      formatDate(scenario.granularity, grid.engine, grid.engine.draftStart()!)
+                    }}（請選終點）
                   } @else if (grid.engine.selectedRange().start; as start) {
                     {{ formatDate(scenario.granularity, grid.engine, start) }} ～
-                    {{ formatDate(scenario.granularity, grid.engine, grid.engine.selectedRange().end!) }}
+                    {{
+                      formatDate(
+                        scenario.granularity,
+                        grid.engine,
+                        grid.engine.selectedRange().end!
+                      )
+                    }}
                   } @else if (grid.engine.selectedDates().length > 0) {
                     已選 {{ grid.engine.selectedDates().length }} 項
                   } @else {
@@ -71,18 +102,40 @@
                 </span>
                 <div class="flex shrink-0 gap-1">
                   @if (grid.engine.isDraftActive()) {
-                    <button sanringBtn variant="ghost" size="sm" type="button" (click)="grid.engine.abortRangeDraft()">中止</button>
+                    <button
+                      sanringBtn
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      (click)="grid.engine.abortRangeDraft()"
+                    >
+                      中止
+                    </button>
                   }
-                  <button sanringBtn variant="outline" size="sm" type="button" (click)="grid.engine.clearSelection()">清空</button>
+                  <button
+                    sanringBtn
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    (click)="grid.engine.clearSelection()"
+                  >
+                    清空
+                  </button>
                 </div>
               </div>
 
               @if (scenario.mode === 'multi' && grid.engine.selectedDates().length > 0) {
                 <div class="mt-2 flex flex-wrap gap-1.5">
                   @for (date of grid.engine.selectedDates(); track date.getTime()) {
-                    <span class="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs text-foreground">
+                    <span
+                      class="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs text-foreground"
+                    >
                       {{ formatDate(scenario.granularity, grid.engine, date) }}
-                      <button type="button" class="text-muted hover:text-foreground" (click)="grid.engine.removeDate(date)">
+                      <button
+                        type="button"
+                        class="text-muted hover:text-foreground"
+                        (click)="grid.engine.removeDate(date)"
+                      >
                         <svg lucideX [size]="12"></svg>
                       </button>
                     </span>
@@ -93,7 +146,9 @@
 
             <div class="flex-1 pt-1 md:pt-2">
               <h3 sanringCardTitle class="text-base">{{ scenario.title }}</h3>
-              <p sanringCardDescription class="mt-1 text-sm text-muted">{{ scenario.description }}</p>
+              <p sanringCardDescription class="mt-1 text-sm text-muted">
+                {{ scenario.description }}
+              </p>
             </div>
           </div>
         </sanring-card-content>

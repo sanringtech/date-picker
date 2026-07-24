@@ -34,20 +34,41 @@ import { RouterLink } from '@angular/router';
 
       <!-- Architecture overview -->
       <div class="mt-20 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <a routerLink="/engine/calendar" class="group rounded-xl border border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40">
+        <a
+          routerLink="/engine/calendar"
+          class="group rounded-xl border border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40"
+        >
           <p class="mb-1 font-semibold text-foreground">CalendarEngine</p>
-          <p class="text-sm text-muted">Single / Range / Multi 日期選取，42-cell 網格，鍵盤導航，Disabled Dates</p>
-          <p class="mt-3 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">M1–M6 →</p>
+          <p class="text-sm text-muted">
+            Single / Range / Multi 日期選取，42-cell 網格，鍵盤導航，Disabled Dates
+          </p>
+          <p class="mt-3 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
+            M1–M6 →
+          </p>
         </a>
-        <a routerLink="/engine/granularity" class="group rounded-xl border border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40">
+        <a
+          routerLink="/engine/granularity"
+          class="group rounded-xl border border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40"
+        >
           <p class="mb-1 font-semibold text-foreground">GranularityPickerEngine</p>
-          <p class="text-sm text-muted">Month / Quarter / Year 粒度選取，財年起始月可注入，與 CalendarEngine 完全平行</p>
-          <p class="mt-3 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">M7 →</p>
+          <p class="text-sm text-muted">
+            Month / Quarter / Year 粒度選取，財年起始月可注入，與 CalendarEngine 完全平行
+          </p>
+          <p class="mt-3 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
+            M7 →
+          </p>
         </a>
-        <a routerLink="/engine/time" class="group rounded-xl border border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40">
+        <a
+          routerLink="/engine/time"
+          class="group rounded-xl border border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40"
+        >
           <p class="mb-1 font-semibold text-foreground">TimeAdjustmentEngine</p>
-          <p class="text-sm text-muted">時/分 Draft-Confirm 生命週期，caller-key 設計，TimePrecision 可配置</p>
-          <p class="mt-3 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">M8 →</p>
+          <p class="text-sm text-muted">
+            時/分 Draft-Confirm 生命週期，caller-key 設計，TimePrecision 可配置
+          </p>
+          <p class="mt-3 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
+            M8 →
+          </p>
         </a>
       </div>
     </div>

@@ -7,7 +7,10 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   template: `
     <header class="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
       <div class="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-        <a routerLink="/" class="flex items-center gap-2 font-semibold text-foreground no-underline">
+        <a
+          routerLink="/"
+          class="flex items-center gap-2 font-semibold text-foreground no-underline"
+        >
           <span class="text-primary font-bold">@sanring</span>
           <span class="text-muted">/</span>
           <span>date-picker</span>

@@ -3,8 +3,7 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () =>
-      import('./layouts/docs-shell.component').then((m) => m.DocsShellComponent),
+    loadComponent: () => import('./layouts/docs-shell.component').then((m) => m.DocsShellComponent),
     children: [
       {
         path: '',

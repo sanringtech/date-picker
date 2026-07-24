@@ -59,8 +59,7 @@ const SCENARIOS: readonly Scenario[] = [
   {
     id: 'multimonth',
     title: '多月並排（M4）',
-    description:
-      '同時顯示兩個月份，鍵盤方向鍵在兩個月格之間無縫移動；抵達整個視窗邊界才自動換頁。',
+    description: '同時顯示兩個月份，鍵盤方向鍵在兩個月格之間無縫移動；抵達整個視窗邊界才自動換頁。',
     configure: (e) => {
       e.setSelectionMode('range');
       e.setMonthsToDisplay(2);

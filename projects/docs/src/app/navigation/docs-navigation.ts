@@ -20,8 +20,6 @@ export const docsNavSections: readonly DocsNavSection[] = [
   },
   {
     label: 'Widget',
-    items: [
-      { label: 'Widget Layer', path: '/widget', badge: 'soon' },
-    ],
+    items: [{ label: 'Widget Layer', path: '/widget', badge: 'soon' }],
   },
 ];

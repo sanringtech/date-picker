@@ -1,5 +1,10 @@
 import { Injectable, signal } from '@angular/core';
-import type { TimeAdjustmentDraft, TimeGuardMatcher, TimePrecision, TimeValue } from '../shared/calendar.types';
+import type {
+  TimeAdjustmentDraft,
+  TimeGuardMatcher,
+  TimePrecision,
+  TimeValue,
+} from '../shared/calendar.types';
 import {
   confirmTimeDraft,
   removeTimeDraft,
@@ -44,11 +49,7 @@ export class TimeAdjustmentEngine {
    * without try/catch.
    */
   confirmTimeDraft(key: string): Date | null {
-    const { drafts, composed } = confirmTimeDraft(
-      this._timeDrafts(),
-      key,
-      this._timePrecision(),
-    );
+    const { drafts, composed } = confirmTimeDraft(this._timeDrafts(), key, this._timePrecision());
     this._timeDrafts.set(drafts);
     return composed;
   }
