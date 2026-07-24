@@ -1,0 +1,173 @@
+<div>
+  <h1 class="mb-2 text-2xl font-bold text-foreground">TimeAdjustmentEngine</h1>
+  <p class="mb-8 text-muted">
+    時/分 Draft–Confirm 生命週期，完全不認識 CalendarEngine。caller-key 設計讓 Single / Range / Multi 各自獨立管理。
+  </p>
+
+  <div class="flex flex-col gap-6">
+    <!-- Time + Calendar combined -->
+    <sanring-card class="w-full overflow-hidden">
+      <sanring-card-content class="p-5 md:p-6">
+        <div class="flex flex-col items-start gap-6 md:flex-row">
+          <!-- Calendar -->
+          <div class="w-full max-w-[20rem] shrink-0 sm:w-80">
+            <div class="rounded-lg border border-border bg-background p-4 shadow-inner transition-shadow focus-within:ring-2 focus-within:ring-primary">
+              <div
+                sanringCalendarGrid
+                tabindex="0"
+                class="block outline-none"
+              >
+                <div class="mb-4 flex items-center justify-between">
+                  <button sanringBtn variant="ghost" size="icon" type="button" aria-label="上一月" (click)="engine.prevMonth()">
+                    <svg lucideChevronLeft [size]="18"></svg>
+                  </button>
+                  <span class="font-semibold text-foreground">
+                    {{ currentMonthLabel(engine.monthGrids()[0]) }}
+                  </span>
+                  <button sanringBtn variant="ghost" size="icon" type="button" aria-label="下一月" (click)="engine.nextMonth()">
+                    <svg lucideChevronRight [size]="18"></svg>
+                  </button>
+                </div>
+
+                <div class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted" aria-hidden="true">
+                  @for (label of weekdayLabels(); track label) { <span>{{ label }}</span> }
+                </div>
+
+                <div class="grid grid-cols-7 gap-1" role="grid" aria-label="選擇日期">
+                  @for (week of toWeeks(engine.monthGrids()[0]); track $index) {
+                    <div role="row" class="contents">
+                      @for (day of week; track day.date.getTime()) {
+                        <button
+                          role="gridcell"
+                          type="button"
+                          [attr.aria-selected]="day.isSelected ? true : null"
+                          [attr.aria-label]="format(day.date, 'yyyy-MM-dd')"
+                          class="aspect-square rounded text-sm transition-colors active:brightness-90"
+                          [class.text-muted]="!day.isCurrentMonth && !day.isSelected"
+                          [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
+                          [class.bg-primary]="day.isSelected"
+                          [class.text-primary-foreground]="day.isSelected"
+                          [class.ring-2]="day.isFocused"
+                          [class.ring-primary]="day.isFocused"
+                          [class.font-bold]="day.isToday && !day.isSelected"
+                          [class.hover:bg-surface-strong]="!day.isSelected"
+                          (click)="onDayClick(day)"
+                        >
+                          {{ day.date.getDate() }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Time controls -->
+          <div class="flex flex-1 flex-col gap-4 pt-1 md:pt-2">
+            <div>
+              <h3 sanringCardTitle class="text-base">時/分調整（Time Adjustment）</h3>
+              <p sanringCardDescription class="mt-1 text-sm text-muted">
+                先點選日期，再調整時/分；每次切換小時、分鐘或 AM/PM 都會立即寫回 CalendarEngine 的已選 Date。
+              </p>
+            </div>
+
+            @if (engine.selectedDate(); as selected) {
+              <div class="rounded-lg border border-border bg-surface p-4 flex flex-col gap-4">
+                <p class="text-xs text-muted">
+                  已選日期：<span class="font-mono text-foreground">{{ format(selected, 'yyyy-MM-dd') }}</span>
+                </p>
+
+                <div class="inline-flex w-fit rounded-lg border border-border bg-background p-1" role="group" aria-label="小時制">
+                  <button sanringBtn variant="ghost" size="sm" type="button" [class.bg-surface-strong]="hourCycle() === 'h24'" [attr.aria-pressed]="hourCycle() === 'h24'" (click)="hourCycle.set('h24')">24 小時</button>
+                  <button sanringBtn variant="ghost" size="sm" type="button" [class.bg-surface-strong]="hourCycle() === 'h12'" [attr.aria-pressed]="hourCycle() === 'h12'" (click)="hourCycle.set('h12')">12 小時</button>
+                </div>
+
+                <div class="flex items-center gap-4">
+                  <div class="flex flex-col items-center gap-1">
+                    <span class="text-xs text-muted">小時</span>
+                    <button sanringBtn variant="ghost" size="icon" type="button" (click)="adjustHours(1)"><svg lucideChevronUp [size]="18"></svg></button>
+                    <span class="w-12 text-center font-mono text-2xl font-semibold text-foreground">{{ displayHour() }}</span>
+                    <button sanringBtn variant="ghost" size="icon" type="button" (click)="adjustHours(-1)"><svg lucideChevronDown [size]="18"></svg></button>
+                  </div>
+                  <span class="pb-2 text-2xl font-bold text-muted">:</span>
+                  <div class="flex flex-col items-center gap-1">
+                    <span class="text-xs text-muted">分鐘</span>
+                    <button sanringBtn variant="ghost" size="icon" type="button" (click)="adjustMinutes(1)"><svg lucideChevronUp [size]="18"></svg></button>
+                    <span class="w-12 text-center font-mono text-2xl font-semibold text-foreground">{{ pad(draftMinutes()) }}</span>
+                    <button sanringBtn variant="ghost" size="icon" type="button" (click)="adjustMinutes(-1)"><svg lucideChevronDown [size]="18"></svg></button>
+                  </div>
+                  @if (hourCycle() === 'h12') {
+                    <button sanringBtn variant="outline" size="sm" type="button" class="self-center" (click)="toggleMeridiem()">{{ meridiem() }}</button>
+                  }
+                </div>
+              </div>
+            } @else {
+              <p class="text-sm text-muted">請先在左側日曆點選一個日期。</p>
+            }
+
+            <div class="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+              <span class="text-muted">已選 Date：</span>
+              @if (engine.selectedDate(); as selected) {
+                <span class="font-mono text-foreground">{{ formatSelectedDate(selected) }}</span>
+              } @else {
+                <span class="text-muted">尚未選取</span>
+              }
+            </div>
+          </div>
+        </div>
+      </sanring-card-content>
+    </sanring-card>
+
+    <!-- Standalone time picker -->
+    <sanring-card class="w-full overflow-hidden">
+      <sanring-card-content class="p-5 md:p-6">
+        <div class="flex flex-col items-start gap-6 md:flex-row">
+          <div class="w-full max-w-[22rem] shrink-0 sm:w-88">
+            <div class="rounded-lg border border-border bg-background p-4 shadow-inner">
+              <div class="inline-flex rounded-lg border border-border bg-surface p-1" role="group" aria-label="小時制">
+                <button sanringBtn variant="ghost" size="sm" type="button" [class.bg-surface-strong]="standaloneHourCycle() === 'h24'" [attr.aria-pressed]="standaloneHourCycle() === 'h24'" (click)="standaloneHourCycle.set('h24')">24 小時</button>
+                <button sanringBtn variant="ghost" size="sm" type="button" [class.bg-surface-strong]="standaloneHourCycle() === 'h12'" [attr.aria-pressed]="standaloneHourCycle() === 'h12'" (click)="standaloneHourCycle.set('h12')">12 小時</button>
+              </div>
+
+              <div class="mt-5 flex items-center justify-center gap-4">
+                <div class="flex flex-col items-center gap-1">
+                  <span class="text-xs text-muted">小時</span>
+                  <button sanringBtn variant="ghost" size="icon" type="button" aria-label="增加小時" (click)="standaloneAdjustHours(1)"><svg lucideChevronUp [size]="18"></svg></button>
+                  <span class="w-14 text-center font-mono text-3xl font-semibold text-foreground">{{ standaloneDisplayHour() }}</span>
+                  <button sanringBtn variant="ghost" size="icon" type="button" aria-label="減少小時" (click)="standaloneAdjustHours(-1)"><svg lucideChevronDown [size]="18"></svg></button>
+                </div>
+                <span class="pb-2 text-3xl font-bold text-muted">:</span>
+                <div class="flex flex-col items-center gap-1">
+                  <span class="text-xs text-muted">分鐘</span>
+                  <button sanringBtn variant="ghost" size="icon" type="button" aria-label="增加分鐘" (click)="standaloneAdjustMinutes(minuteStep)"><svg lucideChevronUp [size]="18"></svg></button>
+                  <span class="w-14 text-center font-mono text-3xl font-semibold text-foreground">{{ pad(standaloneDraftMinutes()) }}</span>
+                  <button sanringBtn variant="ghost" size="icon" type="button" aria-label="減少分鐘" (click)="standaloneAdjustMinutes(-minuteStep)"><svg lucideChevronDown [size]="18"></svg></button>
+                </div>
+                @if (standaloneHourCycle() === 'h12') {
+                  <button sanringBtn variant="outline" size="sm" type="button" class="self-center" (click)="standaloneToggleMeridiem()">{{ standaloneMeridiem() }}</button>
+                }
+              </div>
+
+              <div class="mt-5 flex gap-2">
+                <button sanringBtn variant="outline" size="sm" type="button" (click)="standaloneResetTime()">重設</button>
+              </div>
+
+              <div class="mt-3 rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+                <span class="text-muted">已選時間：</span>
+                <span class="font-mono text-foreground">{{ standaloneSelectedTimeLabel() }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-1 pt-1 md:pt-2">
+            <h3 sanringCardTitle class="text-base">獨立時分選擇器（Time Picker）</h3>
+            <p sanringCardDescription class="mt-1 text-sm text-muted">
+              不經過日曆格，直接選擇時與分；每次切換小時、分鐘或 AM/PM 都會立即更新已選時間。分鐘步長為 5。
+            </p>
+          </div>
+        </div>
+      </sanring-card-content>
+    </sanring-card>
+  </div>
+</div>
