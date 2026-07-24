@@ -34,22 +34,22 @@ export class ButtonDirective {
   protected readonly buttonClass = computed(() => {
     const variants: Record<ButtonVariant, string> = {
       default:
-        'border-transparent bg-[var(--sanring-control)] text-[var(--sanring-control-foreground)] hover:brightness-95 active:brightness-90',
+        'border-transparent bg-[var(--dp-control)] text-[var(--dp-control-foreground)] hover:brightness-95 active:brightness-90',
       secondary:
-        'border-[var(--sanring-border)] bg-[var(--sanring-surface-strong)] text-[var(--sanring-foreground)] hover:bg-[var(--sanring-active)] active:brightness-90',
+        'border-[var(--dp-border)] bg-[var(--dp-surface-strong)] text-[var(--dp-text-main)] hover:bg-[var(--dp-active)] active:brightness-90',
       outline:
-        'border-[var(--sanring-border-strong)] bg-transparent text-[var(--sanring-foreground)] hover:bg-[var(--sanring-surface-strong)] active:brightness-90',
+        'border-[var(--dp-border-strong)] bg-transparent text-[var(--dp-text-main)] hover:bg-[var(--dp-surface-strong)] active:brightness-90',
       ghost:
-        'border-transparent bg-transparent text-[var(--sanring-foreground)] hover:bg-[var(--sanring-surface-strong)] active:brightness-90',
+        'border-transparent bg-transparent text-[var(--dp-text-main)] hover:bg-[var(--dp-surface-strong)] active:brightness-90',
       destructive:
-        'border-transparent bg-[#dc2626] text-white hover:bg-[#b91c1c] focus-visible:ring-[#ef4444] active:brightness-90',
-      link: 'border-transparent bg-transparent px-0 text-[var(--sanring-foreground)] underline-offset-4 hover:underline active:opacity-70',
+        'border-transparent bg-[var(--dp-danger)] text-white hover:bg-[var(--dp-danger-strong)] focus-visible:ring-[var(--dp-danger)] active:brightness-90',
+      link: 'border-transparent bg-transparent px-0 text-[var(--dp-text-main)] underline-offset-4 hover:underline active:opacity-70',
     };
     return cn(
       'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg border',
       CONTROL_TEXT_CLASS,
       'transition-[background-color,color] focus-visible:outline-none focus-visible:ring-2',
-      'focus-visible:ring-[var(--sanring-border-strong)] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
+      'focus-visible:ring-[var(--dp-border-strong)] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
       variants[this.variant()],
       CONTROL_SIZE_CLASSES[this.size()],
       this.class(),
