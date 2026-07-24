@@ -30,21 +30,21 @@ export class ToggleDirective {
   protected readonly toggleClass = computed(() => {
     const variants: Record<ToggleVariant, string> = {
       default: cn(
-        'border-transparent bg-transparent text-[var(--sanring-foreground)]',
-        'hover:bg-[var(--sanring-surface-strong)]',
-        'data-[state=on]:bg-[var(--sanring-surface-strong)]',
+        'border-transparent bg-transparent text-[var(--dp-text-main)]',
+        'hover:bg-[var(--dp-surface-strong)]',
+        'data-[state=on]:bg-[var(--dp-surface-strong)]',
       ),
       outline: cn(
-        'border-[var(--sanring-border)] bg-transparent text-[var(--sanring-foreground)]',
-        'hover:bg-[var(--sanring-surface-strong)]',
-        'data-[state=on]:bg-[var(--sanring-surface-strong)]',
+        'border-[var(--dp-border)] bg-transparent text-[var(--dp-text-main)]',
+        'hover:bg-[var(--dp-surface-strong)]',
+        'data-[state=on]:bg-[var(--dp-surface-strong)]',
       ),
     };
     return cn(
       'inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md border',
       CONTROL_TEXT_CLASS,
       'transition-colors focus-visible:outline-none focus-visible:ring-2',
-      'focus-visible:ring-[var(--sanring-border-strong)]',
+      'focus-visible:ring-[var(--dp-border-strong)]',
       'disabled:pointer-events-none disabled:opacity-50',
       variants[this.variant()],
       COMPACT_CONTROL_SIZE_CLASSES[this.size()],
