@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ButtonDirective } from '../components/ui/button';
 import { docsNavSections } from '../navigation/docs-navigation';
 
 @Component({
   selector: 'app-docs-sidebar-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonDirective],
   template: `
     <div class="mx-auto flex max-w-5xl gap-0 px-6 py-8">
       <!-- Sidebar -->
@@ -19,9 +20,16 @@ import { docsNavSections } from '../navigation/docs-navigation';
                 @for (item of section.items; track item.path) {
                   <li>
                     <a
+                      sanringBtn
+                      variant="ghost"
+                      size="sm"
                       [routerLink]="item.path"
-                      routerLinkActive="bg-surface text-foreground"
-                      class="flex items-center justify-between rounded-md px-3 py-1.5 text-sm text-muted transition-colors hover:text-foreground no-underline"
+                      routerLinkActive
+                      #rla="routerLinkActive"
+                      [class]="
+                        (rla.isActive ? 'bg-surface-strong text-foreground' : 'text-muted') +
+                        ' w-full justify-between no-underline'
+                      "
                     >
                       {{ item.label }}
                       @if (item.badge === 'soon') {
