@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter, withComponentInputBinding, withHashLocation } from '@angular/router';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { CALENDAR_LOCALE, CALENDAR_QUARTER_STARTS_ON, CALENDAR_TODAY } from '@sanring/date-picker';
 import type { CalendarLocale } from '@sanring/date-picker';
 
