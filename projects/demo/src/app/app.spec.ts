@@ -56,6 +56,35 @@ describe('App', () => {
     }
   });
 
+  it('groups the showcase by usage frequency and keeps selection info as a separate block', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('[data-testid="toggle-info-block"]')).toBeNull();
+
+    const groups = Array.from(
+      compiled.querySelectorAll<HTMLElement>('[data-testid^="demo-group-"]'),
+    )
+      .map((group) => group.dataset['testid'])
+      .filter((id): id is string => id !== undefined);
+    expect(groups).toEqual([
+      'demo-group-common-date',
+      'demo-group-time',
+      'demo-group-period',
+      'demo-group-advanced-date',
+      'demo-group-assembly',
+    ]);
+
+    expect(
+      compiled.querySelector(
+        '[data-testid="calendar-grid-basic"] [data-testid="calendar-selected-value-basic"]',
+      ),
+    ).toBeNull();
+    expect(compiled.querySelector('[data-testid="calendar-selected-value-basic"]')).toBeTruthy();
+  });
+
   it('only the "disabled" scenario has disabled cells; "basic"/"no-deselect" have none (independent engine instances)', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
@@ -94,7 +123,6 @@ describe('App', () => {
       '[data-testid="calendar-chips-multi"] [data-testid^="calendar-remove-multi-"]',
     );
     expect(chips).toHaveLength(2);
-    // The "已選 N 天" summary (previously missing when showInfoBlock defaulted to true) must render.
     expect(
       compiled.querySelector('[data-testid="calendar-selected-value-multi"]')?.textContent,
     ).toContain('已選 2 天');
@@ -178,7 +206,7 @@ describe('App', () => {
     expect(chips).toHaveLength(2);
   });
 
-  it('Multi-month scenario (⑤): repeated ArrowRight moves the rendered focus ring exactly 1 day forward each press (2026-07-18 regression)', async () => {
+  it('Multi-month scenario (⑪): repeated ArrowRight moves the rendered focus ring exactly 1 day forward each press (2026-07-18 regression)', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     fixture.detectChanges();
@@ -238,38 +266,102 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
+    const section = compiled.querySelector<HTMLElement>(
+      '[data-testid="scenario-section-time-adjustment"]',
+    );
+    expect(section).toBeTruthy();
+    expect(section!.getAttribute('aria-labelledby')).toBe('scenario-title-time-adjustment');
 
-    const firstDay = compiled.querySelector<HTMLButtonElement>('[data-testid^="time-demo-day-"]');
+    const firstDay = section!.querySelector<HTMLButtonElement>('[data-testid^="time-demo-day-"]');
     expect(firstDay).toBeTruthy();
 
     firstDay!.click();
     fixture.detectChanges();
-    expect(compiled.querySelector('[data-testid="time-demo-hours"]')?.textContent).toContain('00');
+    expect(section!.querySelector('[data-testid="time-demo-hours"]')?.textContent).toContain('00');
+    expect(section!.querySelector('[data-testid="time-demo-result"]')?.textContent).toContain(
+      '00:00:00',
+    );
 
-    compiled.querySelector<HTMLButtonElement>('[data-testid="time-demo-hour-cycle-12"]')!.click();
+    section!.querySelector<HTMLButtonElement>('[data-testid="time-demo-hour-cycle-12"]')!.click();
     fixture.detectChanges();
-    expect(compiled.querySelector('[data-testid="time-demo-hours"]')?.textContent).toContain('12');
-    expect(compiled.querySelector('[data-testid="time-demo-meridiem"]')?.textContent).toContain(
+    expect(section!.querySelector('[data-testid="time-demo-hours"]')?.textContent).toContain('12');
+    expect(section!.querySelector('[data-testid="time-demo-meridiem"]')?.textContent).toContain(
       'AM',
     );
-
-    compiled.querySelector<HTMLButtonElement>('[data-testid="time-demo-meridiem"]')!.click();
-    fixture.detectChanges();
-    expect(compiled.querySelector('[data-testid="time-demo-meridiem"]')?.textContent).toContain(
-      'PM',
+    expect(section!.querySelector('[data-testid="time-demo-result"]')?.textContent).toContain(
+      '12:00:00 AM',
     );
 
-    compiled.querySelector<HTMLButtonElement>('[data-testid="time-demo-confirm"]')!.click();
+    section!.querySelector<HTMLButtonElement>('[data-testid="time-demo-meridiem"]')!.click();
     fixture.detectChanges();
-    expect(compiled.querySelector('[data-testid="time-demo-result"]')?.textContent).toContain(
+    expect(section!.querySelector('[data-testid="time-demo-meridiem"]')?.textContent).toContain(
+      'PM',
+    );
+    expect(section!.querySelector('[data-testid="time-demo-result"]')?.textContent).toContain(
       '12:00:00 PM',
     );
 
-    compiled.querySelector<HTMLButtonElement>('[data-testid="time-demo-hour-cycle-24"]')!.click();
+    section!.querySelector<HTMLButtonElement>('[data-testid="time-demo-hour-cycle-24"]')!.click();
     fixture.detectChanges();
-    expect(compiled.querySelector('[data-testid="time-demo-result"]')?.textContent).toContain(
+    expect(section!.querySelector('[data-testid="time-demo-result"]')?.textContent).toContain(
       '12:00:00',
     );
+    expect(section!.querySelector('[data-testid="time-demo-confirm"]')).toBeNull();
+    expect(section!.querySelector('[data-testid="time-demo-abort"]')).toBeNull();
+  });
+
+  it('Time Picker demo: renders as an independent time-only section', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const section = compiled.querySelector<HTMLElement>(
+      '[data-testid="scenario-section-time-picker"]',
+    );
+    expect(section).toBeTruthy();
+    expect(section!.getAttribute('aria-labelledby')).toBe('scenario-title-time-picker');
+    expect(section!.querySelector('#scenario-title-time-picker')?.textContent).toContain(
+      '獨立時分選擇器',
+    );
+
+    expect(section!.querySelector('[data-testid="time-picker-hours"]')?.textContent).toContain(
+      '09',
+    );
+    expect(section!.querySelector('[data-testid="time-picker-minutes"]')?.textContent).toContain(
+      '30',
+    );
+    expect(section!.querySelector('[data-testid="time-picker-result"]')?.textContent).toContain(
+      '09:30',
+    );
+
+    section!.querySelector<HTMLButtonElement>('[data-testid="time-picker-minute-up"]')!.click();
+    fixture.detectChanges();
+    expect(section!.querySelector('[data-testid="time-picker-minutes"]')?.textContent).toContain(
+      '35',
+    );
+    expect(section!.querySelector('[data-testid="time-picker-result"]')?.textContent).toContain(
+      '09:35',
+    );
+
+    section!.querySelector<HTMLButtonElement>('[data-testid="time-picker-hour-cycle-12"]')!.click();
+    fixture.detectChanges();
+    expect(section!.querySelector('[data-testid="time-picker-result"]')?.textContent).toContain(
+      '09:35 AM',
+    );
+
+    section!.querySelector<HTMLButtonElement>('[data-testid="time-picker-meridiem"]')!.click();
+    fixture.detectChanges();
+    expect(section!.querySelector('[data-testid="time-picker-result"]')?.textContent).toContain(
+      '09:35 PM',
+    );
+
+    section!.querySelector<HTMLButtonElement>('[data-testid="time-picker-hour-cycle-24"]')!.click();
+    fixture.detectChanges();
+    expect(section!.querySelector('[data-testid="time-picker-result"]')?.textContent).toContain(
+      '21:35',
+    );
+
+    expect(section!.querySelector('[data-testid="time-picker-confirm"]')).toBeNull();
   });
 
   it('drill-down scenario: zooming out to year, then back in through month, selects a day decades away (1996-08-17)', async () => {

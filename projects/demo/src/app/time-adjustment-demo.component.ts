@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { format } from 'date-fns/format';
 import { LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
-import { CALENDAR_LOCALE, CalendarGridDirective, TimeAdjustmentEngine } from '@sanring/date-picker';
-import type { CalendarDay, TimeValue } from '@sanring/date-picker';
+import { CALENDAR_LOCALE, CalendarGridDirective } from '@sanring/date-picker';
+import type { CalendarDay } from '@sanring/date-picker';
 import { ButtonDirective } from './components/ui/button';
 import {
   CardComponent,
@@ -25,7 +25,6 @@ type TimeHourCycle = 'h12' | 'h24';
     LucideChevronLeft,
     LucideChevronRight,
   ],
-  providers: [TimeAdjustmentEngine],
   template: `
     <sanring-card class="w-full overflow-hidden">
       <sanring-card-content class="p-5 md:p-6">
@@ -113,10 +112,12 @@ type TimeHourCycle = 'h12' | 'h24';
           <!-- 右欄：時分調整 + 說明 -->
           <div class="flex flex-1 flex-col gap-4 pt-1 md:pt-2">
             <div>
-              <h3 sanringCardTitle class="text-base">⑩ 時/分調整（Time Adjustment，M8）</h3>
+              <h3 sanringCardTitle class="text-base" id="scenario-title-time-adjustment">
+                ⑤ 時/分調整（Time Adjustment，M8）
+              </h3>
               <p sanringCardDescription class="mt-1 text-sm text-muted">
-                先點選日期，再調整時/分（Draft 狀態）；「確認」合成完整 Date 寫回 CalendarEngine，
-                「中止」丟棄 Draft 回到選取前時間分量。
+                先點選日期，再調整時/分；每次切換小時、分鐘或 AM/PM 都會立即寫回 CalendarEngine
+                的已選 Date。
               </p>
             </div>
 
@@ -168,7 +169,7 @@ type TimeHourCycle = 'h12' | 'h24';
                       variant="ghost"
                       size="icon"
                       type="button"
-                      (click)="adjustHours(1, selected)"
+                      (click)="adjustHours(1)"
                     >
                       ▲
                     </button>
@@ -182,7 +183,7 @@ type TimeHourCycle = 'h12' | 'h24';
                       variant="ghost"
                       size="icon"
                       type="button"
-                      (click)="adjustHours(-1, selected)"
+                      (click)="adjustHours(-1)"
                     >
                       ▼
                     </button>
@@ -197,7 +198,7 @@ type TimeHourCycle = 'h12' | 'h24';
                       variant="ghost"
                       size="icon"
                       type="button"
-                      (click)="adjustMinutes(1, selected)"
+                      (click)="adjustMinutes(1)"
                     >
                       ▲
                     </button>
@@ -211,7 +212,7 @@ type TimeHourCycle = 'h12' | 'h24';
                       variant="ghost"
                       size="icon"
                       type="button"
-                      (click)="adjustMinutes(-1, selected)"
+                      (click)="adjustMinutes(-1)"
                     >
                       ▼
                     </button>
@@ -225,52 +226,28 @@ type TimeHourCycle = 'h12' | 'h24';
                       type="button"
                       class="self-center"
                       data-testid="time-demo-meridiem"
-                      (click)="toggleMeridiem(selected)"
+                      (click)="toggleMeridiem()"
                     >
                       {{ meridiem() }}
                     </button>
                   }
-                </div>
-
-                <div class="flex gap-2">
-                  <button
-                    sanringBtn
-                    variant="default"
-                    size="sm"
-                    type="button"
-                    data-testid="time-demo-confirm"
-                    (click)="confirmDraft(selected)"
-                  >
-                    確認
-                  </button>
-                  <button
-                    sanringBtn
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                    data-testid="time-demo-abort"
-                    (click)="abortDraft(selected)"
-                  >
-                    中止
-                  </button>
                 </div>
               </div>
             } @else {
               <p class="text-sm text-muted">請先在左側日曆點選一個日期。</p>
             }
 
-            <!-- 確認後結果 -->
             <div
               class="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
               data-testid="time-demo-result"
             >
-              <span class="text-muted">已確認 Date：</span>
-              @if (confirmedDate()) {
+              <span class="text-muted">已選 Date：</span>
+              @if (engine.selectedDate(); as selected) {
                 <span class="font-mono text-foreground">
-                  {{ formatConfirmedDate(confirmedDate()!) }}
+                  {{ formatSelectedDate(selected) }}
                 </span>
               } @else {
-                <span class="text-muted">尚未確認</span>
+                <span class="text-muted">尚未選取</span>
               }
             </div>
           </div>
@@ -281,7 +258,6 @@ type TimeHourCycle = 'h12' | 'h24';
 })
 export class TimeAdjustmentDemoComponent {
   private readonly locale = inject(CALENDAR_LOCALE);
-  private readonly timeEngine = inject(TimeAdjustmentEngine);
   private readonly gridDirective = viewChild.required(CalendarGridDirective);
 
   /** CalendarEngine 由 CalendarGridDirective 自帶，透過 viewChild 拿同一份實例 */
@@ -292,7 +268,6 @@ export class TimeAdjustmentDemoComponent {
   protected readonly draftHours = signal(9);
   protected readonly draftMinutes = signal(0);
   protected readonly hourCycle = signal<TimeHourCycle>('h24');
-  protected readonly confirmedDate = signal<Date | null>(null);
   protected readonly weekdayLabels = computed(() => [
     ...this.locale.weekdayLabels.slice(this.locale.weekStartsOn),
     ...this.locale.weekdayLabels.slice(0, this.locale.weekStartsOn),
@@ -312,42 +287,29 @@ export class TimeAdjustmentDemoComponent {
     if (selected) {
       this.draftHours.set(selected.getHours());
       this.draftMinutes.set(selected.getMinutes());
-      this.pushDraft(selected);
     }
   }
 
-  protected adjustHours(delta: number, baseDate: Date): void {
+  protected adjustHours(delta: number): void {
     this.draftHours.set((this.draftHours() + delta + 24) % 24);
-    this.pushDraft(baseDate);
+    this.applySelectedTime();
   }
 
-  protected adjustMinutes(delta: number, baseDate: Date): void {
-    this.draftMinutes.set((this.draftMinutes() + delta + 60) % 60);
-    this.pushDraft(baseDate);
+  protected adjustMinutes(delta: number): void {
+    const totalMinutes = this.draftHours() * 60 + this.draftMinutes() + delta;
+    const normalized = (totalMinutes + 24 * 60) % (24 * 60);
+    this.draftHours.set(Math.floor(normalized / 60));
+    this.draftMinutes.set(normalized % 60);
+    this.applySelectedTime();
   }
 
   protected setHourCycle(hourCycle: TimeHourCycle): void {
     this.hourCycle.set(hourCycle);
   }
 
-  protected toggleMeridiem(baseDate: Date): void {
+  protected toggleMeridiem(): void {
     this.draftHours.set((this.draftHours() + 12) % 24);
-    this.pushDraft(baseDate);
-  }
-
-  protected confirmDraft(baseDate: Date): void {
-    this.pushDraft(baseDate);
-    const composed = this.timeEngine.confirmTimeDraft('single');
-    if (composed !== null) {
-      this.engine.setSelectedDate(composed);
-      this.confirmedDate.set(composed);
-    }
-  }
-
-  protected abortDraft(baseDate: Date): void {
-    this.timeEngine.abortTimeDraft('single');
-    this.draftHours.set(baseDate.getHours());
-    this.draftMinutes.set(baseDate.getMinutes());
+    this.applySelectedTime();
   }
 
   protected toWeeks(grid: readonly CalendarDay[]): CalendarDay[][] {
@@ -365,7 +327,7 @@ export class TimeAdjustmentDemoComponent {
     return n.toString().padStart(2, '0');
   }
 
-  protected formatConfirmedDate(date: Date): string {
+  protected formatSelectedDate(date: Date): string {
     const pattern = this.hourCycle() === 'h24' ? 'yyyy-MM-dd HH:mm:ss' : 'yyyy-MM-dd hh:mm:ss a';
     return format(date, pattern);
   }
@@ -375,8 +337,13 @@ export class TimeAdjustmentDemoComponent {
     return this.pad(normalized === 0 ? 12 : normalized);
   }
 
-  private pushDraft(baseDate: Date): void {
-    const value: TimeValue = { hours: this.draftHours(), minutes: this.draftMinutes() };
-    this.timeEngine.startOrUpdateTimeDraft('single', baseDate, value);
+  private applySelectedTime(): void {
+    const selected = this.engine.selectedDate();
+    if (selected === null) {
+      return;
+    }
+    const next = new Date(selected);
+    next.setHours(this.draftHours(), this.draftMinutes(), 0, 0);
+    this.engine.setSelectedDate(next);
   }
 }

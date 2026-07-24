@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal, viewChildren } from '@angular/core';
+import { Component, effect, inject, viewChildren } from '@angular/core';
 import { format } from 'date-fns/format';
 import { LucideChevronLeft, LucideChevronRight, LucideX } from '@lucide/angular';
 import { CALENDAR_LOCALE, CalendarGridDirective } from '@sanring/date-picker';
@@ -18,6 +18,7 @@ import {
 import { GranularityPickerDemoComponent } from './granularity-picker-demo.component';
 import { DrillDownPickerDemoComponent } from './drilldown-picker-demo.component';
 import { TimeAdjustmentDemoComponent } from './time-adjustment-demo.component';
+import { TimePickerDemoComponent } from './time-picker-demo.component';
 import { FIXED_TODAY } from './app.config';
 
 /** R4 / Decision 5: an OR-combined disabled matcher — weekends (predicate) + a fixed holiday block (DateInterval). */
@@ -33,61 +34,88 @@ interface DemoScenario {
   readonly monthsToDisplay?: number;
 }
 
+interface DemoScenarioGroup<TScenario> {
+  readonly id: string;
+  readonly title: string;
+  readonly description: string;
+  readonly scenarios: readonly TScenario[];
+}
+
 /**
  * Progressive showcase states (PRD §8's "representative assembly states"
  * spirit, scoped to what M1–M3 actually implement). Each scenario gets its
  * own CalendarEngine instance — CalendarGridDirective is component-scoped
  * by design, so N grids on one page never share state.
  */
-const SCENARIOS: readonly DemoScenario[] = [
+const BASIC_SCENARIO: DemoScenario = {
+  id: 'basic',
+  title: '① 基礎單選',
+  description: '預設狀態：任選一天，再點同一天可取消選取。沒有任何禁用規則。',
+  configure: () => undefined,
+};
+
+const DISABLED_SCENARIO: DemoScenario = {
+  id: 'disabled',
+  title: '② 含禁用規則（常用完整型）',
+  description:
+    '週末（自訂函式）＋ 7/20–7/24 公休（DateInterval）疊加禁用（R4 / Decision 5），且不可取消選取。',
+  configure: (engine) => {
+    engine.setAllowDeselect(false);
+    engine.setDisabled([isWeekend, summerBreak]);
+  },
+};
+
+const RANGE_SCENARIO: DemoScenario = {
+  id: 'range',
+  title: '③ 區間選取（Range）',
+  description:
+    '第一次點擊設定起點（進入 Draft），第二次點擊提交區間，Escape 或「中止草稿」按鈕中止並回溯（Decision 3 / §4）。',
+  configure: (engine) => engine.setSelectionMode('range'),
+};
+
+const MULTI_SCENARIO: DemoScenario = {
+  id: 'multi',
+  title: '④ 多選日期（Multi-dates，M6）',
+  description:
+    '累積點選任意不連續日期，再次點擊同一天立即移除（toggle 語意，不受 allowDeselect 影響，Decision 11 / I6）；下方標籤可用 removeDate() 個別移除，或用「清空」整批歸零。',
+  configure: (engine) => engine.setSelectionMode('multi'),
+};
+
+const NO_DESELECT_SCENARIO: DemoScenario = {
+  id: 'no-deselect',
+  title: '⑩ 不可取消選取',
+  description: 'allowDeselect = false — 再次點擊已選日期不會取消（憲法 §4 的另一個合法分支）。',
+  configure: (engine) => engine.setAllowDeselect(false),
+};
+
+const MULTI_MONTH_SCENARIO: DemoScenario = {
+  id: 'multimonth',
+  title: '⑪ 多月並排 + 跨月焦點（M4）',
+  description:
+    '同時顯示兩個月份（Decision 8），鍵盤方向鍵在兩個月格之間無縫移動；抵達整個視窗邊界才自動換頁（Decision 6）。',
+  configure: (engine) => {
+    engine.setSelectionMode('range');
+    engine.setMonthsToDisplay(2);
+  },
+  monthsToDisplay: 2,
+};
+
+const CALENDAR_SCENARIO_GROUPS: readonly DemoScenarioGroup<DemoScenario>[] = [
   {
-    id: 'basic',
-    title: '① 基礎單選',
-    description: '預設狀態：任選一天，再點同一天可取消選取。沒有任何禁用規則。',
-    configure: () => undefined,
+    id: 'common-date',
+    title: '常用日期選取',
+    description: '最常被產品表單直接使用的日期模式：單選、禁用、區間與多選。',
+    scenarios: [BASIC_SCENARIO, DISABLED_SCENARIO, RANGE_SCENARIO, MULTI_SCENARIO],
   },
   {
-    id: 'no-deselect',
-    title: '② 不可取消選取',
-    description: 'allowDeselect = false — 再次點擊已選日期不會取消（憲法 §4 的另一個合法分支）。',
-    configure: (engine) => engine.setAllowDeselect(false),
-  },
-  {
-    id: 'disabled',
-    title: '③ 含禁用規則（最完整）',
-    description:
-      '週末（自訂函式）＋ 7/20–7/24 公休（DateInterval）疊加禁用（R4 / Decision 5），且不可取消選取。',
-    configure: (engine) => {
-      engine.setAllowDeselect(false);
-      engine.setDisabled([isWeekend, summerBreak]);
-    },
-  },
-  {
-    id: 'range',
-    title: '④ 區間選取（Range）',
-    description:
-      '第一次點擊設定起點（進入 Draft），第二次點擊提交區間，Escape 或「中止草稿」按鈕中止並回溯（Decision 3 / §4）。',
-    configure: (engine) => engine.setSelectionMode('range'),
-  },
-  {
-    id: 'multimonth',
-    title: '⑤ 多月並排 + 跨月焦點（M4）',
-    description:
-      '同時顯示兩個月份（Decision 8），鍵盤方向鍵在兩個月格之間無縫移動；抵達整個視窗邊界才自動換頁（Decision 6）。',
-    configure: (engine) => {
-      engine.setSelectionMode('range');
-      engine.setMonthsToDisplay(2);
-    },
-    monthsToDisplay: 2,
-  },
-  {
-    id: 'multi',
-    title: '⑥ 多選日期（Multi-dates，M6）',
-    description:
-      '累積點選任意不連續日期，再次點擊同一天立即移除（toggle 語意，不受 allowDeselect 影響，Decision 11 / I6）；下方標籤可用 removeDate() 個別移除，或用「清空」整批歸零。',
-    configure: (engine) => engine.setSelectionMode('multi'),
+    id: 'advanced-date',
+    title: '進階日期行為',
+    description: '較低頻但會影響整合策略的日期行為：不可取消與多月視窗。',
+    scenarios: [NO_DESELECT_SCENARIO, MULTI_MONTH_SCENARIO],
   },
 ];
+
+const RENDERED_CALENDAR_SCENARIOS = CALENDAR_SCENARIO_GROUPS.flatMap((group) => group.scenarios);
 
 interface GranularityDemoScenario {
   readonly id: string;
@@ -97,12 +125,6 @@ interface GranularityDemoScenario {
   readonly mode: 'single' | 'range' | 'multi';
 }
 
-/**
- * M7 / ADR-0001 assembly examples — GranularityPickerEngine, a sibling engine
- * to CalendarEngine, so each card here provides its own instance directly
- * rather than going through CalendarGridDirective (see
- * granularity-picker-demo.component.ts).
- */
 const GRANULARITY_SCENARIOS: readonly GranularityDemoScenario[] = [
   {
     id: 'month-picker',
@@ -128,6 +150,21 @@ const GRANULARITY_SCENARIOS: readonly GranularityDemoScenario[] = [
   },
 ];
 
+const GRANULARITY_SCENARIO_GROUPS: readonly DemoScenarioGroup<GranularityDemoScenario>[] = [
+  {
+    id: 'period',
+    title: '期間選擇',
+    description: '用於報表、帳期與資料彙整的月、季、年選取模式。',
+    scenarios: GRANULARITY_SCENARIOS,
+  },
+];
+
+/**
+ * M7 / ADR-0001 assembly examples — GranularityPickerEngine, a sibling engine
+ * to CalendarEngine, so each card here provides its own instance directly
+ * rather than going through CalendarGridDirective (see
+ * granularity-picker-demo.component.ts).
+ */
 @Component({
   selector: 'app-root',
   imports: [
@@ -143,6 +180,7 @@ const GRANULARITY_SCENARIOS: readonly GranularityDemoScenario[] = [
     GranularityPickerDemoComponent,
     DrillDownPickerDemoComponent,
     TimeAdjustmentDemoComponent,
+    TimePickerDemoComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -151,11 +189,9 @@ export class App {
   private readonly locale = inject(CALENDAR_LOCALE);
   private readonly grids = viewChildren(CalendarGridDirective);
 
-  protected readonly scenarios = SCENARIOS;
-  protected readonly granularityScenarios = GRANULARITY_SCENARIOS;
+  protected readonly calendarScenarioGroups = CALENDAR_SCENARIO_GROUPS;
+  protected readonly granularityScenarioGroups = GRANULARITY_SCENARIO_GROUPS;
   protected readonly fixedToday = FIXED_TODAY;
-  /** Controls whether the selection info renders as a separate block below the calendar. */
-  protected readonly showInfoBlock = signal(true);
 
   protected readonly weekdayLabels = [
     ...this.locale.weekdayLabels.slice(this.locale.weekStartsOn),
@@ -165,7 +201,7 @@ export class App {
   constructor() {
     effect(() => {
       this.grids().forEach((directive, index) => {
-        SCENARIOS[index]?.configure(directive.engine);
+        RENDERED_CALENDAR_SCENARIOS[index]?.configure(directive.engine);
       });
     });
   }
