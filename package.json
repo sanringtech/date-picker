@@ -3,8 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "start:docs": "ng serve docs",
+    "start": "ng serve docs",
     "build": "ng build",
     "build:docs": "ng build docs",
     "watch": "ng build --watch --configuration development",

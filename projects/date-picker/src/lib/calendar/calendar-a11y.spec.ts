@@ -2,7 +2,7 @@
  * WAI-ARIA compliance tests using axe-core (M4 acceptance gate, PRD §10).
  *
  * Renders a minimal but complete calendar grid that mirrors the ARIA structure
- * described in the demo app (role=grid > role=row > role=gridcell) and asserts
+ * described in the docs site (role=grid > role=row > role=gridcell) and asserts
  * zero axe violations for the core interaction scenarios.
  */
 

@@ -4,8 +4,8 @@
   "compileOnSave": false,
   "compilerOptions": {
     "paths": {
-      "@sanring/date-picker": ["./dist/date-picker"],
-      "@sanring/date-picker-widget": ["./dist/date-picker-widget"]
+      "@sanring/date-picker": ["./projects/date-picker/src/public-api.ts"],
+      "@sanring/date-picker-widget": ["./projects/date-picker-widget/src/public-api.ts"]
     },
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -36,12 +36,6 @@
     },
     {
       "path": "./projects/date-picker-widget/tsconfig.spec.json"
-    },
-    {
-      "path": "./projects/demo/tsconfig.app.json"
-    },
-    {
-      "path": "./projects/demo/tsconfig.spec.json"
     },
     {
       "path": "./projects/docs/tsconfig.app.json"
