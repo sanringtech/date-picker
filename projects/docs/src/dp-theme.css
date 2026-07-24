@@ -1,0 +1,84 @@
+/*
+ * @sanring/date-picker — design tokens
+ *
+ * date-picker's own color identity, not borrowed from @sanring/ui. This
+ * file only backs the docs site's own chrome (nav, buttons, cards); the
+ * published `@sanring/date-picker-widget` package ships its own separate
+ * `dp-theme.css` (projects/date-picker-widget/src/dp-theme.css) since it's
+ * a standalone artifact with its own consumers. The two share the same
+ * eight core hex values (primary/primary-light/accent/danger/text-*/
+ * bg-base) — kept in sync by hand, not imported, since they serve
+ * different packages.
+ *
+ * 深/淺色模式：預設（:root，沒有 data-theme 屬性）是深色；在 <html> 或
+ * <body> 上加 data-theme="light" 屬性即可切換淺色，例如：
+ *   document.documentElement.dataset['theme'] = 'light';
+ * (see header.component.ts's toggleTheme())
+ */
+
+:root {
+  /* 圓角：sm 給圖示按鈕，lg 給卡片/對話框 */
+  --dp-radius: 8px;
+  --dp-radius-lg: 12px;
+
+  /* 字型 */
+  --dp-font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* 主色：選中的單日背景、主按鈕 */
+  --dp-primary: #2dd4bf;
+  /* 區間背景：range 選擇時的淺色過渡背景、hover 效果 */
+  --dp-primary-light: #134e4a;
+  /* 疊在主色區塊上的文字顏色 */
+  --dp-primary-fg: #0f172a;
+
+  /* 今日標示 */
+  --dp-accent: #fbbf24;
+
+  /* 破壞操作：清除日期 (Clear)、取消按鈕 */
+  --dp-danger: #fb7185;
+  --dp-danger-strong: #f43f5e;
+
+  /* 文字 */
+  --dp-text-main: #f1f5f9;
+  --dp-text-muted: #94a3b8;
+  --dp-text-disabled: #475569;
+
+  /* 底色 */
+  --dp-bg-base: #0f172a;
+
+  /* 通用 UI 語意層（nav/button/card 用，不在原始 8 色清單內，深色模式為推導值） */
+  --dp-border: #1e293b;
+  --dp-border-strong: #334155;
+  --dp-surface: #1e293b;
+  --dp-surface-strong: #334155;
+  --dp-elevated: #334155;
+  --dp-control: #f1f5f9;
+  --dp-control-foreground: #0f172a;
+  --dp-active: #134e4a;
+}
+
+:root[data-theme='light'] {
+  --dp-primary: #0d9488;
+  --dp-primary-light: #ccfbf1;
+  --dp-primary-fg: #ffffff;
+
+  --dp-accent: #f59e0b;
+
+  --dp-danger: #f43f5e;
+  --dp-danger-strong: #e11d48;
+
+  --dp-text-main: #334155;
+  --dp-text-muted: #64748b;
+  --dp-text-disabled: #cbd5e1;
+
+  --dp-bg-base: #ffffff;
+
+  --dp-border: #e2e8f0;
+  --dp-border-strong: #cbd5e1;
+  --dp-surface: #f8fafc;
+  --dp-surface-strong: #f1f5f9;
+  --dp-elevated: #f1f5f9;
+  --dp-control: #334155;
+  --dp-control-foreground: #ffffff;
+  --dp-active: #ccfbf1;
+}
