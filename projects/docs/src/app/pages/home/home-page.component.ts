@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ButtonDirective } from '../../components/ui/button';
+import { SANRING_UI_LINKS } from '../../navigation/external-links';
 
 @Component({
   selector: 'app-home-page',
@@ -72,7 +73,67 @@ import { ButtonDirective } from '../../components/ui/button';
           </p>
         </a>
       </div>
+
+      <!-- Widget layer -->
+      <div class="mt-16">
+        <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">Widget 層</h2>
+        <p class="mb-4 text-sm text-muted">
+          Composed 層，Engine 之上提供預設樣式的 Popover DatePicker 元件。
+        </p>
+        <a
+          routerLink="/widget"
+          class="flex items-center justify-between rounded-xl border border-dashed border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40"
+        >
+          <span>
+            <span class="font-semibold text-foreground">@sanring/date-picker-widget</span>
+            <span
+              class="ml-2 align-middle rounded-full bg-surface-strong px-1.5 py-0.5 text-[10px] font-medium text-muted"
+            >
+              soon
+            </span>
+            <p class="mt-1 text-sm text-muted">在 Engine 之上組合的預設樣式元件</p>
+          </span>
+        </a>
+      </div>
+
+      <!-- Styled components -->
+      <div class="mt-10">
+        <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">
+          樣式化元件（@sanring/ui）
+        </h2>
+        <p class="mb-4 text-sm text-muted">
+          想要現成樣式、不走 headless？@sanring/ui 提供對應的樣式化元件。
+        </p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <a
+            [href]="uiLinks.calendar"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center justify-between rounded-lg border border-border bg-surface p-4 no-underline transition-colors hover:border-primary/40"
+          >
+            <span>
+              <p class="font-semibold text-foreground">Calendar</p>
+              <p class="mt-0.5 text-sm text-muted">ui.sanring.dev/components/calendar</p>
+            </span>
+            <span class="text-muted" aria-hidden="true">↗</span>
+          </a>
+          <a
+            [href]="uiLinks.datePicker"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center justify-between rounded-lg border border-border bg-surface p-4 no-underline transition-colors hover:border-primary/40"
+          >
+            <span>
+              <p class="font-semibold text-foreground">Date Picker</p>
+              <p class="mt-0.5 text-sm text-muted">ui.sanring.dev/components/date-picker</p>
+            </span>
+            <span class="text-muted" aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </div>
     </div>
   `,
 })
-export class HomePageComponent {}
+export class HomePageComponent {
+  protected readonly uiLinks = SANRING_UI_LINKS;
+}
