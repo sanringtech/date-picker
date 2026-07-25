@@ -1,13 +1,4 @@
-export interface DocsNavSection {
-  readonly label: string;
-  readonly items: readonly DocsNavItem[];
-}
-
-export interface DocsNavItem {
-  readonly label: string;
-  readonly path: string;
-  readonly badge?: 'wip' | 'soon';
-}
+import type { SidebarSection } from '../components/sidebar/sidebar.types';
 
 export interface DocsTopNavItem {
   readonly label: string;
@@ -19,7 +10,7 @@ export const docsTopNavItems: readonly DocsTopNavItem[] = [
   { label: 'Widget', path: '/widget' },
 ];
 
-export const docsNavSections: readonly DocsNavSection[] = [
+export const docsNavSections: readonly SidebarSection[] = [
   {
     label: 'Engine',
     items: [
