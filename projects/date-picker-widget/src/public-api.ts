@@ -3,3 +3,5 @@
  */
 
 export * from './lib/date-picker-overlay-shell.component';
+export * from './lib/date-format';
+export * from './lib/date-picker.component';

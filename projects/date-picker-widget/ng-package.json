@@ -5,5 +5,5 @@
   "lib": {
     "entryFile": "src/public-api.ts"
   },
-  "allowedNonPeerDependencies": ["@sanring/date-picker"]
+  "allowedNonPeerDependencies": ["@sanring/date-picker", "date-fns"]
 }

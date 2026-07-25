@@ -23,6 +23,6 @@ export const docsNavSections: readonly SidebarSection[] = [
   {
     label: 'Widget',
     path: '/widget',
-    items: [{ label: 'Widget Layer', path: '/widget', badge: 'soon' }],
+    items: [{ label: 'Widget Layer', path: '/widget' }],
   },
 ];

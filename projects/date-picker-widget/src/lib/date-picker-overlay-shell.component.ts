@@ -1,12 +1,18 @@
-import { Component, ViewChild, inject, signal } from '@angular/core';
-import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { Component, ElementRef, OnDestroy, ViewChild, inject, input, signal } from '@angular/core';
+import { ConnectedPosition, Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { CdkPortal, PortalModule } from '@angular/cdk/portal';
 
+/** PRD §7: bottom-start preferred, flips to top-start when space runs out. */
+const CONNECTED_POSITIONS: ConnectedPosition[] = [
+  { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+  { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+];
+
 /**
- * W0 scaffold: proves the CDK Overlay wiring works end to end
- * (create → attach → dispose) inside this workspace. Not the composed
- * DatePicker itself — anchoring to an input, positioning, and assembling
- * `CalendarEngine` land in W1/W2 per the PRD milestone plan.
+ * Shared Overlay open/close/dispose lifecycle for both DatePickerComponent and
+ * (later) DateRangePickerComponent (PRD §4a: avoid duplicating this per component).
+ * Anchors to `connectedTo` when provided (W1); falls back to W0's global-center
+ * placement otherwise, so the original scaffold behavior still holds with no anchor.
  */
 @Component({
   selector: 'sanring-date-picker-overlay-shell',
@@ -17,8 +23,10 @@ import { CdkPortal, PortalModule } from '@angular/cdk/portal';
     </ng-template>
   `,
 })
-export class DatePickerOverlayShellComponent {
+export class DatePickerOverlayShellComponent implements OnDestroy {
   private readonly overlay = inject(Overlay);
+
+  readonly connectedTo = input<ElementRef<HTMLElement> | undefined>(undefined);
 
   @ViewChild(CdkPortal, { static: true }) private readonly portal!: CdkPortal;
 
@@ -29,8 +37,12 @@ export class DatePickerOverlayShellComponent {
     if (this.overlayRef) {
       return;
     }
+    const anchor = this.connectedTo();
     this.overlayRef = this.overlay.create({
-      positionStrategy: this.overlay.position().global().centerHorizontally().centerVertically(),
+      positionStrategy: anchor
+        ? this.overlay.position().flexibleConnectedTo(anchor).withPositions(CONNECTED_POSITIONS)
+        : this.overlay.position().global().centerHorizontally().centerVertically(),
+      scrollStrategy: this.overlay.scrollStrategies.reposition(),
       hasBackdrop: true,
     });
     this.overlayRef.backdropClick().subscribe(() => this.close());
@@ -50,5 +62,10 @@ export class DatePickerOverlayShellComponent {
     } else {
       this.open();
     }
+  }
+
+  /** Overlay content lives in a global CDK container, not this component's own DOM subtree — must dispose explicitly or it leaks past destroy. */
+  ngOnDestroy(): void {
+    this.overlayRef?.dispose();
   }
 }
