@@ -1,8 +1,7 @@
-<div>
-  <app-page-header title="CalendarEngine">
-    Single / Range / Multi 三種選取模式的核心狀態機，42-cell 固定月網格，鍵盤導航與 Disabled Dates。
-  </app-page-header>
-
+<app-engine-page
+  title="CalendarEngine"
+  description="Single / Range / Multi 三種選取模式的核心狀態機，42-cell 固定月網格，鍵盤導航與 Disabled Dates。"
+>
   <!-- Scenario cards -->
   <div class="flex flex-col gap-6">
     @for (scenario of scenarios; track scenario.id) {
@@ -324,4 +323,4 @@
       </sanring-card-content>
     </sanring-card>
   </div>
-</div>
+</app-engine-page>

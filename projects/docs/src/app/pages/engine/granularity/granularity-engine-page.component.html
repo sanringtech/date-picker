@@ -1,9 +1,7 @@
-<div>
-  <app-page-header title="GranularityPickerEngine">
-    Month / Quarter / Year 粒度選取，與 CalendarEngine 共用同一套 Single / Range / Multi
-    語意，財年起始月可注入。
-  </app-page-header>
-
+<app-engine-page
+  title="GranularityPickerEngine"
+  description="Month / Quarter / Year 粒度選取，與 CalendarEngine 共用同一套 Single / Range / Multi 語意，財年起始月可注入。"
+>
   <div class="flex flex-col gap-6">
     @for (scenario of scenarios; track scenario.id) {
       <sanring-card class="w-full overflow-hidden">
@@ -157,4 +155,4 @@
       </sanring-card>
     }
   </div>
-</div>
+</app-engine-page>

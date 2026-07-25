@@ -13,7 +13,7 @@ import {
   CardDescriptionDirective,
   CardTitleDirective,
 } from '../../../components/ui/card';
-import { PageHeaderComponent } from '../../../components/page-header/page-header.component';
+import { EnginePageComponent } from '../../../components/engine-page/engine-page.component';
 
 interface GranularityScenario {
   readonly id: string;
@@ -57,7 +57,7 @@ const SCENARIOS: readonly GranularityScenario[] = [
     CardContentComponent,
     CardTitleDirective,
     CardDescriptionDirective,
-    PageHeaderComponent,
+    EnginePageComponent,
     LucideChevronLeft,
     LucideChevronRight,
     LucideX,

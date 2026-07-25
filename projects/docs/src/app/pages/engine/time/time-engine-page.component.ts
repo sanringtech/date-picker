@@ -15,7 +15,7 @@ import {
   CardDescriptionDirective,
   CardTitleDirective,
 } from '../../../components/ui/card';
-import { PageHeaderComponent } from '../../../components/page-header/page-header.component';
+import { EnginePageComponent } from '../../../components/engine-page/engine-page.component';
 
 type TimeHourCycle = 'h12' | 'h24';
 
@@ -28,7 +28,7 @@ type TimeHourCycle = 'h12' | 'h24';
     CardContentComponent,
     CardTitleDirective,
     CardDescriptionDirective,
-    PageHeaderComponent,
+    EnginePageComponent,
     LucideChevronLeft,
     LucideChevronRight,
     LucideChevronUp,

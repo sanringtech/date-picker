@@ -7,9 +7,10 @@ import { PageHeaderComponent } from '../../components/page-header/page-header.co
   selector: 'app-engine-index-page',
   imports: [RouterLink, PageHeaderComponent],
   template: `
-    <app-page-header title="Engine 層"
-      >三個獨立的 Injectable，每個都有自己的狀態機，互不依賴。</app-page-header
-    >
+    <app-page-header
+      title="Engine 層"
+      description="三個獨立的 Injectable，每個都有自己的狀態機，互不依賴。"
+    />
     <div class="space-y-3">
       <a
         routerLink="/engine/calendar"

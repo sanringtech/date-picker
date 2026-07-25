@@ -1,10 +1,7 @@
-<div>
-  <app-page-header title="TimeAdjustmentEngine">
-    時/分 Draft–Confirm 生命週期：調整時間後進入 <code class="font-mono text-xs">pending</code>
-    狀態，按「確認」才寫回 CalendarEngine；按「中止」回復上次確認值。caller-key 設計讓 Single /
-    Range / Multi 各自獨立管理。
-  </app-page-header>
-
+<app-engine-page
+  title="TimeAdjustmentEngine"
+  description='時/分 Draft–Confirm 生命週期：調整時間後進入 <code class="font-mono text-xs">pending</code> 狀態，按「確認」才寫回 CalendarEngine；按「中止」回復上次確認值。caller-key 設計讓 Single / Range / Multi 各自獨立管理。'
+>
   <div class="flex flex-col gap-6">
     <!-- Time + Calendar combined: Draft-Confirm demo -->
     <sanring-card class="w-full overflow-hidden">
@@ -389,4 +386,4 @@
       </sanring-card-content>
     </sanring-card>
   </div>
-</div>
+</app-engine-page>
