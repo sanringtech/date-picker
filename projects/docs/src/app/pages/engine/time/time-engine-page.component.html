@@ -1,10 +1,9 @@
 <div>
-  <h1 class="mb-2 text-2xl font-bold text-foreground">TimeAdjustmentEngine</h1>
-  <p class="mb-8 text-muted">
+  <app-page-header title="TimeAdjustmentEngine">
     時/分 Draft–Confirm 生命週期：調整時間後進入 <code class="font-mono text-xs">pending</code>
     狀態，按「確認」才寫回 CalendarEngine；按「中止」回復上次確認值。caller-key 設計讓 Single /
     Range / Multi 各自獨立管理。
-  </p>
+  </app-page-header>
 
   <div class="flex flex-col gap-6">
     <!-- Time + Calendar combined: Draft-Confirm demo -->

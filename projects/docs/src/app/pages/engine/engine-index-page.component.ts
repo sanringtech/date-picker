@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SANRING_UI_LINKS } from '../../navigation/external-links';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 
 @Component({
   selector: 'app-engine-index-page',
-  imports: [RouterLink],
+  imports: [RouterLink, PageHeaderComponent],
   template: `
-    <h1 class="mb-2 text-2xl font-bold text-foreground">Engine 層</h1>
-    <p class="mb-8 text-muted">三個獨立的 Injectable，每個都有自己的狀態機，互不依賴。</p>
+    <app-page-header title="Engine 層"
+      >三個獨立的 Injectable，每個都有自己的狀態機，互不依賴。</app-page-header
+    >
     <div class="space-y-3">
       <a
         routerLink="/engine/calendar"
