@@ -123,6 +123,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4400
+          },
           "configurations": {
             "production": {
               "buildTarget": "docs:build:production"
