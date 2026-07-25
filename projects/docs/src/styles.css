@@ -1,6 +1,12 @@
 @import './dp-theme.css';
 @import 'tailwindcss';
 
+:root {
+  /* single source of truth for the docs shell's content width — header, footer,
+     home page, and the sidebar layout each reference this instead of hardcoding max-w-5xl */
+  --dp-content-max-w: 64rem;
+}
+
 @theme inline {
   --color-background: var(--dp-bg-base);
   --color-foreground: var(--dp-text-main);

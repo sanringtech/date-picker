@@ -6,7 +6,7 @@ import { ButtonDirective } from '../../components/ui/button';
   selector: 'app-home-page',
   imports: [RouterLink, ButtonDirective],
   template: `
-    <div class="mx-auto max-w-5xl px-6 py-20">
+    <div class="mx-auto max-w-[var(--dp-content-max-w)] px-6 py-20">
       <div class="max-w-2xl">
         <p class="mb-3 text-sm font-semibold text-primary">@sanring/date-picker</p>
         <h1 class="mb-4 text-4xl font-bold text-foreground">

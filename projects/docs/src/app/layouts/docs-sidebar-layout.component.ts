@@ -7,7 +7,7 @@ import { docsNavSections } from '../navigation/docs-navigation';
   selector: 'app-docs-sidebar-layout',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonDirective],
   template: `
-    <div class="mx-auto flex max-w-5xl gap-0 px-6 py-8">
+    <div class="mx-auto flex max-w-[var(--dp-content-max-w)] gap-0 px-6 py-8">
       <!-- Sidebar -->
       <aside class="w-52 shrink-0 pr-8">
         <nav>
