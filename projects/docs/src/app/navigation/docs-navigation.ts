@@ -13,6 +13,7 @@ export const docsTopNavItems: readonly DocsTopNavItem[] = [
 export const docsNavSections: readonly SidebarSection[] = [
   {
     label: 'Engine',
+    path: '/engine',
     items: [
       { label: 'Calendar Engine', path: '/engine/calendar' },
       { label: 'Granularity Picker', path: '/engine/granularity' },
@@ -21,6 +22,7 @@ export const docsNavSections: readonly SidebarSection[] = [
   },
   {
     label: 'Widget',
+    path: '/widget',
     items: [{ label: 'Widget Layer', path: '/widget', badge: 'soon' }],
   },
 ];

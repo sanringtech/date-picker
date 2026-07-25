@@ -2,9 +2,22 @@
   <nav>
     @for (section of sections(); track section.label) {
       <div class="mb-6">
-        <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
-          {{ section.label }}
-        </p>
+        @if (section.path) {
+          <a
+            [routerLink]="section.path"
+            routerLinkActive
+            #sectionRla="routerLinkActive"
+            [routerLinkActiveOptions]="{ exact: true }"
+            class="mb-2 block text-xs font-semibold uppercase tracking-wider no-underline transition-colors hover:text-foreground"
+            [class]="sectionRla.isActive ? 'text-foreground' : 'text-muted'"
+          >
+            {{ section.label }}
+          </a>
+        } @else {
+          <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+            {{ section.label }}
+          </p>
+        }
         <ul class="space-y-0.5 list-none p-0 m-0">
           @for (item of section.items; track item.path) {
             <li>
