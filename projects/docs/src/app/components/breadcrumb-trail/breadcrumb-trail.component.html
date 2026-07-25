@@ -1,0 +1,18 @@
+<sanring-breadcrumb class="mb-6">
+  <sanring-breadcrumb-list>
+    @for (crumb of items(); track crumb.label; let last = $last) {
+      <sanring-breadcrumb-item>
+        @if (crumb.path && !last) {
+          <sanring-breadcrumb-link [routerLink]="crumb.path">{{
+            crumb.label
+          }}</sanring-breadcrumb-link>
+        } @else {
+          <sanring-breadcrumb-page>{{ crumb.label }}</sanring-breadcrumb-page>
+        }
+      </sanring-breadcrumb-item>
+      @if (!last) {
+        <sanring-breadcrumb-divider />
+      }
+    }
+  </sanring-breadcrumb-list>
+</sanring-breadcrumb>
