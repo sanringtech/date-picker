@@ -4,7 +4,7 @@
 :root {
   /* single source of truth for the docs shell's content width — header, footer,
      home page, and the sidebar layout each reference this instead of hardcoding max-w-5xl */
-  --dp-content-max-w: 64rem;
+  --dp-content-max-w: 72rem;
 }
 
 @theme inline {
