@@ -18,6 +18,16 @@
     "breadcrumb/breadcrumb-divider.component.ts": "b2fc3f8ddba9d4ae2a46a389ebd71a16d3ee5856cc1ba17ebb550d29da60d93f",
     "breadcrumb/breadcrumb-ellipsis.component.ts": "c92b62ddaa1b5eaaf32bb66e819f218b6b8f442d840c37211a0ee9381266d07c",
     "breadcrumb/breadcrumb.type.ts": "2a14b4af515710d386405b924d13ebda0343cae472af5c9be380f9765f8fe7bd",
-    "breadcrumb/index.ts": "05c45fe3e1d568d463e6d1e1c38129477f780f1516ef53616ba760b0bdf1a222"
+    "breadcrumb/index.ts": "05c45fe3e1d568d463e6d1e1c38129477f780f1516ef53616ba760b0bdf1a222",
+    "tabs/tabs.component.ts": "092736c04dce22d50e8f10c6c439d0479f77ddb6746ac0a310049c4b1c7069dd",
+    "tabs/tabs-list.component.ts": "21143e94bb3913c589273151b42be8b613a36e1bb20fb9e5b3c398a235739b10",
+    "tabs/tabs-trigger.component.ts": "a996b31a365082ce616ebc0e44cdf6ab454e88a27a32df5e7c3d85c451a75215",
+    "tabs/tabs-content.component.ts": "bcc4fec93d639f36ba41eaf816a2a8539da68e5360a0a658d0f754a6a570f923",
+    "tabs/tabs.type.ts": "8490e1c16ef0b555fedf897b7307560c0b9dd415d2a9d8a73b5023a1ece6887b",
+    "tabs/index.ts": "9ac10755f1ad5894e29097c52c035ceb7f1529e927daf3504efb02bca07ef2f4",
+    "collapsible/collapsible.component.ts": "9443e9b654d2995e0a467fb291e2fbe01c92b38973367f984ef12090b519922e",
+    "collapsible/collapsible-trigger.directive.ts": "90e82c22a10773d0c167c5d0a9bfd51ae2cae97d534e1045e62871baa5aadc0e",
+    "collapsible/collapsible-content.directive.ts": "3d15236d68063d438bc1da9bc928cfda8398ecd10709b6e56bba48ff40650d85",
+    "collapsible/index.ts": "fbb26c5639ad078c5284dbfb1c07f8f69f078f10ff7074f5ff352449593ceb77"
   }
 }
