@@ -1,0 +1,26 @@
+<div class="mx-auto flex max-w-[var(--dp-content-max-w)] gap-0 px-6 py-8">
+  <app-sidebar [sections]="sections" />
+
+  <main class="min-w-0 flex-1">
+    <sanring-breadcrumb class="mb-6">
+      <sanring-breadcrumb-list>
+        @for (crumb of breadcrumbs(); track crumb.label; let last = $last) {
+          <sanring-breadcrumb-item>
+            @if (crumb.path && !last) {
+              <sanring-breadcrumb-link [routerLink]="crumb.path">{{
+                crumb.label
+              }}</sanring-breadcrumb-link>
+            } @else {
+              <sanring-breadcrumb-page>{{ crumb.label }}</sanring-breadcrumb-page>
+            }
+          </sanring-breadcrumb-item>
+          @if (!last) {
+            <sanring-breadcrumb-divider />
+          }
+        }
+      </sanring-breadcrumb-list>
+    </sanring-breadcrumb>
+
+    <router-outlet />
+  </main>
+</div>
