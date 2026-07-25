@@ -1,8 +1,14 @@
 {
   "componentPath": "projects/docs/src/app/components/ui",
   "installedHashes": {
-    "toggle/toggle.directive.ts": "bcb3a8b95fff75c9e14ebc14d76ec29b5162cb875b4e276f4c9bc33dcd550928",
-    "toggle/toggle.types.ts": "d6d46a1d93e2f958d1cbdcdbdbe7bed9aa6cb47ba88d48103fdcd99c093246ec",
-    "toggle/index.ts": "174866ee94824a820a0ec9814c39a18490091391dde97a9e49dee818f5012bf8"
+    "switch/switch.component.ts": "63f3802a2eda0e6528773b1bb4c014f33587c6d8e81e537c740dec43ab01f534",
+    "switch/switch.type.ts": "c598427d8dc96e9c6d0b25db90273cc9ff8807cc0408f88dc81b5ce46a4a8b6d",
+    "switch/index.ts": "ea6c666972d5cef75298041adaf4bf71cc11da36aa882f9708d9dd05242e4b7a",
+    "field/field.component.ts": "80f866cf4e80422ae04f8b14ccd696b5ea42446f5dbf991e0abf7c917cb67d4e",
+    "field/field.type.ts": "63e97c82be97d7908176eefc8f5258af2cf172515fe9d5c825d841947ecad9f3",
+    "field/label.directive.ts": "bd7a31690ad27b82c53b7eed683e90239e39d9c07a2556339d8c3ac06f408a39",
+    "field/description.directive.ts": "6b82613592378fa1af186367ce1b75e45255140ab9f0264f39eafc4313638c8f",
+    "field/error-message.component.ts": "408aead65f33df5d0ca102e6258db9d307173d37fb5b1cc32a3002f45534b7fb",
+    "field/index.ts": "2bc224c443c93b10c429894917b0998ce64f803c2550a76db1dfb618c74d0960"
   }
 }

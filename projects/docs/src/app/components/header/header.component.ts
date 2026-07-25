@@ -1,26 +1,27 @@
 import { Component, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ButtonDirective } from '../ui/button';
-import { ToggleDirective } from '../ui/toggle';
+import { SwitchComponent } from '../ui/switch';
 import { LogoComponent } from '../logo/logo.component';
 import { NavigationComponent } from '../navigation/navigation.component';
 
 @Component({
   selector: 'app-header',
-  imports: [ButtonDirective, ToggleDirective, LogoComponent, NavigationComponent],
+  imports: [ButtonDirective, SwitchComponent, FormsModule, LogoComponent, NavigationComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
 })
 export class HeaderComponent {
   protected readonly isDark = signal(true);
+  protected readonly themeSwitchId = 'header-theme-switch';
 
-  protected toggleTheme(): void {
+  protected setDark(dark: boolean): void {
     const root = document.documentElement;
-    if (root.dataset['theme'] === 'light') {
+    if (dark) {
       delete root.dataset['theme'];
-      this.isDark.set(true);
     } else {
       root.dataset['theme'] = 'light';
-      this.isDark.set(false);
     }
+    this.isDark.set(dark);
   }
 }
