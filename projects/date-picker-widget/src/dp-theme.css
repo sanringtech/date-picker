@@ -1,17 +1,31 @@
 /*
- * @sanring/date-picker-widget — default color tokens
+ * @sanring/date-picker-widget — default design tokens
  *
  * Standalone token set for the widget's own rendered output. Deliberately
  * not tied to @sanring/ui's --sanring-* palette: consumers installing this
  * widget package won't necessarily have that design system loaded. Import
  * this file once in your global stylesheet, then override any --dp-*
  * variable to re-theme the widget — component styles should only ever read
- * these variables, never hardcode colors.
+ * these variables (via the Tailwind `@theme inline` mapping below), never
+ * hardcode colors.
+ *
+ * These are variable *values* only — Tailwind doesn't know what `bg-primary`
+ * or `text-foreground` mean just because this file is imported. Your global
+ * stylesheet also needs the `@theme inline { ... }` mapping block shown in
+ * the package README's "Theming" section, once, alongside `@import
+ * 'tailwindcss'`. See README.md for the full snippet (same recipe for both
+ * npm-install and copy-mode consumption).
  */
 
 :root {
+  /* 圓角：sm 給輸入框，lg 給彈出視窗/卡片 */
+  --dp-radius: 6px;
+  --dp-radius-lg: 8px;
+
   /* 主色：選中的單日背景、主按鈕（如：確認） */
   --dp-primary: #0d9488;
+  /* 疊在主色區塊上的文字顏色 */
+  --dp-primary-fg: #ffffff;
   /* 區間背景：範圍選擇時的淺色過渡背景、Hover 效果 */
   --dp-primary-light: #ccfbf1;
 
@@ -29,4 +43,10 @@
 
   /* 反白/底色：日曆卡片底色、主色區塊上的反白文字 */
   --dp-bg-base: #ffffff;
+
+  /* 通用 UI 語意層：輸入框/彈出視窗邊框、hover 底色 */
+  --dp-border: #e2e8f0;
+  --dp-border-strong: #cbd5e1;
+  --dp-surface: #f8fafc;
+  --dp-surface-strong: #f1f5f9;
 }

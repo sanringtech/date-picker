@@ -312,8 +312,9 @@ These are not deferred features — they are outside the engine's service bounda
 
 ```
 projects/
-  date-picker/   publishable library  (ng-packagr → dist/date-picker)
-  docs/          Tailwind docs site   (ng serve docs → localhost:4200)
+  date-picker/         publishable library  (ng-packagr → dist/date-picker)
+  date-picker-widget/  publishable library  (ng-packagr → dist/date-picker-widget)
+  docs/                Tailwind docs site   (ng serve docs → localhost:4400)
 ```
 
 ## Development
@@ -330,4 +331,5 @@ npm run format:check              # Prettier check
 ## Docs
 
 - Business rules (source of truth): `.claude/constitutions/date-picker.md`
-- Product/technical spec: `.claude/prds/date-picker.md`
+- Product/technical spec (engine): `.claude/prds/date-picker.md`
+- Composed widget (npm install + copy-mode consumption): [`projects/date-picker-widget/README.md`](./projects/date-picker-widget/README.md), spec at `.claude/prds/date-picker-widget.md`
