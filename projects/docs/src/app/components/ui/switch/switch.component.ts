@@ -61,10 +61,20 @@ let nextUniqueId = 0;
       (focus)="onFocus()"
       (blur)="onBlur()"
     >
-      <span
-        [attr.data-state]="checkedSignal() ? 'checked' : 'unchecked'"
-        [class]="thumbClass()"
-      ></span>
+      <span [attr.data-state]="checkedSignal() ? 'checked' : 'unchecked'" [class]="thumbClass()">
+        <span
+          class="pointer-events-none absolute inset-0 grid place-items-center text-[var(--dp-text-main)]"
+          [class.hidden]="!checkedSignal()"
+        >
+          <ng-content select="[sanringSwitchIconChecked]" />
+        </span>
+        <span
+          class="pointer-events-none absolute inset-0 grid place-items-center text-[var(--dp-text-main)]"
+          [class.hidden]="checkedSignal()"
+        >
+          <ng-content select="[sanringSwitchIconUnchecked]" />
+        </span>
+      </span>
     </button>
   `,
 })
@@ -90,7 +100,7 @@ export class SwitchComponent implements ControlValueAccessor, OnInit {
   );
   protected readonly thumbClass = computed(() =>
     cn(
-      'pointer-events-none block rounded-full bg-[var(--dp-bg-base)] shadow-lg ring-0 transition-transform duration-200 ease-in-out',
+      'pointer-events-none relative block rounded-full bg-[var(--dp-bg-base)] shadow-lg ring-0 transition-transform duration-200 ease-in-out',
       SWITCH_THUMB_SIZE_CLASSES[this.size()],
       this.checkedSignal() && SWITCH_THUMB_TRANSLATE_CLASSES[this.size()],
       !this.checkedSignal() && 'translate-x-0',
