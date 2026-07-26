@@ -1,4 +1,13 @@
-import { Component, ElementRef, OnDestroy, ViewChild, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  ViewChild,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { ConnectedPosition, Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { CdkPortal, PortalModule } from '@angular/cdk/portal';
 
@@ -28,6 +37,16 @@ export class DatePickerOverlayShellComponent implements OnDestroy {
 
   readonly connectedTo = input<ElementRef<HTMLElement> | undefined>(undefined);
 
+  /**
+   * Fires once per actual close — backdrop click, explicit close()/toggle(), all
+   * funnel through here. W2's range component listens to this (rather than
+   * duplicating a backdrop-click subscription of its own) to abort an
+   * in-progress range Draft regardless of what triggered the close (PRD §7
+   * Story 2 AC 2). Single-mode W1 has no Draft concept and simply doesn't
+   * listen to it.
+   */
+  readonly closed = output<void>();
+
   @ViewChild(CdkPortal, { static: true }) private readonly portal!: CdkPortal;
 
   private overlayRef: OverlayRef | null = null;
@@ -51,9 +70,13 @@ export class DatePickerOverlayShellComponent implements OnDestroy {
   }
 
   close(): void {
-    this.overlayRef?.dispose();
+    if (!this.overlayRef) {
+      return;
+    }
+    this.overlayRef.dispose();
     this.overlayRef = null;
     this.isOpen.set(false);
+    this.closed.emit();
   }
 
   toggle(): void {

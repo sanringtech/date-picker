@@ -50,6 +50,13 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/widget/widget-page.component').then((m) => m.WidgetPageComponent),
           },
+          {
+            path: 'widget/range',
+            loadComponent: () =>
+              import('./pages/widget/range/range-widget-page.component').then(
+                (m) => m.RangeWidgetPageComponent,
+              ),
+          },
         ],
       },
     ],

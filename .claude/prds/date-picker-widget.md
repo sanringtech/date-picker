@@ -253,8 +253,8 @@ TODO（小項，不擋 W1 開工）：實際 error 狀態的 ARIA live region �
 | Milestone | 內容 | 驗收門檻（草案） |
 |---|---|---|
 | W0（實際完成 2026-07-20） | Workspace/套件骨架建置（`@sanring/date-picker-widget`，依賴 `@sanring/date-picker`）；CDK Overlay 基本串接 | ✅ 空殼元件可 build（`ng build date-picker-widget`）；✅ `DatePickerOverlayShellComponent` 完成 Overlay create/attach/dispose 開關驗證，5 個單元測試全綠；✅ `ng lint`/`prettier --check` 零違規；沿用既有 workspace（`projects/date-picker-widget`）與 Vitest，獨立版號 `0.1.0` 起跑（未發布） |
-| W1 | Single 模式黑盒元件（`DatePickerComponent`）+ 預設 Tailwind 樣式 + CSS Custom Properties 主題變數 | demo 可安裝黑盒套件並完成單日選取 |
-| W2 | Range 模式黑盒元件（`DateRangePickerComponent`）+ 雙月並排視覺 | demo 可完成區間選取，行為對齊 engine §4 Range 狀態機 |
+| W1（實際完成 2026-07-26） | Single 模式黑盒元件（`DatePickerComponent`）+ 預設 Tailwind 樣式 + CSS Custom Properties 主題變數 | ✅ demo（`/widget`）可安裝黑盒套件並完成單日選取；✅ CDK Overlay 錨定定位（bottom-start/top-start 翻轉）取代 W0 的 global-center；✅ 13 個單元測試全綠；✅ `ng lint`/`prettier --check` 零違規 |
+| W2（實際完成 2026-07-26） | Range 模式黑盒元件（`DateRangePickerComponent`）+ 雙月並排視覺 | ✅ demo（`/widget/range`）可完成區間選取，行為對齊 engine §4 Range 狀態機（Draft/提交/中止回溯）；✅ Overlay shell 新增 `closed` output，backdrop click／Escape（無 Draft 時）皆會關閉並中止殘留 Draft，兩輸入框回復中止前舊值（§7 Story 2 AC）；✅ 13 個新增單元測試全綠（含真實瀏覽器 Playwright 驗證：開啟、兩次點選提交、backdrop 中止三條路徑）；✅ `ng lint`/`prettier --check` 零違規 |
 | W3 | 複製模式文件與範例 repo（非 CLI 工具，純文件/repo 供手動複製） | 文件涵蓋複製步驟，複製後的元件可獨立運作 |
 | W4 | a11y 驗收（沿用 engine 已建立的 axe-core/鍵盤驗收模式）+ npm 發布準備 | 符合 WAI-ARIA，`npm publish --dry-run` 通過 |
 
