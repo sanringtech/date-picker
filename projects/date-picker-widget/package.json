@@ -1,6 +1,6 @@
 {
   "name": "@sanring/date-picker-widget",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Composed Angular DatePicker/RangePicker widget — CDK Overlay + Input assembled on top of @sanring/date-picker",
   "keywords": [
     "angular",
@@ -24,7 +24,9 @@
     "date-fns": "^4.4.0",
     "tslib": "^2.3.0"
   },
-  "sideEffects": ["*.css"],
+  "sideEffects": [
+    "*.css"
+  ],
   "publishConfig": {
     "access": "public"
   }
