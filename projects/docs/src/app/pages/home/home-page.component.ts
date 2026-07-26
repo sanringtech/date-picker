@@ -1,4 +1,12 @@
-import { afterNextRender, Component, computed, inject, viewChild } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { format } from 'date-fns/format';
 import { CALENDAR_LOCALE, CALENDAR_TODAY, CalendarGridDirective } from '@sanring/date-picker';
@@ -33,7 +41,7 @@ export class HomePageComponent {
   private readonly i18n = inject(I18nService);
   protected readonly t = computed(() => this.i18n.t().home);
   protected readonly locale = inject(CALENDAR_LOCALE);
-  private readonly today = inject(CALENDAR_TODAY)();
+  private readonly todayFn = inject(CALENDAR_TODAY);
   private readonly previewGrid = viewChild(CalendarGridDirective);
 
   protected readonly weekdayLabels = [
@@ -41,9 +49,24 @@ export class HomePageComponent {
     ...this.locale.weekdayLabels.slice(0, this.locale.weekStartsOn),
   ];
 
+  /** True while the calendar/time picker mirror the live clock instead of a manual pick. */
+  protected readonly isLive = signal(true);
+  protected readonly now = signal(new Date());
+  private readonly manualHour = signal<number | null>(null);
+  private readonly manualMinute = signal<number | null>(null);
+  protected readonly pickerHour = computed(() => this.manualHour() ?? this.now().getHours());
+  protected readonly pickerMinute = computed(() => this.manualMinute() ?? this.now().getMinutes());
+  private idleTimeoutId?: ReturnType<typeof setTimeout>;
+
   constructor() {
     afterNextRender(() => {
-      this.previewGrid()?.engine.selectDate(this.today);
+      this.previewGrid()?.engine.selectDate(this.todayFn());
+    });
+
+    const intervalId = setInterval(() => this.now.set(new Date()), 1000);
+    inject(DestroyRef).onDestroy(() => {
+      clearInterval(intervalId);
+      clearTimeout(this.idleTimeoutId);
     });
   }
 
@@ -58,12 +81,32 @@ export class HomePageComponent {
     return weeks;
   }
 
-  protected formatSelectedDate(date: Date): string {
-    return format(date, 'yyyy-MM-dd');
+  protected adjustPickerHour(delta: number): void {
+    this.manualHour.set((this.pickerHour() + delta + 24) % 24);
+    this.markInteraction();
   }
 
-  protected weekdayLabelFor(date: Date): string {
-    return this.locale.weekdayLabels[date.getDay()];
+  protected adjustPickerMinute(delta: number): void {
+    this.manualMinute.set((this.pickerMinute() + delta + 60) % 60);
+    this.markInteraction();
+  }
+
+  protected formatNow(date: Date): string {
+    return format(date, 'MM/dd HH:mm');
+  }
+
+  /** Marks a manual date/time interaction: leaves live mode and (re)starts the 30s idle revert. */
+  protected markInteraction(): void {
+    this.isLive.set(false);
+    clearTimeout(this.idleTimeoutId);
+    this.idleTimeoutId = setTimeout(() => this.revertToLive(), 30_000);
+  }
+
+  private revertToLive(): void {
+    this.isLive.set(true);
+    this.manualHour.set(null);
+    this.manualMinute.set(null);
+    this.previewGrid()?.engine.selectDate(this.todayFn());
   }
 
   protected readonly layerSections = computed<HomeLayerSection[]>(() => {

@@ -16,8 +16,12 @@ export interface HomeDictionary {
     readonly subtitle: string;
     readonly prevMonthLabel: string;
     readonly nextMonthLabel: string;
-    readonly selectedLabel: string;
-    readonly notSelected: string;
+    readonly timePickerLabel: string;
+    readonly increaseHourLabel: string;
+    readonly decreaseHourLabel: string;
+    readonly increaseMinuteLabel: string;
+    readonly decreaseMinuteLabel: string;
+    readonly currentTimeLabel: string;
     readonly widgetLinkLabel: string;
     readonly engineLinkLabel: string;
   };

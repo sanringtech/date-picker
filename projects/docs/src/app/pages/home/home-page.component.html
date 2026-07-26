@@ -43,7 +43,7 @@
               type="button"
               class="rounded p-1 text-muted hover:bg-surface-strong"
               [attr.aria-label]="t().previewCard.prevMonthLabel"
-              (click)="grid.engine.prevMonth()"
+              (click)="grid.engine.prevMonth(); markInteraction()"
             >
               ‹
             </button>
@@ -54,7 +54,7 @@
               type="button"
               class="rounded p-1 text-muted hover:bg-surface-strong"
               [attr.aria-label]="t().previewCard.nextMonthLabel"
-              (click)="grid.engine.nextMonth()"
+              (click)="grid.engine.nextMonth(); markInteraction()"
             >
               ›
             </button>
@@ -84,7 +84,7 @@
                   [class.font-bold]="day.isToday && !day.isSelected"
                   [class.hover:bg-surface-strong]="!day.isSelected && !day.isDisabled"
                   [class.opacity-40]="day.isDisabled"
-                  (click)="grid.engine.selectDate(day.date)"
+                  (click)="grid.engine.selectDate(day.date); markInteraction()"
                 >
                   {{ day.date.getDate() }}
                 </button>
@@ -93,18 +93,72 @@
           </div>
         </div>
 
-        <div class="min-w-[9rem] flex-1 rounded-lg border border-border bg-background/40 p-4">
-          <p class="text-xs font-medium uppercase tracking-wide text-muted">
-            {{ t().previewCard.selectedLabel }}
-          </p>
-          @if (grid.engine.selectedDate(); as selected) {
-            <p class="mt-2 text-xl font-semibold text-foreground">
-              {{ formatSelectedDate(selected) }}
+        <div class="flex min-w-[9rem] flex-1 flex-col gap-4">
+          <div class="rounded-lg border border-border bg-background/40 p-4">
+            <p class="text-xs font-medium uppercase tracking-wide text-muted">
+              {{ t().previewCard.timePickerLabel }}
             </p>
-            <p class="mt-1 text-sm text-muted">{{ weekdayLabelFor(selected) }}</p>
-          } @else {
-            <p class="mt-2 text-sm text-muted">{{ t().previewCard.notSelected }}</p>
-          }
+            <div class="mt-3 flex items-center justify-center gap-2">
+              <div class="flex flex-col items-center">
+                <button
+                  type="button"
+                  class="rounded p-0.5 text-muted hover:bg-surface-strong"
+                  [attr.aria-label]="t().previewCard.increaseHourLabel"
+                  (click)="adjustPickerHour(1)"
+                >
+                  ▲
+                </button>
+                <span class="w-10 text-center font-mono text-xl text-foreground">
+                  {{ pickerHour().toString().padStart(2, '0') }}
+                </span>
+                <button
+                  type="button"
+                  class="rounded p-0.5 text-muted hover:bg-surface-strong"
+                  [attr.aria-label]="t().previewCard.decreaseHourLabel"
+                  (click)="adjustPickerHour(-1)"
+                >
+                  ▼
+                </button>
+              </div>
+              <span class="text-xl text-foreground">:</span>
+              <div class="flex flex-col items-center">
+                <button
+                  type="button"
+                  class="rounded p-0.5 text-muted hover:bg-surface-strong"
+                  [attr.aria-label]="t().previewCard.increaseMinuteLabel"
+                  (click)="adjustPickerMinute(1)"
+                >
+                  ▲
+                </button>
+                <span class="w-10 text-center font-mono text-xl text-foreground">
+                  {{ pickerMinute().toString().padStart(2, '0') }}
+                </span>
+                <button
+                  type="button"
+                  class="rounded p-0.5 text-muted hover:bg-surface-strong"
+                  [attr.aria-label]="t().previewCard.decreaseMinuteLabel"
+                  (click)="adjustPickerMinute(-1)"
+                >
+                  ▼
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-border bg-background/40 p-4">
+            <p class="text-xs font-medium uppercase tracking-wide text-muted">
+              {{ t().previewCard.currentTimeLabel }}
+            </p>
+            <div class="mt-2 min-h-[2rem]">
+              @if (isLive()) {
+                <span
+                  class="inline-flex rounded-full bg-primary/15 px-3 py-1 font-mono text-lg font-semibold text-primary"
+                >
+                  {{ formatNow(now()) }}
+                </span>
+              }
+            </div>
+          </div>
         </div>
       </div>
 
