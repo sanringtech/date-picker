@@ -24,3 +24,17 @@ export const DEFAULT_DATE_FORMAT_CONFIG: DateFormatConfig = {
 
 /** CSS Custom Property overrides for the black-box (npm install) theming path. */
 export type DatePickerWidgetTheme = Record<`--dp-${string}`, string>;
+
+/**
+ * `DateTimePickerComponent`'s (W7 draft) own default for its `format` input —
+ * a plain `DEFAULT_DATE_FORMAT_CONFIG` would silently drop the time-of-day
+ * portion (`yyyy-MM-dd` has no hour/minute), so a date+time composed picker
+ * needs its own ISO-with-time default. Same 100%-overridable contract (I5).
+ */
+export const DEFAULT_DATE_TIME_FORMAT_CONFIG: DateFormatConfig = {
+  format: (date) => formatDate(date, 'yyyy-MM-dd HH:mm'),
+  parse: (value) => {
+    const parsed = parseDate(value, 'yyyy-MM-dd HH:mm', new Date());
+    return isValid(parsed) ? parsed : null;
+  },
+};

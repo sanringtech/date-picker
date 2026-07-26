@@ -1,0 +1,128 @@
+<div class="relative inline-block w-full max-w-[20rem]">
+  <input
+    #inputEl
+    type="text"
+    role="combobox"
+    aria-haspopup="dialog"
+    autocomplete="off"
+    class="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+    [class.border-red-500]="invalid()"
+    [placeholder]="placeholder()"
+    [value]="inputValue()"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-invalid]="invalid() ? true : null"
+    [attr.aria-controls]="dialogId"
+    (focus)="onInputFocus()"
+    (input)="onInputChange($any($event.target).value)"
+  />
+</div>
+
+<sanring-date-picker-overlay-shell [connectedTo]="inputElRef">
+  <div
+    #gridEl
+    [id]="dialogId"
+    role="dialog"
+    aria-modal="false"
+    aria-label="選擇多個日期"
+    tabindex="0"
+    class="rounded-lg border border-border bg-surface p-4 shadow-lg outline-none focus-within:ring-2 focus-within:ring-primary"
+    (keydown)="onGridKeydown($event)"
+  >
+    @if (sortedSelectedDates().length > 0) {
+      <div class="mb-3 flex flex-wrap items-center gap-1" aria-label="已選取日期列表">
+        @for (date of sortedSelectedDates(); track date.getTime()) {
+          <span
+            class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-foreground"
+          >
+            {{ format().format(date) }}
+            <button
+              type="button"
+              [attr.aria-label]="'移除 ' + chipAriaLabel(date)"
+              class="text-muted hover:text-foreground"
+              (click)="removeDate(date)"
+            >
+              ×
+            </button>
+          </span>
+        }
+        <button
+          type="button"
+          class="text-xs text-muted underline hover:text-foreground"
+          (click)="clearAll()"
+        >
+          清除全部
+        </button>
+      </div>
+    }
+
+    <div class="min-w-60">
+      <div class="mb-4 flex items-center justify-between">
+        <button
+          type="button"
+          aria-label="上一月"
+          class="rounded p-1 text-muted hover:bg-surface-strong"
+          (click)="engine.prevMonth()"
+        >
+          ‹
+        </button>
+        <span class="font-semibold text-foreground">{{
+          currentMonthLabel(engine.monthGrids()[0])
+        }}</span>
+        <button
+          type="button"
+          aria-label="下一月"
+          class="rounded p-1 text-muted hover:bg-surface-strong"
+          (click)="engine.nextMonth()"
+        >
+          ›
+        </button>
+      </div>
+
+      <div
+        class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted"
+        role="row"
+        aria-hidden="true"
+      >
+        @for (label of weekdayLabels(); track label) {
+          <span>{{ label }}</span>
+        }
+      </div>
+
+      <div
+        class="grid grid-cols-7 gap-1"
+        role="grid"
+        [attr.aria-label]="currentMonthLabel(engine.monthGrids()[0])"
+      >
+        @for (week of toWeeks(engine.monthGrids()[0]); track $index) {
+          <div role="row" class="contents">
+            @for (day of week; track day.date.getTime()) {
+              <button
+                role="gridcell"
+                type="button"
+                [disabled]="day.isDisabled"
+                [attr.aria-selected]="day.isSelected ? true : null"
+                [attr.aria-disabled]="day.isDisabled ? true : null"
+                [attr.aria-label]="dayAriaLabel(day)"
+                class="aspect-square rounded text-sm transition-colors active:brightness-90"
+                [class.text-muted]="!day.isCurrentMonth && !day.isSelected"
+                [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
+                [class.bg-primary]="day.isSelected"
+                [class.text-primary-foreground]="day.isSelected"
+                [class.ring-2]="day.isFocused"
+                [class.ring-primary]="day.isFocused"
+                [class.font-bold]="day.isToday && !day.isSelected"
+                [class.hover:bg-surface-strong]="!day.isSelected && !day.isDisabled"
+                [class.opacity-40]="day.isDisabled"
+                [class.cursor-not-allowed]="day.isDisabled"
+                [class.line-through]="day.isDisabled"
+                (click)="selectDate(day.date)"
+              >
+                {{ day.date.getDate() }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</sanring-date-picker-overlay-shell>
