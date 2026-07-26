@@ -1,0 +1,29 @@
+import type { WidgetIndexDictionary } from '../i18n.types';
+
+export const widgetIndex: WidgetIndexDictionary = {
+  pageTitle: 'Widget 層',
+  pageDescription:
+    'Composed 層，Engine 之上提供預設樣式的 Popover DatePicker 元件，可獨立安裝或複製原始碼取得所有權。',
+  singleTitle: 'DatePicker (Single)',
+  singleDescription: '單一日期選取，CDK Overlay 錨定的 Popover 日曆',
+  rangeTitle: 'DateRangePicker',
+  rangeDescription: '起訖日期範圍選取',
+  modesHeading: '兩種消費模式',
+  modesDescriptionPrefix: '兩者都依賴',
+  modesDescriptionSuffix:
+    '作為真正的引擎；複製模式只轉移外殼（Input + Overlay + Tailwind markup）的所有權，狀態機、鍵盤操作與 WAI-ARIA 綁定仍留在你繼續 import 的引擎內，不會脫鉤。',
+  npmTitle: 'npm 安裝（黑盒）',
+  npmSubtitle: '想快速上線的開發者',
+  installLabel: '安裝方式',
+  npmInstallValueSuffix: '，完成',
+  customizeLabel: '客製化',
+  npmCustomizeValue: 'CSS 變數 + format/disabled inputs',
+  updateLabel: '更新方式',
+  copyTitle: '複製模式（所有權轉移）',
+  copySubtitle: '需要深度客製化樣式/互動的開發者',
+  copyInstallValue: '複製 4 個檔案進專案',
+  copyCustomizeValue: '任何東西——你擁有 markup',
+  copyUpdateValue: '手動——自行追蹤上游',
+  copyStepsPrefix: '步驟見套件',
+  copyStepsSuffix: '的「Copy mode」章節。',
+};

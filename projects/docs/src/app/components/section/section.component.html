@@ -1,7 +1,49 @@
-<section class="mt-10 first-of-type:mt-0">
-  <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">{{ title() }}</h2>
-  @if (description(); as desc) {
-    <p class="mb-4 text-sm text-muted" [innerHTML]="desc"></p>
+<section [class]="sectionClass()">
+  @if (variant() === 'split') {
+    <div [class]="splitClass()">
+      <div>
+        @if (heading(); as sectionHeading) {
+          <p class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">
+            {{ title() }}
+          </p>
+          <h2 class="text-2xl font-bold text-foreground">{{ sectionHeading }}</h2>
+        } @else {
+          <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">
+            {{ title() }}
+          </h2>
+        }
+
+        @if (description(); as desc) {
+          <p class="mt-3 text-sm leading-6 text-muted" [innerHTML]="desc"></p>
+        }
+
+        <ng-content select="[section-action]" />
+      </div>
+
+      <ng-content />
+    </div>
+  } @else {
+    <div [class]="headerClass()">
+      <div>
+        @if (heading(); as sectionHeading) {
+          <p class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">
+            {{ title() }}
+          </p>
+          <h2 class="text-2xl font-bold text-foreground">{{ sectionHeading }}</h2>
+        } @else {
+          <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">
+            {{ title() }}
+          </h2>
+        }
+
+        @if (description(); as desc) {
+          <p class="mt-3 text-sm leading-6 text-muted" [innerHTML]="desc"></p>
+        }
+      </div>
+
+      <ng-content select="[section-action]" />
+    </div>
+
+    <ng-content />
   }
-  <ng-content />
 </section>

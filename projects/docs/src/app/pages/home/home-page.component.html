@@ -1,0 +1,168 @@
+<div class="mx-auto max-w-[var(--dp-content-max-w)] px-6 py-14 md:py-18">
+  <section class="grid items-center gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(420px,1fr)]">
+    <div class="max-w-2xl">
+      <p class="mb-3 text-sm font-semibold text-primary">@sanring/date-picker</p>
+      <h1 class="mb-4 text-4xl font-bold leading-tight text-foreground md:text-5xl">
+        {{ t().hero.title }}
+      </h1>
+      <p class="mb-8 text-lg leading-relaxed text-muted">
+        {{ t().hero.description }}
+      </p>
+
+      <div class="flex flex-wrap gap-3">
+        <a sanringBtn variant="default" size="md" routerLink="/widget" class="no-underline">
+          {{ t().hero.ctaPrimary }}
+        </a>
+        <a sanringBtn variant="outline" size="md" routerLink="/engine" class="no-underline">
+          {{ t().hero.ctaSecondary }}
+        </a>
+      </div>
+
+      <p class="mt-8 border-t border-border pt-5 font-mono text-sm text-muted">
+        @sanring/date-picker
+      </p>
+    </div>
+
+    <div class="rounded-lg border border-border bg-surface p-5 shadow-sm md:p-6">
+      <div class="border-b border-border pb-5">
+        <div class="min-w-0">
+          <p class="font-mono text-sm font-semibold text-foreground">@sanring/date-picker</p>
+          <p class="mt-1 text-sm text-muted">{{ t().previewCard.subtitle }}</p>
+        </div>
+      </div>
+
+      <div class="mt-5 flex flex-wrap items-start gap-4">
+        <div
+          sanringCalendarGrid
+          #grid="sanringCalendarGrid"
+          tabindex="0"
+          class="w-72 shrink-0 rounded-lg border border-border bg-background/40 p-4 outline-none focus-within:ring-2 focus-within:ring-primary"
+        >
+          <div class="mb-4 flex items-center justify-between">
+            <button
+              type="button"
+              class="rounded p-1 text-muted hover:bg-surface-strong"
+              [attr.aria-label]="t().previewCard.prevMonthLabel"
+              (click)="grid.engine.prevMonth()"
+            >
+              ‹
+            </button>
+            <span class="font-semibold text-foreground">
+              {{ currentMonthLabel(grid.engine.monthGrids()[0]) }}
+            </span>
+            <button
+              type="button"
+              class="rounded p-1 text-muted hover:bg-surface-strong"
+              [attr.aria-label]="t().previewCard.nextMonthLabel"
+              (click)="grid.engine.nextMonth()"
+            >
+              ›
+            </button>
+          </div>
+
+          <div
+            class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted"
+            aria-hidden="true"
+          >
+            @for (label of weekdayLabels; track label) {
+              <span>{{ label }}</span>
+            }
+          </div>
+
+          <div class="grid grid-cols-7 gap-1">
+            @for (week of toWeeks(grid.engine.monthGrids()[0]); track $index) {
+              @for (day of week; track day.date.getTime()) {
+                <button
+                  type="button"
+                  [disabled]="day.isDisabled"
+                  [attr.aria-selected]="day.isSelected ? true : null"
+                  class="aspect-square rounded text-sm transition-colors active:brightness-90"
+                  [class.text-muted]="!day.isCurrentMonth && !day.isSelected"
+                  [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
+                  [class.bg-primary]="day.isSelected"
+                  [class.text-primary-foreground]="day.isSelected"
+                  [class.font-bold]="day.isToday && !day.isSelected"
+                  [class.hover:bg-surface-strong]="!day.isSelected && !day.isDisabled"
+                  [class.opacity-40]="day.isDisabled"
+                  (click)="grid.engine.selectDate(day.date)"
+                >
+                  {{ day.date.getDate() }}
+                </button>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="min-w-[9rem] flex-1 rounded-lg border border-border bg-background/40 p-4">
+          <p class="text-xs font-medium uppercase tracking-wide text-muted">
+            {{ t().previewCard.selectedLabel }}
+          </p>
+          @if (grid.engine.selectedDate(); as selected) {
+            <p class="mt-2 text-xl font-semibold text-foreground">
+              {{ formatSelectedDate(selected) }}
+            </p>
+            <p class="mt-1 text-sm text-muted">{{ weekdayLabelFor(selected) }}</p>
+          } @else {
+            <p class="mt-2 text-sm text-muted">{{ t().previewCard.notSelected }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-wrap justify-center gap-2">
+        <a sanringBtn variant="outline" size="sm" routerLink="/widget" class="no-underline">
+          {{ t().previewCard.widgetLinkLabel }}
+        </a>
+        <a sanringBtn variant="outline" size="sm" routerLink="/engine" class="no-underline">
+          {{ t().previewCard.engineLinkLabel }}
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="mt-16 space-y-16">
+    @for (section of layerSections(); track section.title; let first = $first) {
+      <section [class]="first ? 'pt-0' : 'border-t border-border pt-12'">
+        <div class="mb-6 grid gap-4 lg:grid-cols-[minmax(0,0.72fr)_auto] lg:items-end">
+          <div class="max-w-3xl">
+            <p class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">
+              {{ section.title }}
+            </p>
+            <h2 class="text-2xl font-bold leading-snug text-foreground md:text-3xl">
+              {{ section.heading }}
+            </h2>
+            <p class="mt-3 text-sm leading-6 text-muted" [innerHTML]="section.description"></p>
+          </div>
+
+          @if (section.action) {
+            <a
+              sanringBtn
+              variant="outline"
+              size="md"
+              [routerLink]="section.action.routerLink"
+              class="no-underline lg:justify-self-end"
+            >
+              {{ section.action.label }}
+            </a>
+          }
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          @for (card of section.cards; track card.title) {
+            <a
+              [routerLink]="card.routerLink"
+              class="group flex min-h-[142px] flex-col rounded-lg border border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40"
+            >
+              <p class="mb-1 font-semibold text-foreground">{{ card.title }}</p>
+              <p class="text-sm leading-6 text-muted">{{ card.description }}</p>
+              <p
+                class="mt-auto pt-4 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                {{ card.actionLabel }}
+              </p>
+            </a>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</div>

@@ -1,0 +1,50 @@
+import type { HomeDictionary } from '../i18n.types';
+
+export const home: HomeDictionary = {
+  hero: {
+    title: 'The Angular date picker system for product UI.',
+    description:
+      '對外以 date-picker 本體作為入口：向上提供可直接落地的 Widget 體驗，向下保留可獨立使用的 Engine 能力，讓產品開發與深度客製都走同一套日期選取核心。',
+    ctaPrimary: '開始使用 DatePicker',
+    ctaSecondary: '查看 Engine',
+  },
+  previewCard: {
+    subtitle: '看看實際樣式，不只是說明。',
+    prevMonthLabel: '上一月',
+    nextMonthLabel: '下一月',
+    selectedLabel: '已選日期',
+    notSelected: '尚未選取',
+    widgetLinkLabel: 'Widget →',
+    engineLinkLabel: 'Engine →',
+  },
+  widgetSection: {
+    eyebrow: 'Widget layer',
+    title: '產品畫面先從 Widget 開始。',
+    descriptionPrefix: 'Widget 已組好輸入框、Overlay、日曆互動與格式化狀態，讓',
+    descriptionSuffix: '可以直接放進表單與篩選器。',
+    datePickerTitle: 'DatePicker',
+    datePickerDescription: '單一日期選取，適合表單欄位、預約日期、有效期限與日期條件設定。',
+    datePickerCta: '開啟 Single demo →',
+    rangeTitle: 'DateRangePicker',
+    rangeDescription: '起訖區間選取，適合報表篩選、旅宿週期、訂單查詢與活動期間。',
+    rangeCta: '開啟 Range demo →',
+    adoptionTitle: 'Two adoption paths',
+    adoptionDescription: '用 npm 快速導入，或複製 widget markup 取得完整樣式與互動所有權。',
+    adoptionCta: '比較安裝模式 →',
+  },
+  engineSection: {
+    eyebrow: 'Engine foundation',
+    title: '需要自訂 UI 時，再使用 Engine。',
+    description: 'Engine 負責日期運算、選取規則、鍵盤導航與 disabled dates，適合做深度客製。',
+    cta: 'Engine 總覽',
+    calendarTitle: 'CalendarEngine',
+    calendarDescription: 'Single / Range / Multi、42-cell 網格、鍵盤導航。',
+    calendarTag: 'M1-M6 →',
+    granularityTitle: 'GranularityPickerEngine',
+    granularityDescription: 'Month / Quarter / Year 粒度選取與財年設定。',
+    granularityTag: 'M7 →',
+    timeTitle: 'TimeAdjustmentEngine',
+    timeDescription: 'Draft / Confirm 生命週期與時間精度配置。',
+    timeTag: 'M8 →',
+  },
+};

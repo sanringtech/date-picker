@@ -1,22 +1,18 @@
-<app-page-header
-  title="Widget Layer — Range"
-  description='Composed Widget 層（<code class="font-mono text-xs">@sanring/date-picker-widget</code>）： DateRangePickerComponent，雙月並排的區間選取器。'
-/>
+<app-page-header [title]="t().pageTitle" [description]="t().pageDescription" />
 
 <sanring-card class="w-full max-w-lg overflow-hidden">
   <sanring-card-content class="p-5 md:p-6">
-    <h3 sanringCardTitle>DateRangePicker（W2，Range 模式）</h3>
+    <h3 sanringCardTitle>{{ t().cardTitle }}</h3>
     <p sanringCardDescription class="mb-4">
-      點擊或聚焦任一輸入框開啟雙月並排月曆；第一次點擊設定起點（Draft），第二次點擊提交區間並關閉。方向鍵移動、Enter/Space
-      選取，Draft 中 Escape 或點擊外部會中止並回溯到中止前的舊值。
+      {{ t().cardDescription }}
     </p>
 
     <sanring-date-range-picker
       [locale]="locale"
       [(selectedRange)]="selectedRange"
-      placeholder="選擇日期"
+      [placeholder]="t().placeholder"
     />
 
-    <p class="mt-4 text-sm text-muted">已選：{{ formatSelected() }}</p>
+    <p class="mt-4 text-sm text-muted">{{ t().selectedLabel }}{{ formatSelected() }}</p>
   </sanring-card-content>
 </sanring-card>

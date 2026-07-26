@@ -1,0 +1,57 @@
+<app-page-header [title]="t().pageTitle" [description]="t().pageDescription" />
+<div class="space-y-3">
+  <a
+    routerLink="/engine/calendar"
+    class="block rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <p class="font-semibold text-foreground">{{ t().calendarTitle }}</p>
+    <p class="mt-0.5 text-sm text-muted">{{ t().calendarDescription }}</p>
+  </a>
+  <a
+    routerLink="/engine/granularity"
+    class="block rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <p class="font-semibold text-foreground">{{ t().granularityTitle }}</p>
+    <p class="mt-0.5 text-sm text-muted">{{ t().granularityDescription }}</p>
+  </a>
+  <a
+    routerLink="/engine/time"
+    class="block rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <p class="font-semibold text-foreground">{{ t().timeTitle }}</p>
+    <p class="mt-0.5 text-sm text-muted">{{ t().timeDescription }}</p>
+  </a>
+</div>
+
+<h2 class="mb-2 mt-10 text-sm font-semibold uppercase tracking-wider text-muted">
+  {{ t().styledHeading }}
+</h2>
+<p class="mb-4 text-sm text-muted">
+  {{ t().styledDescription }}
+</p>
+<div class="space-y-3">
+  <a
+    [href]="uiLinks.calendar"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="flex items-center justify-between rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <span>
+      <p class="font-semibold text-foreground">{{ t().calendarLabel }}</p>
+      <p class="mt-0.5 text-sm text-muted">ui.sanring.dev/components/calendar</p>
+    </span>
+    <span class="text-muted" aria-hidden="true">↗</span>
+  </a>
+  <a
+    [href]="uiLinks.datePicker"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="flex items-center justify-between rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <span>
+      <p class="font-semibold text-foreground">{{ t().datePickerLabel }}</p>
+      <p class="mt-0.5 text-sm text-muted">ui.sanring.dev/components/date-picker</p>
+    </span>
+    <span class="text-muted" aria-hidden="true">↗</span>
+  </a>
+</div>

@@ -1,134 +1,128 @@
-import { Component } from '@angular/core';
+import { afterNextRender, Component, computed, inject, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { format } from 'date-fns/format';
+import { CALENDAR_LOCALE, CALENDAR_TODAY, CalendarGridDirective } from '@sanring/date-picker';
+import type { CalendarDay } from '@sanring/date-picker';
 import { ButtonDirective } from '../../components/ui/button';
-import { SANRING_UI_LINKS } from '../../navigation/external-links';
+import { I18nService } from '../../i18n/i18n.service';
+
+interface HomeLayerSection {
+  title: string;
+  heading: string;
+  description: string;
+  action?: {
+    label: string;
+    routerLink: string;
+  };
+  cards: HomeLayerCard[];
+}
+
+interface HomeLayerCard {
+  title: string;
+  description: string;
+  routerLink: string;
+  actionLabel: string;
+}
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink, ButtonDirective],
-  template: `
-    <div class="mx-auto max-w-[var(--dp-content-max-w)] px-6 py-20">
-      <div class="max-w-2xl">
-        <p class="mb-3 text-sm font-semibold text-primary">@sanring/date-picker</p>
-        <h1 class="mb-4 text-4xl font-bold text-foreground">
-          Headless Angular<br />Calendar Engine
-        </h1>
-        <p class="mb-8 text-lg text-muted leading-relaxed">
-          純狀態機層，零 UI 耦合。負責日期運算、選取規則、鍵盤導航，
-          讓你完全自訂外觀，不被任何設計框架綁死。
-        </p>
-
-        <div class="flex gap-3">
-          <a
-            sanringBtn
-            variant="default"
-            size="md"
-            routerLink="/engine/calendar"
-            class="no-underline"
-          >
-            開始使用 Engine
-          </a>
-          <a sanringBtn variant="outline" size="md" routerLink="/engine" class="no-underline">
-            Engine 總覽
-          </a>
-        </div>
-      </div>
-
-      <!-- Architecture overview -->
-      <div class="mt-20 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <a
-          routerLink="/engine/calendar"
-          class="group rounded-xl border border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40"
-        >
-          <p class="mb-1 font-semibold text-foreground">CalendarEngine</p>
-          <p class="text-sm text-muted">
-            Single / Range / Multi 日期選取，42-cell 網格，鍵盤導航，Disabled Dates
-          </p>
-          <p class="mt-3 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
-            M1–M6 →
-          </p>
-        </a>
-        <a
-          routerLink="/engine/granularity"
-          class="group rounded-xl border border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40"
-        >
-          <p class="mb-1 font-semibold text-foreground">GranularityPickerEngine</p>
-          <p class="text-sm text-muted">
-            Month / Quarter / Year 粒度選取，財年起始月可注入，與 CalendarEngine 完全平行
-          </p>
-          <p class="mt-3 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
-            M7 →
-          </p>
-        </a>
-        <a
-          routerLink="/engine/time"
-          class="group rounded-xl border border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40"
-        >
-          <p class="mb-1 font-semibold text-foreground">TimeAdjustmentEngine</p>
-          <p class="text-sm text-muted">
-            時/分 Draft-Confirm 生命週期，caller-key 設計，TimePrecision 可配置
-          </p>
-          <p class="mt-3 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
-            M8 →
-          </p>
-        </a>
-      </div>
-
-      <!-- Widget layer -->
-      <div class="mt-16">
-        <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">Widget 層</h2>
-        <p class="mb-4 text-sm text-muted">
-          Composed 層，Engine 之上提供預設樣式的 Popover DatePicker 元件。
-        </p>
-        <a
-          routerLink="/widget"
-          class="flex items-center justify-between rounded-xl border border-dashed border-border bg-surface p-5 no-underline transition-colors hover:border-primary/40"
-        >
-          <span>
-            <span class="font-semibold text-foreground">@sanring/date-picker-widget</span>
-            <p class="mt-1 text-sm text-muted">在 Engine 之上組合的預設樣式元件</p>
-          </span>
-        </a>
-      </div>
-
-      <!-- Styled components -->
-      <div class="mt-10">
-        <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">
-          樣式化元件（@sanring/ui）
-        </h2>
-        <p class="mb-4 text-sm text-muted">
-          想要現成樣式、不走 headless？@sanring/ui 提供對應的樣式化元件。
-        </p>
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <a
-            [href]="uiLinks.calendar"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center justify-between rounded-lg border border-border bg-surface p-4 no-underline transition-colors hover:border-primary/40"
-          >
-            <span>
-              <p class="font-semibold text-foreground">Calendar</p>
-              <p class="mt-0.5 text-sm text-muted">ui.sanring.dev/components/calendar</p>
-            </span>
-            <span class="text-muted" aria-hidden="true">↗</span>
-          </a>
-          <a
-            [href]="uiLinks.datePicker"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center justify-between rounded-lg border border-border bg-surface p-4 no-underline transition-colors hover:border-primary/40"
-          >
-            <span>
-              <p class="font-semibold text-foreground">Date Picker</p>
-              <p class="mt-0.5 text-sm text-muted">ui.sanring.dev/components/date-picker</p>
-            </span>
-            <span class="text-muted" aria-hidden="true">↗</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  `,
+  imports: [RouterLink, ButtonDirective, CalendarGridDirective],
+  templateUrl: './home-page.component.html',
 })
 export class HomePageComponent {
-  protected readonly uiLinks = SANRING_UI_LINKS;
+  private readonly i18n = inject(I18nService);
+  protected readonly t = computed(() => this.i18n.t().home);
+  protected readonly locale = inject(CALENDAR_LOCALE);
+  private readonly today = inject(CALENDAR_TODAY)();
+  private readonly previewGrid = viewChild(CalendarGridDirective);
+
+  protected readonly weekdayLabels = [
+    ...this.locale.weekdayLabels.slice(this.locale.weekStartsOn),
+    ...this.locale.weekdayLabels.slice(0, this.locale.weekStartsOn),
+  ];
+
+  constructor() {
+    afterNextRender(() => {
+      this.previewGrid()?.engine.selectDate(this.today);
+    });
+  }
+
+  protected currentMonthLabel(days: readonly CalendarDay[]): string {
+    const current = days.find((d) => d.isCurrentMonth) ?? days[0];
+    return `${current.date.getFullYear()} ${this.locale.monthLabels[current.date.getMonth()]}`;
+  }
+
+  protected toWeeks(days: readonly CalendarDay[]): CalendarDay[][] {
+    const weeks: CalendarDay[][] = [];
+    for (let i = 0; i < 42; i += 7) weeks.push(days.slice(i, i + 7) as CalendarDay[]);
+    return weeks;
+  }
+
+  protected formatSelectedDate(date: Date): string {
+    return format(date, 'yyyy-MM-dd');
+  }
+
+  protected weekdayLabelFor(date: Date): string {
+    return this.locale.weekdayLabels[date.getDay()];
+  }
+
+  protected readonly layerSections = computed<HomeLayerSection[]>(() => {
+    const home = this.t();
+    return [
+      {
+        title: home.widgetSection.eyebrow,
+        heading: home.widgetSection.title,
+        description: `${home.widgetSection.descriptionPrefix} <code class="rounded bg-surface-strong px-1 font-mono text-xs">@sanring/date-picker</code> ${home.widgetSection.descriptionSuffix}`,
+        cards: [
+          {
+            title: home.widgetSection.datePickerTitle,
+            description: home.widgetSection.datePickerDescription,
+            routerLink: '/widget/single',
+            actionLabel: home.widgetSection.datePickerCta,
+          },
+          {
+            title: home.widgetSection.rangeTitle,
+            description: home.widgetSection.rangeDescription,
+            routerLink: '/widget/range',
+            actionLabel: home.widgetSection.rangeCta,
+          },
+          {
+            title: home.widgetSection.adoptionTitle,
+            description: home.widgetSection.adoptionDescription,
+            routerLink: '/widget',
+            actionLabel: home.widgetSection.adoptionCta,
+          },
+        ],
+      },
+      {
+        title: home.engineSection.eyebrow,
+        heading: home.engineSection.title,
+        description: home.engineSection.description,
+        action: {
+          label: home.engineSection.cta,
+          routerLink: '/engine',
+        },
+        cards: [
+          {
+            title: home.engineSection.calendarTitle,
+            description: home.engineSection.calendarDescription,
+            routerLink: '/engine/calendar',
+            actionLabel: home.engineSection.calendarTag,
+          },
+          {
+            title: home.engineSection.granularityTitle,
+            description: home.engineSection.granularityDescription,
+            routerLink: '/engine/granularity',
+            actionLabel: home.engineSection.granularityTag,
+          },
+          {
+            title: home.engineSection.timeTitle,
+            description: home.engineSection.timeDescription,
+            routerLink: '/engine/time',
+            actionLabel: home.engineSection.timeTag,
+          },
+        ],
+      },
+    ];
+  });
 }

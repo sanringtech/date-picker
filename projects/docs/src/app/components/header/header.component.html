@@ -6,6 +6,17 @@
       <app-navigation />
 
       <div class="flex items-center gap-2">
+        <button
+          type="button"
+          sanringBtn
+          variant="outline"
+          size="sm"
+          class="h-8 rounded-md px-2.5 text-xs font-medium"
+          [attr.aria-label]="'Switch to ' + nextLocaleLabel(i18n.locale())"
+          (click)="toggleLocale()"
+        >
+          {{ nextLocaleLabel(i18n.locale()) }}
+        </button>
         <a
           sanringBtn
           variant="outline"
@@ -23,7 +34,7 @@
           </svg>
         </a>
         <label [attr.for]="themeSwitchId" class="sr-only">
-          {{ isDark() ? '切換為淺色模式' : '切換為深色模式' }}
+          {{ isDark() ? i18n.t().header.themeToggleToLight : i18n.t().header.themeToggleToDark }}
         </label>
         <sanring-switch
           class="self-center"
