@@ -4,11 +4,14 @@
       sanringBtn
       variant="ghost"
       size="sm"
+      class="rounded-md"
       [routerLink]="item.path"
       routerLinkActive
       #rla="routerLinkActive"
       [routerLinkActiveOptions]="{ exact: false }"
-      [class]="rla.isActive ? 'bg-surface-strong text-foreground' : 'text-muted'"
+      [class.bg-surface-strong]="rla.isActive"
+      [class.text-foreground]="rla.isActive"
+      [class.text-muted]="!rla.isActive"
     >
       {{ item.label }}
     </a>

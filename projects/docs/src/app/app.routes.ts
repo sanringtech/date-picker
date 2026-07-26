@@ -48,6 +48,13 @@ export const routes: Routes = [
           {
             path: 'widget',
             loadComponent: () =>
+              import('./pages/widget/widget-index-page.component').then(
+                (m) => m.WidgetIndexPageComponent,
+              ),
+          },
+          {
+            path: 'widget/single',
+            loadComponent: () =>
               import('./pages/widget/widget-page.component').then((m) => m.WidgetPageComponent),
           },
           {

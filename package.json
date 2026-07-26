@@ -13,7 +13,7 @@
     "format:check": "prettier --check \"projects/**/*.{ts,html}\"",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "ng build date-picker && npm publish ./dist/date-picker --access public"
+    "release": "node scripts/release.mjs"
   },
   "private": true,
   "workspaces": [

@@ -1,0 +1,7 @@
+<section class="mt-10 first-of-type:mt-0">
+  <h2 class="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">{{ title() }}</h2>
+  @if (description(); as desc) {
+    <p class="mb-4 text-sm text-muted" [innerHTML]="desc"></p>
+  }
+  <ng-content />
+</section>

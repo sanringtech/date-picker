@@ -16,6 +16,7 @@ import {
   CardTitleDirective,
 } from '../../../components/ui/card';
 import { EnginePageComponent } from '../../../components/engine-page/engine-page.component';
+import { SectionComponent } from '../../../components/section/section.component';
 
 const isWeekend = (date: Date): boolean => date.getDay() === 0 || date.getDay() === 6;
 const summerBreak: DateInterval = { from: new Date(2026, 6, 20), to: new Date(2026, 6, 24) };
@@ -88,6 +89,7 @@ type DrillViewMode = 'day' | 'month' | 'year';
     CardTitleDirective,
     CardDescriptionDirective,
     EnginePageComponent,
+    SectionComponent,
     LucideChevronLeft,
     LucideChevronRight,
     LucideX,

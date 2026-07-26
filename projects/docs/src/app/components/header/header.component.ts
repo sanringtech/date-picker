@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { LucideMoon, LucideSun } from '@lucide/angular';
 import { ButtonDirective } from '../ui/button';
 import { SwitchComponent } from '../ui/switch';
 import { LogoComponent } from '../logo/logo.component';
@@ -7,7 +8,15 @@ import { NavigationComponent } from '../navigation/navigation.component';
 
 @Component({
   selector: 'app-header',
-  imports: [ButtonDirective, SwitchComponent, FormsModule, LogoComponent, NavigationComponent],
+  imports: [
+    ButtonDirective,
+    SwitchComponent,
+    FormsModule,
+    LogoComponent,
+    NavigationComponent,
+    LucideMoon,
+    LucideSun,
+  ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
 })

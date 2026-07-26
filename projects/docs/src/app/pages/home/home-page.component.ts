@@ -86,11 +86,6 @@ import { SANRING_UI_LINKS } from '../../navigation/external-links';
         >
           <span>
             <span class="font-semibold text-foreground">@sanring/date-picker-widget</span>
-            <span
-              class="ml-2 align-middle rounded-full bg-surface-strong px-1.5 py-0.5 text-[10px] font-medium text-muted"
-            >
-              soon
-            </span>
             <p class="mt-1 text-sm text-muted">在 Engine 之上組合的預設樣式元件</p>
           </span>
         </a>

@@ -4,7 +4,7 @@ feature_id: date-picker-widget
 feature_name: Sanring Composed DatePicker Widget (@sanring/date-picker-widget)
 status: active
 owner: jack755051
-last_updated: 2026-07-20
+last_updated: 2026-07-26
 related_constitution: .claude/constitutions/date-picker.md
 related_adrs: []
 ---
@@ -256,7 +256,7 @@ TODO（小項，不擋 W1 開工）：實際 error 狀態的 ARIA live region �
 | W1（實際完成 2026-07-26） | Single 模式黑盒元件（`DatePickerComponent`）+ 預設 Tailwind 樣式 + CSS Custom Properties 主題變數 | ✅ demo（`/widget`）可安裝黑盒套件並完成單日選取；✅ CDK Overlay 錨定定位（bottom-start/top-start 翻轉）取代 W0 的 global-center；✅ 13 個單元測試全綠；✅ `ng lint`/`prettier --check` 零違規 |
 | W2（實際完成 2026-07-26） | Range 模式黑盒元件（`DateRangePickerComponent`）+ 雙月並排視覺 | ✅ demo（`/widget/range`）可完成區間選取，行為對齊 engine §4 Range 狀態機（Draft/提交/中止回溯）；✅ Overlay shell 新增 `closed` output，backdrop click／Escape（無 Draft 時）皆會關閉並中止殘留 Draft，兩輸入框回復中止前舊值（§7 Story 2 AC）；✅ 13 個新增單元測試全綠（含真實瀏覽器 Playwright 驗證：開啟、兩次點選提交、backdrop 中止三條路徑）；✅ `ng lint`/`prettier --check` 零違規 |
 | W3（實際完成 2026-07-26） | 複製模式文件與範例 repo（非 CLI 工具，純文件/repo 供手動複製）：新增 `projects/date-picker-widget/README.md`，涵蓋 npm 黑盒安裝與複製模式雙路徑、Tailwind `@theme inline` 主題接線步驟、複製檔案清單、API 參考表 | ✅ 文件涵蓋複製步驟（4 個檔案清單 + 逐步操作），複製後的元件可獨立運作（已逐一驗證 4 個複製檔案的 import 只依賴 `date-fns`/`@angular/*`/`@angular/cdk/*`/`@sanring/date-picker`，無其他 widget 內部隱藏依賴）；✅ 順帶修正 W1/W2 遺留的主題缺口——`dp-theme.css` 原本缺少 `border`/`surface`/`primary-foreground`/`radius` 等元件模板實際使用到的 token，已補齊（黑盒與複製模式共用同一份 Tailwind `@theme inline` 接線食譜）；✅ 修正 `ng-package.json` asset 路徑（原本會把 CSS 打包到 `dist/date-picker-widget/src/dp-theme.css`，與 README 記載的 `@sanring/date-picker-widget/dp-theme.css` 匯入路徑不符，已修正為打包到 dist 根目錄）；✅ 根目錄 `README.md` workspace layout／Docs 章節補上 `date-picker-widget`（原本完全沒被列入，之前是文件缺口）；✅ `ng build`/`ng test`/`ng lint`/`prettier --check` 全過 |
-| W4 | a11y 驗收（沿用 engine 已建立的 axe-core/鍵盤驗收模式）+ npm 發布準備 | 符合 WAI-ARIA，`npm publish --dry-run` 通過 |
+| W4（實際完成 2026-07-26） | a11y 驗收（沿用 engine 已建立的 axe-core 驗收模式）+ npm 發布準備：新增 `date-picker-widget-a11y.spec.ts`（Single/Range 兩元件各自的 closed/open/已選取/disabled/Draft 中/已提交 range 等狀態逐一掃描）；掃描過程中發現並修補真實缺陷——Overlay `role="dialog"` 缺少 accessible name（axe `aria-dialog-name`），已於 `date-picker.component.html`/`date-range-picker.component.html` 補上 `aria-label`；順帶補齊 release 自動化缺口——原 `package.json` `release` script 與 `.github/workflows/release.yml` 只認 `projects/date-picker/**`，widget 完全沒有自動發布路徑，已新增 `scripts/release.mjs`（逐套件比對版本是否已在 registry 上，已發布則跳過，避免兩套件獨立版號下重複 publish 既有版本報錯）並將 `release.yml` trigger paths 加入 `projects/date-picker-widget/**` | ✅ 36 個單元測試全綠（含新增 10 個 axe-core WAI-ARIA 測試，零違規）；✅ `ng lint`/`prettier --check` 零違規；✅ `ng build date-picker-widget` 成功；✅ `npm publish --dry-run --access public` 於 `dist/date-picker-widget` 執行通過（26.5 kB，6 個檔案）；✅ Release workflow 現已涵蓋 widget 套件（W4 開工前查核發現的缺口，經 owner 確認後一併修正） |
 
 **已知前提**：engine PRD M5（npm 發布）完成、公開穩定 API 定案後，才具備條件供本產出物消費，W0 不預期在 engine M5 完成前啟動。
 

@@ -24,7 +24,7 @@ export const docsNavSections: readonly SidebarSection[] = [
     label: 'Widget',
     path: '/widget',
     items: [
-      { label: 'DatePicker (Single)', path: '/widget' },
+      { label: 'DatePicker (Single)', path: '/widget/single' },
       { label: 'DateRangePicker', path: '/widget/range' },
     ],
   },
