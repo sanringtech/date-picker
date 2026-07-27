@@ -4,26 +4,14 @@ import { CALENDAR_LOCALE } from '@sanring/date-picker';
 import type { DateRange } from '@sanring/date-picker';
 import { DateGranularityRangePickerComponent } from '@sanring/date-picker-widget';
 import { PageHeaderComponent } from '../../../components/page-header/page-header.component';
-import {
-  CardComponent,
-  CardContentComponent,
-  CardDescriptionDirective,
-  CardTitleDirective,
-} from '../../../components/ui/card';
+import { WidgetDemoComponent } from '../../../components/widget-demo/widget-demo.component';
 import { I18nService } from '../../../i18n/i18n.service';
 
 const EMPTY_RANGE: DateRange = { start: null, end: null };
 
 @Component({
   selector: 'app-granularity-range-widget-page',
-  imports: [
-    PageHeaderComponent,
-    DateGranularityRangePickerComponent,
-    CardComponent,
-    CardContentComponent,
-    CardTitleDirective,
-    CardDescriptionDirective,
-  ],
+  imports: [PageHeaderComponent, DateGranularityRangePickerComponent, WidgetDemoComponent],
   templateUrl: './granularity-range-widget-page.component.html',
 })
 export class GranularityRangeWidgetPageComponent {

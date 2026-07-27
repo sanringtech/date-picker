@@ -7,12 +7,7 @@ import type {
   PickerGranularity,
 } from '@sanring/date-picker';
 import { ButtonDirective } from '../../../components/ui/button';
-import {
-  CardComponent,
-  CardContentComponent,
-  CardDescriptionDirective,
-  CardTitleDirective,
-} from '../../../components/ui/card';
+import { EngineDemoCardComponent } from '../../../components/engine-demo-card/engine-demo-card.component';
 import { EnginePageComponent } from '../../../components/engine-page/engine-page.component';
 
 interface GranularityScenario {
@@ -53,10 +48,7 @@ const SCENARIOS: readonly GranularityScenario[] = [
   imports: [
     GranularityGridDirective,
     ButtonDirective,
-    CardComponent,
-    CardContentComponent,
-    CardTitleDirective,
-    CardDescriptionDirective,
+    EngineDemoCardComponent,
     EnginePageComponent,
     LucideChevronLeft,
     LucideChevronRight,

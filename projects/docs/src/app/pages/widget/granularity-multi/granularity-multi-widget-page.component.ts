@@ -3,24 +3,12 @@ import { format } from 'date-fns/format';
 import { CALENDAR_LOCALE } from '@sanring/date-picker';
 import { DateGranularityMultiPickerComponent } from '@sanring/date-picker-widget';
 import { PageHeaderComponent } from '../../../components/page-header/page-header.component';
-import {
-  CardComponent,
-  CardContentComponent,
-  CardDescriptionDirective,
-  CardTitleDirective,
-} from '../../../components/ui/card';
+import { WidgetDemoComponent } from '../../../components/widget-demo/widget-demo.component';
 import { I18nService } from '../../../i18n/i18n.service';
 
 @Component({
   selector: 'app-granularity-multi-widget-page',
-  imports: [
-    PageHeaderComponent,
-    DateGranularityMultiPickerComponent,
-    CardComponent,
-    CardContentComponent,
-    CardTitleDirective,
-    CardDescriptionDirective,
-  ],
+  imports: [PageHeaderComponent, DateGranularityMultiPickerComponent, WidgetDemoComponent],
   templateUrl: './granularity-multi-widget-page.component.html',
 })
 export class GranularityMultiWidgetPageComponent {

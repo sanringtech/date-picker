@@ -1,19 +1,17 @@
 <app-page-header [title]="t().pageTitle" [description]="t().pageDescription" />
 
-<sanring-card class="w-full max-w-lg overflow-hidden">
-  <sanring-card-content class="p-5 md:p-6">
-    <h3 sanringCardTitle>{{ t().cardTitle }}</h3>
-    <p sanringCardDescription class="mb-4">
-      {{ t().cardDescription }}
-    </p>
-
-    <sanring-date-granularity-range-picker
-      granularity="month"
-      [locale]="locale"
-      [(selectedRange)]="selectedRange"
-      [placeholder]="t().placeholder"
-    />
-
-    <p class="mt-4 text-sm text-muted">{{ t().selectedLabel }}{{ formatSelected() }}</p>
-  </sanring-card-content>
-</sanring-card>
+<app-widget-demo
+  controlClass="w-full max-w-lg"
+  [title]="t().cardTitle"
+  [description]="t().cardDescription"
+  [resultLabel]="t().selectedLabel"
+  [resultValue]="formatSelected()"
+>
+  <sanring-date-granularity-range-picker
+    widgetControl
+    granularity="month"
+    [locale]="locale"
+    [(selectedRange)]="selectedRange"
+    [placeholder]="t().placeholder"
+  />
+</app-widget-demo>

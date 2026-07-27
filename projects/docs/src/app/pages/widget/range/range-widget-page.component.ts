@@ -4,26 +4,14 @@ import { CALENDAR_LOCALE } from '@sanring/date-picker';
 import type { DateRange } from '@sanring/date-picker';
 import { DateRangePickerComponent } from '@sanring/date-picker-widget';
 import { PageHeaderComponent } from '../../../components/page-header/page-header.component';
-import {
-  CardComponent,
-  CardContentComponent,
-  CardDescriptionDirective,
-  CardTitleDirective,
-} from '../../../components/ui/card';
+import { WidgetDemoComponent } from '../../../components/widget-demo/widget-demo.component';
 import { I18nService } from '../../../i18n/i18n.service';
 
 const EMPTY_RANGE: DateRange = { start: null, end: null };
 
 @Component({
   selector: 'app-range-widget-page',
-  imports: [
-    PageHeaderComponent,
-    DateRangePickerComponent,
-    CardComponent,
-    CardContentComponent,
-    CardTitleDirective,
-    CardDescriptionDirective,
-  ],
+  imports: [PageHeaderComponent, DateRangePickerComponent, WidgetDemoComponent],
   templateUrl: './range-widget-page.component.html',
 })
 export class RangeWidgetPageComponent {

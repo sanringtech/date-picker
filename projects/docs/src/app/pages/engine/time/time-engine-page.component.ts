@@ -9,12 +9,7 @@ import {
 import { CALENDAR_LOCALE, CalendarGridDirective, TimeAdjustmentEngine } from '@sanring/date-picker';
 import type { CalendarDay } from '@sanring/date-picker';
 import { ButtonDirective } from '../../../components/ui/button';
-import {
-  CardComponent,
-  CardContentComponent,
-  CardDescriptionDirective,
-  CardTitleDirective,
-} from '../../../components/ui/card';
+import { EngineDemoCardComponent } from '../../../components/engine-demo-card/engine-demo-card.component';
 import { EnginePageComponent } from '../../../components/engine-page/engine-page.component';
 
 type TimeHourCycle = 'h12' | 'h24';
@@ -24,10 +19,7 @@ type TimeHourCycle = 'h12' | 'h24';
   imports: [
     CalendarGridDirective,
     ButtonDirective,
-    CardComponent,
-    CardContentComponent,
-    CardTitleDirective,
-    CardDescriptionDirective,
+    EngineDemoCardComponent,
     EnginePageComponent,
     LucideChevronLeft,
     LucideChevronRight,

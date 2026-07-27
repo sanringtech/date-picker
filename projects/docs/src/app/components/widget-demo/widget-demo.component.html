@@ -1,0 +1,20 @@
+<div class="w-full">
+  <h3 class="text-base font-semibold tracking-tight text-foreground">{{ title() }}</h3>
+  <p class="mt-2 max-w-2xl text-sm leading-6 text-muted" [innerHTML]="description()"></p>
+
+  <div
+    class="mt-6 flex justify-center rounded-2xl border border-border bg-surface p-10 shadow-inner md:p-14"
+  >
+    <div [class]="controlClass()">
+      <ng-content select="[widgetControl]" />
+    </div>
+  </div>
+
+  <div class="mt-4 flex min-w-0 items-center gap-2 text-sm">
+    <span class="shrink-0 text-muted">{{ resultLabel() }}</span>
+    <code
+      class="min-w-0 truncate rounded bg-surface px-2 py-0.5 font-mono text-xs text-foreground"
+      >{{ resultValue() }}</code
+    >
+  </div>
+</div>
