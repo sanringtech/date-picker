@@ -48,6 +48,8 @@ export class DatePickerComponent {
   readonly today = input<Date | undefined>(undefined);
   readonly format = input<DateFormatConfig>(DEFAULT_DATE_FORMAT_CONFIG);
   readonly placeholder = input('');
+  readonly monthsToDisplay = input(1);
+  readonly viewDate = input<Date | undefined>(undefined);
   readonly openedChange = output<boolean>();
 
   /**
@@ -86,6 +88,8 @@ export class DatePickerComponent {
     effect(() => this.engine.setLocale(this.locale()));
     effect(() => this.engine.setDisabled(this.disabled()));
     effect(() => this.engine.setAllowDeselect(this.allowDeselect()));
+    effect(() => this.engine.setMonthsToDisplay(this.monthsToDisplay()));
+    effect(() => { const vd = this.viewDate(); if (vd !== undefined) this.engine.setViewDate(vd); });
 
     /**
      * One direction only: external `[(selectedDate)]` writes -> engine (+ input

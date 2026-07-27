@@ -12,53 +12,71 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { format as formatDate } from 'date-fns';
 import {
+  CALENDAR_QUARTER_STARTS_ON,
   CALENDAR_TODAY,
-  CalendarEngine,
-  type CalendarDay,
+  GranularityPickerEngine,
   type CalendarLocale,
   type DisabledInput,
+  type GranularityCell,
+  type PickerGranularity,
+  type QuarterStartMonth,
 } from '@sanring/date-picker';
-import { DEFAULT_DATE_FORMAT_CONFIG, type DateFormatConfig } from './date-format';
 import { DatePickerOverlayShellComponent } from './date-picker-overlay-shell.component';
 
 let nextDialogId = 0;
 
 /**
- * Multi-mode composed DatePicker (widget PRD §10 W5 draft). Wraps engine
- * `selectionMode: 'multi'` (M6) — a toggle-collection selection with no
- * Draft state, unlike Range — so unlike W1/W2 the overlay stays open after
- * each pick and only closes on Escape/backdrop click, letting the user
- * accumulate several dates in one session.
+ * Month/Quarter/Year multi-mode picker (widget W6-multi). Wraps
+ * `GranularityPickerEngine` in 'multi' mode — toggle collection with no
+ * Draft state, so the overlay stays open after each pick. Chips in the
+ * panel show each selected period; individual remove buttons and a
+ * "清除全部" action mirror W5's DateMultiPickerComponent UX.
  */
 @Component({
-  selector: 'sanring-date-multi-picker',
+  selector: 'sanring-date-granularity-multi-picker',
   imports: [DatePickerOverlayShellComponent],
-  templateUrl: './date-multi-picker.component.html',
+  templateUrl: './date-granularity-multi-picker.component.html',
 })
-export class DateMultiPickerComponent {
+export class DateGranularityMultiPickerComponent {
   private readonly parentTodayFn = inject(CALENDAR_TODAY);
   private readonly parentInjector = inject(Injector);
 
+  readonly granularity = input.required<PickerGranularity>();
   readonly selectedDates = model<Date[]>([]);
   readonly locale = input.required<CalendarLocale>();
+  /**
+   * Required by the engine when `granularity: 'quarter'` — same lazy-token
+   * convention as DateGranularityPickerComponent (ADR-0001 sub-decision 1).
+   */
+  readonly quarterStartMonth = input<QuarterStartMonth | undefined>(undefined);
   readonly disabled = input<DisabledInput | undefined>(undefined);
   readonly today = input<Date | undefined>(undefined);
-  readonly format = input<DateFormatConfig>(DEFAULT_DATE_FORMAT_CONFIG);
   readonly placeholder = input('');
-  readonly monthsToDisplay = input(1);
+  readonly yearsToDisplay = input(12);
   readonly viewDate = input<Date | undefined>(undefined);
   readonly openedChange = output<boolean>();
 
   private readonly engineInjector = Injector.create({
     parent: this.parentInjector,
     providers: [
-      CalendarEngine,
+      GranularityPickerEngine,
       { provide: CALENDAR_TODAY, useValue: () => this.today() ?? this.parentTodayFn() },
+      {
+        provide: CALENDAR_QUARTER_STARTS_ON,
+        useFactory: (): QuarterStartMonth => {
+          const qsm = this.quarterStartMonth();
+          if (qsm === undefined) {
+            throw new Error(
+              'sanring-date-granularity-multi-picker: quarterStartMonth is required when granularity="quarter".',
+            );
+          }
+          return qsm;
+        },
+      },
     ],
   });
-  protected readonly engine = this.engineInjector.get(CalendarEngine);
+  protected readonly engine = this.engineInjector.get(GranularityPickerEngine);
 
   @ViewChild('inputEl', { static: true })
   protected readonly inputElRef!: ElementRef<HTMLInputElement>;
@@ -68,37 +86,27 @@ export class DateMultiPickerComponent {
 
   protected readonly isOpen = computed(() => this.shell.isOpen());
   protected readonly inputValue = signal('');
-  protected readonly invalid = signal(false);
-  protected readonly dialogId = `sanring-date-multi-picker-dialog-${nextDialogId++}`;
+  protected readonly dialogId = `sanring-date-granularity-multi-picker-dialog-${nextDialogId++}`;
 
   /** Chronological display order — the engine's Map preserves insertion order, not date order. */
   protected readonly sortedSelectedDates = computed(() =>
     [...this.engine.selectedDates()].sort((a, b) => a.getTime() - b.getTime()),
   );
 
-  protected readonly weekdayLabels = computed(() => {
-    const l = this.locale();
-    return [...l.weekdayLabels.slice(l.weekStartsOn), ...l.weekdayLabels.slice(0, l.weekStartsOn)];
-  });
-
   constructor() {
     this.engine.setSelectionMode('multi');
 
-    effect(() => this.engine.setLocale(this.locale()));
+    effect(() => this.engine.setSelectionGranularity(this.granularity()));
     effect(() => this.engine.setDisabled(this.disabled()));
-    effect(() => this.engine.setMonthsToDisplay(this.monthsToDisplay()));
+    effect(() => this.engine.setGridColumns(this.granularity() === 'quarter' ? 2 : 3));
+    effect(() => this.engine.setYearsToDisplay(this.yearsToDisplay()));
     effect(() => { const vd = this.viewDate(); if (vd !== undefined) this.engine.setViewDate(vd); });
 
-    /**
-     * One direction only: external `[(selectedDates)]` writes -> engine (+ input
-     * text). See W1's equivalent comment for why this isn't a two-way effect pair.
-     */
+    /** One direction only: external `[(selectedDates)]` writes -> engine. See W1's equivalent comment. */
     effect(() => {
       const modelValue = this.selectedDates();
       untracked(() => {
-        if (sameDateSet(modelValue, this.engine.selectedDates())) {
-          return;
-        }
+        if (sameDateSet(modelValue, this.engine.selectedDates())) return;
         this.engine.setSelectedDates(modelValue);
         this.applyEngineDatesToText();
       });
@@ -107,11 +115,9 @@ export class DateMultiPickerComponent {
 
   private applyEngineDatesToText(): void {
     const dates = this.sortedSelectedDates();
-    this.inputValue.set(dates.map((d) => this.format().format(d)).join(', '));
-    this.invalid.set(false);
+    this.inputValue.set(dates.map((d) => this.periodLabel(d)).join(', '));
   }
 
-  /** Synchronous engine -> model + input text sync for call sites that mutate the engine directly (grid clicks, chip removal, keyboard selection). */
   private syncFromEngine(): void {
     const value = this.engine.selectedDates();
     if (!sameDateSet(value, this.selectedDates())) {
@@ -120,23 +126,46 @@ export class DateMultiPickerComponent {
     this.applyEngineDatesToText();
   }
 
-  protected toWeeks(grid: readonly CalendarDay[]): CalendarDay[][] {
-    const weeks: CalendarDay[][] = [];
-    for (let i = 0; i < 42; i += 7) weeks.push(grid.slice(i, i + 7) as CalendarDay[]);
-    return weeks;
+  protected gridColsClass(): string {
+    return this.granularity() === 'quarter' ? 'grid-cols-2' : 'grid-cols-3';
   }
 
-  protected currentMonthLabel(days: readonly CalendarDay[]): string {
-    const current = days.find((d) => d.isCurrentMonth) ?? days[0];
-    return `${current.date.getFullYear()} ${this.locale().monthLabels[current.date.getMonth()]}`;
+  protected cellLabel(cell: GranularityCell, index: number): string {
+    switch (this.granularity()) {
+      case 'month':
+        return this.locale().monthLabels[cell.date.getMonth()];
+      case 'quarter':
+        return `Q${index + 1}`;
+      case 'year':
+        return `${cell.date.getFullYear()}`;
+    }
   }
 
-  protected dayAriaLabel(day: CalendarDay): string {
-    return formatDate(day.date, 'yyyy-MM-dd');
+  protected headerLabel(): string {
+    const cells = this.engine.granularityGrids();
+    if (cells.length === 0) return '';
+    if (this.granularity() === 'year') {
+      return `${cells[0].date.getFullYear()} – ${cells[cells.length - 1].date.getFullYear()}`;
+    }
+    return `${cells[0].date.getFullYear()}`;
+  }
+
+  protected periodLabel(date: Date): string {
+    switch (this.granularity()) {
+      case 'month':
+        return `${date.getFullYear()} ${this.locale().monthLabels[date.getMonth()]}`;
+      case 'quarter': {
+        const cells = this.engine.granularityGrids();
+        const i = cells.findIndex((c) => c.date.getTime() === date.getTime());
+        return `${date.getFullYear()} Q${i >= 0 ? i + 1 : '?'}`;
+      }
+      case 'year':
+        return `${date.getFullYear()}`;
+    }
   }
 
   protected chipAriaLabel(date: Date): string {
-    return formatDate(date, 'yyyy-MM-dd');
+    return this.periodLabel(date);
   }
 
   protected onInputFocus(): void {
@@ -147,42 +176,10 @@ export class DateMultiPickerComponent {
     this.open();
   }
 
-  /** Returning focus to the input after a close() fires a native 'focus' event, which would otherwise re-open via onInputFocus(). */
   private suppressNextFocusOpen = false;
   private refocusInputWithoutReopening(): void {
     this.suppressNextFocusOpen = true;
     this.inputElRef.nativeElement.focus();
-  }
-
-  /**
-   * Typed input is a comma-separated list, parsed as one indivisible batch
-   * (Range's "wait for the whole transaction" precedent) — a half-typed
-   * trailing entry simply waits rather than partially committing.
-   */
-  protected onInputChange(value: string): void {
-    this.inputValue.set(value);
-    if (value.trim() === '') {
-      this.invalid.set(false);
-      this.engine.clearSelection();
-      this.selectedDates.set([]);
-      return;
-    }
-    const entries = value.split(',').map((v) => v.trim());
-    if (entries.some((v) => v === '')) {
-      // Trailing/empty comma segment — still typing, wait rather than reject.
-      return;
-    }
-    const parsed = entries.map((v) => this.format().parse(v));
-    if (parsed.some((d) => d === null)) {
-      this.invalid.set(true);
-      return;
-    }
-    this.engine.setSelectedDates(parsed as Date[]);
-    const committed = this.engine.selectedDates();
-    // setSelectedDates() silently drops disabled/duplicate entries (I2, Decision 13) —
-    // surface that instead of silently claiming every typed entry stuck.
-    this.invalid.set(committed.length !== new Set(entries).size);
-    this.selectedDates.set(committed);
   }
 
   protected selectDate(date: Date): void {
@@ -259,6 +256,6 @@ export class DateMultiPickerComponent {
 
 function sameDateSet(a: readonly Date[], b: readonly Date[]): boolean {
   if (a.length !== b.length) return false;
-  const keysB = new Set(b.map((d) => d.toDateString()));
-  return a.every((d) => keysB.has(d.toDateString()));
+  const timesB = new Set(b.map((d) => d.getTime()));
+  return a.every((d) => timesB.has(d.getTime()));
 }

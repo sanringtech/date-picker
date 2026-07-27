@@ -62,6 +62,8 @@ export class DateTimePickerComponent {
   readonly placeholder = input('');
   readonly precision = input<TimePrecision>('hour-minute');
   readonly timeGuard = input<TimeGuardMatcher | undefined>(undefined);
+  readonly monthsToDisplay = input(1);
+  readonly viewDate = input<Date | undefined>(undefined);
   readonly openedChange = output<boolean>();
 
   private readonly engineInjector = Injector.create({
@@ -100,6 +102,8 @@ export class DateTimePickerComponent {
     effect(() => this.engine.setLocale(this.locale()));
     effect(() => this.engine.setDisabled(this.disabled()));
     effect(() => this.engine.setAllowDeselect(this.allowDeselect()));
+    effect(() => this.engine.setMonthsToDisplay(this.monthsToDisplay()));
+    effect(() => { const vd = this.viewDate(); if (vd !== undefined) this.engine.setViewDate(vd); });
     effect(() => this.timeEngine.setTimePrecision(this.precision()));
     effect(() => this.timeEngine.setTimeGuard(this.timeGuard()));
 

@@ -17,49 +17,48 @@ import {
   CALENDAR_TODAY,
   GranularityPickerEngine,
   type CalendarLocale,
+  type DateRange,
   type DisabledInput,
   type GranularityCell,
   type PickerGranularity,
   type QuarterStartMonth,
+  type RangePeriodCountLimit,
 } from '@sanring/date-picker';
 import { DatePickerOverlayShellComponent } from './date-picker-overlay-shell.component';
 
 let nextDialogId = 0;
 
+const EMPTY_RANGE: DateRange = { start: null, end: null };
+
 /**
- * Month/Quarter/Year-picker composed DatePicker (widget PRD §10 W6 draft).
- * Single-selection only — engine `GranularityPickerEngine` (M7) also supports
- * Range/Multi for this same granularity axis, but wiring all nine
- * granularity×mode combinations into one component's template is deferred to
- * a follow-up; this is the common "pick one month/quarter/year" case (mirrors
- * how vue3-datepicker's month-picker/year-picker are single-value pickers).
+ * Month/Quarter/Year range-mode picker (widget W6-range). Wraps
+ * `GranularityPickerEngine` in 'range' mode — two readonly inputs display
+ * the committed start/end period labels; the first grid click opens a
+ * Draft, the second commits it. Escape while a Draft is active aborts
+ * it (Decision 3 precedent); Escape with no active Draft closes the
+ * overlay.
  */
 @Component({
-  selector: 'sanring-date-granularity-picker',
+  selector: 'sanring-date-granularity-range-picker',
   imports: [DatePickerOverlayShellComponent],
-  templateUrl: './date-granularity-picker.component.html',
+  templateUrl: './date-granularity-range-picker.component.html',
 })
-export class DateGranularityPickerComponent {
+export class DateGranularityRangePickerComponent {
   private readonly parentTodayFn = inject(CALENDAR_TODAY);
   private readonly parentInjector = inject(Injector);
 
   readonly granularity = input.required<PickerGranularity>();
-  readonly selectedDate = model<Date | null>(null);
-  /** Only consumed for `granularity: 'month'` cell/header labels. */
+  readonly selectedRange = model<DateRange>(EMPTY_RANGE);
   readonly locale = input.required<CalendarLocale>();
   /**
-   * Required by the engine only when `granularity: 'quarter'` (ADR-0001
-   * Zero-default parity) — omitted for month/year. Read lazily via a DI
-   * `useFactory` below (not baked in as `useValue` at construction time) —
-   * signal inputs only carry their real bound value *after* the constructor
-   * returns (Angular applies property bindings post-construction), so a
-   * direct read here would always observe the pre-binding default.
+   * Required by the engine when `granularity: 'quarter'` — same lazy-token
+   * convention as DateGranularityPickerComponent (ADR-0001 sub-decision 1).
    */
   readonly quarterStartMonth = input<QuarterStartMonth | undefined>(undefined);
   readonly disabled = input<DisabledInput | undefined>(undefined);
-  readonly allowDeselect = input(false);
   readonly today = input<Date | undefined>(undefined);
   readonly placeholder = input('');
+  readonly rangePeriodCountLimit = input<RangePeriodCountLimit | undefined>(undefined);
   readonly yearsToDisplay = input(12);
   readonly viewDate = input<Date | undefined>(undefined);
   readonly openedChange = output<boolean>();
@@ -71,15 +70,11 @@ export class DateGranularityPickerComponent {
       { provide: CALENDAR_TODAY, useValue: () => this.today() ?? this.parentTodayFn() },
       {
         provide: CALENDAR_QUARTER_STARTS_ON,
-        // Engine only calls injector.get() for this token when granularity is
-        // actually 'quarter' (its own lazy-resolution comment) — month/year
-        // consumers never trigger this factory, so they're never forced to
-        // supply it either.
         useFactory: (): QuarterStartMonth => {
           const qsm = this.quarterStartMonth();
           if (qsm === undefined) {
             throw new Error(
-              'sanring-date-granularity-picker: quarterStartMonth is required when granularity="quarter" (no default — a business calendar convention, not a neutral fact).',
+              'sanring-date-granularity-range-picker: quarterStartMonth is required when granularity="quarter".',
             );
           }
           return qsm;
@@ -89,50 +84,61 @@ export class DateGranularityPickerComponent {
   });
   protected readonly engine = this.engineInjector.get(GranularityPickerEngine);
 
-  @ViewChild('inputEl', { static: true })
-  protected readonly inputElRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('startInputEl', { static: true })
+  protected readonly startInputElRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('endInputEl', { static: true })
+  protected readonly endInputElRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('anchorEl', { static: true })
+  protected readonly anchorElRef!: ElementRef<HTMLElement>;
   @ViewChild('gridEl') private readonly gridElRef?: ElementRef<HTMLDivElement>;
   @ViewChild(DatePickerOverlayShellComponent, { static: true })
   private readonly shell!: DatePickerOverlayShellComponent;
 
   protected readonly isOpen = computed(() => this.shell.isOpen());
-  protected readonly inputValue = signal('');
-  protected readonly dialogId = `sanring-date-granularity-picker-dialog-${nextDialogId++}`;
+  protected readonly startText = signal('');
+  protected readonly endText = signal('');
+  protected readonly dialogId = `sanring-date-granularity-range-picker-dialog-${nextDialogId++}`;
+
+  private lastFocusedField: 'start' | 'end' = 'start';
 
   constructor() {
-    this.engine.setSelectionMode('single');
+    this.engine.setSelectionMode('range');
 
     effect(() => this.engine.setSelectionGranularity(this.granularity()));
     effect(() => this.engine.setDisabled(this.disabled()));
-    effect(() => this.engine.setAllowDeselect(this.allowDeselect()));
     effect(() => this.engine.setGridColumns(this.granularity() === 'quarter' ? 2 : 3));
     effect(() => this.engine.setYearsToDisplay(this.yearsToDisplay()));
+    effect(() => this.engine.setRangePeriodCountLimit(this.rangePeriodCountLimit()));
     effect(() => { const vd = this.viewDate(); if (vd !== undefined) this.engine.setViewDate(vd); });
 
-    /** One direction only: external `[(selectedDate)]` writes -> engine (+ input text). See W1's equivalent comment for why this isn't a two-way effect pair. */
+    /** One direction only: external `[(selectedRange)]` writes -> engine. See W1's equivalent comment. */
     effect(() => {
-      const modelValue = this.selectedDate();
+      const modelValue = this.selectedRange();
       untracked(() => {
-        if (modelValue === this.engine.selectedDate()) {
-          return;
-        }
-        if (modelValue === null) {
+        const current = this.engine.selectedRange();
+        if (sameRange(modelValue, current)) return;
+        if (modelValue.start === null && modelValue.end === null) {
           this.engine.clearSelection();
-        } else {
-          this.engine.setSelectedDate(modelValue);
+        } else if (modelValue.start !== null && modelValue.end !== null) {
+          this.engine.setSelectedRange(modelValue);
         }
-        this.inputValue.set(modelValue ? this.periodLabel(modelValue) : '');
+        this.applyEngineRangeToText();
       });
     });
   }
 
-  /** Synchronous engine -> model + input text sync for call sites that mutate the engine directly (grid clicks, keyboard selection). */
+  private applyEngineRangeToText(): void {
+    const range = this.engine.selectedRange();
+    this.startText.set(range.start ? this.periodLabel(range.start) : '');
+    this.endText.set(range.end ? this.periodLabel(range.end) : '');
+  }
+
   private syncFromEngine(): void {
-    const value = this.engine.selectedDate();
-    if (value !== this.selectedDate()) {
-      this.selectedDate.set(value);
+    const value = this.engine.selectedRange();
+    if (!sameRange(value, this.selectedRange())) {
+      this.selectedRange.set(value);
     }
-    this.inputValue.set(value ? this.periodLabel(value) : '');
+    this.applyEngineRangeToText();
   }
 
   protected gridColsClass(): string {
@@ -159,7 +165,6 @@ export class DateGranularityPickerComponent {
     return `${cells[0].date.getFullYear()}`;
   }
 
-  /** Display label for a committed value — quarter falls back to "Q?" if the value falls outside the currently displayed year window (findIndex miss), same as the engine demo page. */
   protected periodLabel(date: Date): string {
     switch (this.granularity()) {
       case 'month':
@@ -174,7 +179,8 @@ export class DateGranularityPickerComponent {
     }
   }
 
-  protected onInputFocus(): void {
+  protected onStartInputFocus(): void {
+    this.lastFocusedField = 'start';
     if (this.suppressNextFocusOpen) {
       this.suppressNextFocusOpen = false;
       return;
@@ -182,22 +188,53 @@ export class DateGranularityPickerComponent {
     this.open();
   }
 
-  /** Returning focus to the input after a close() fires a native 'focus' event, which would otherwise re-open via onInputFocus(). */
+  protected onEndInputFocus(): void {
+    this.lastFocusedField = 'end';
+    if (this.suppressNextFocusOpen) {
+      this.suppressNextFocusOpen = false;
+      return;
+    }
+    this.open();
+  }
+
   private suppressNextFocusOpen = false;
   private refocusInputWithoutReopening(): void {
     this.suppressNextFocusOpen = true;
-    this.inputElRef.nativeElement.focus();
+    const target = this.lastFocusedField === 'start' ? this.startInputElRef : this.endInputElRef;
+    target.nativeElement.focus();
   }
 
   protected selectDate(date: Date): void {
     this.engine.selectDate(date);
+    if (this.engine.isDraftActive()) {
+      // First pick of the pair — show draft start immediately, keep overlay open.
+      this.startText.set(this.periodLabel(date));
+      this.endText.set('');
+      return;
+    }
     this.syncFromEngine();
     this.close();
     this.refocusInputWithoutReopening();
   }
 
+  /** Backdrop click and shell close funnel here (abort Draft, keep prior committed values). */
+  protected onShellClosed(): void {
+    this.abortDraftAndResync();
+    this.openedChange.emit(false);
+  }
+
+  private abortDraftAndResync(): void {
+    this.engine.abortRangeDraft();
+    this.applyEngineRangeToText();
+  }
+
   protected onGridKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
+      if (this.engine.isDraftActive()) {
+        this.abortDraftAndResync();
+        event.preventDefault();
+        return;
+      }
       this.close();
       this.refocusInputWithoutReopening();
       event.preventDefault();
@@ -249,6 +286,13 @@ export class DateGranularityPickerComponent {
   close(): void {
     if (!this.shell.isOpen()) return;
     this.shell.close();
-    this.openedChange.emit(false);
   }
+}
+
+function sameRange(a: DateRange, b: DateRange): boolean {
+  const aStart = a.start?.getTime() ?? null;
+  const bStart = b.start?.getTime() ?? null;
+  const aEnd = a.end?.getTime() ?? null;
+  const bEnd = b.end?.getTime() ?? null;
+  return aStart === bStart && aEnd === bEnd;
 }

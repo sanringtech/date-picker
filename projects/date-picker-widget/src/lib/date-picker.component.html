@@ -28,8 +28,9 @@
     class="rounded-lg border border-border bg-surface p-4 shadow-lg outline-none focus-within:ring-2 focus-within:ring-primary"
     (keydown)="onGridKeydown($event)"
   >
+    <div [class]="engine.monthGrids().length > 1 ? 'flex gap-6' : 'block'">
     @for (monthGrid of engine.monthGrids(); track $index) {
-      <div class="min-w-60">
+      <div class="min-w-60 flex-1">
         <div class="mb-4 flex items-center justify-between">
           <button
             type="button"
@@ -97,5 +98,6 @@
         </div>
       </div>
     }
+    </div>
   </div>
 </sanring-date-picker-overlay-shell>

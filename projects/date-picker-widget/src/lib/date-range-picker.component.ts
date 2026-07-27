@@ -53,6 +53,7 @@ export class DateRangePickerComponent {
   readonly placeholder = input('');
   readonly rangeDayCountLimit = input<RangeDayCountLimit | undefined>(undefined);
   readonly monthsToDisplay = input(2);
+  readonly viewDate = input<Date | undefined>(undefined);
   readonly openedChange = output<boolean>();
 
   private readonly engineInjector = Injector.create({
@@ -95,6 +96,7 @@ export class DateRangePickerComponent {
     effect(() => this.engine.setDisabled(this.disabled()));
     effect(() => this.engine.setMonthsToDisplay(this.monthsToDisplay()));
     effect(() => this.engine.setRangeDayCountLimit(this.rangeDayCountLimit()));
+    effect(() => { const vd = this.viewDate(); if (vd !== undefined) this.engine.setViewDate(vd); });
 
     /** One direction only: external `[(selectedRange)]` writes -> engine (+ input text). See W1's equivalent comment for why this isn't a two-way effect pair. */
     effect(() => {
