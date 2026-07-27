@@ -26,6 +26,12 @@ export const docsNavSections: readonly SidebarSection[] = [
     items: [
       { label: 'DatePicker (Single)', path: '/widget/single' },
       { label: 'DateRangePicker', path: '/widget/range' },
+      { label: 'DateMultiPicker', path: '/widget/multi' },
+      { label: 'DateGranularityPicker', path: '/widget/granularity' },
+      { label: 'DateGranularityRangePicker', path: '/widget/granularity-range' },
+      { label: 'DateGranularityMultiPicker', path: '/widget/granularity-multi' },
+      { label: 'DateTimePicker', path: '/widget/time' },
+      { label: 'DateTimeRangePicker', path: '/widget/time-range' },
     ],
   },
 ];

@@ -1,4 +1,8 @@
 <app-page-header [title]="t().pageTitle" [description]="t().pageDescription" />
+
+<h2 class="mb-2 mt-6 text-sm font-semibold uppercase tracking-wider text-muted">
+  {{ t().dayGroupHeading }}
+</h2>
 <div class="space-y-3">
   <a
     routerLink="/widget/single"
@@ -13,6 +17,60 @@
   >
     <p class="break-words font-semibold text-foreground">{{ t().rangeTitle }}</p>
     <p class="mt-0.5 text-sm text-muted">{{ t().rangeDescription }}</p>
+  </a>
+  <a
+    routerLink="/widget/multi"
+    class="block rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <p class="break-words font-semibold text-foreground">{{ t().multiTitle }}</p>
+    <p class="mt-0.5 text-sm text-muted">{{ t().multiDescription }}</p>
+  </a>
+</div>
+
+<h2 class="mb-2 mt-6 text-sm font-semibold uppercase tracking-wider text-muted">
+  {{ t().granularityGroupHeading }}
+</h2>
+<div class="space-y-3">
+  <a
+    routerLink="/widget/granularity"
+    class="block rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <p class="break-words font-semibold text-foreground">{{ t().granularityTitle }}</p>
+    <p class="mt-0.5 text-sm text-muted">{{ t().granularityDescription }}</p>
+  </a>
+  <a
+    routerLink="/widget/granularity-range"
+    class="block rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <p class="break-words font-semibold text-foreground">{{ t().granularityRangeTitle }}</p>
+    <p class="mt-0.5 text-sm text-muted">{{ t().granularityRangeDescription }}</p>
+  </a>
+  <a
+    routerLink="/widget/granularity-multi"
+    class="block rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <p class="break-words font-semibold text-foreground">{{ t().granularityMultiTitle }}</p>
+    <p class="mt-0.5 text-sm text-muted">{{ t().granularityMultiDescription }}</p>
+  </a>
+</div>
+
+<h2 class="mb-2 mt-6 text-sm font-semibold uppercase tracking-wider text-muted">
+  {{ t().timeGroupHeading }}
+</h2>
+<div class="space-y-3">
+  <a
+    routerLink="/widget/time"
+    class="block rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <p class="break-words font-semibold text-foreground">{{ t().timeTitle }}</p>
+    <p class="mt-0.5 text-sm text-muted">{{ t().timeDescription }}</p>
+  </a>
+  <a
+    routerLink="/widget/time-range"
+    class="block rounded-lg border border-border bg-surface p-4 no-underline hover:border-primary/40 transition-colors"
+  >
+    <p class="break-words font-semibold text-foreground">{{ t().timeRangeTitle }}</p>
+    <p class="mt-0.5 text-sm text-muted">{{ t().timeRangeDescription }}</p>
   </a>
 </div>
 

@@ -22,6 +22,7 @@ export interface HomeDictionary {
     readonly increaseMinuteLabel: string;
     readonly decreaseMinuteLabel: string;
     readonly currentTimeLabel: string;
+    readonly selectedTimeLabel: string;
     readonly widgetLinkLabel: string;
     readonly engineLinkLabel: string;
   };
@@ -60,10 +61,25 @@ export interface HomeDictionary {
 export interface WidgetIndexDictionary {
   readonly pageTitle: string;
   readonly pageDescription: string;
+  readonly dayGroupHeading: string;
   readonly singleTitle: string;
   readonly singleDescription: string;
   readonly rangeTitle: string;
   readonly rangeDescription: string;
+  readonly multiTitle: string;
+  readonly multiDescription: string;
+  readonly granularityGroupHeading: string;
+  readonly granularityTitle: string;
+  readonly granularityDescription: string;
+  readonly granularityRangeTitle: string;
+  readonly granularityRangeDescription: string;
+  readonly granularityMultiTitle: string;
+  readonly granularityMultiDescription: string;
+  readonly timeGroupHeading: string;
+  readonly timeTitle: string;
+  readonly timeDescription: string;
+  readonly timeRangeTitle: string;
+  readonly timeRangeDescription: string;
   readonly modesHeading: string;
   readonly modesDescriptionPrefix: string;
   readonly modesDescriptionSuffix: string;
@@ -124,5 +140,11 @@ export interface Dictionary {
   readonly widgetIndex: WidgetIndexDictionary;
   readonly widgetSingle: WidgetSingleDictionary;
   readonly widgetRange: WidgetRangeDictionary;
+  readonly widgetMulti: WidgetRangeDictionary;
+  readonly widgetGranularity: WidgetRangeDictionary;
+  readonly widgetGranularityRange: WidgetRangeDictionary;
+  readonly widgetGranularityMulti: WidgetRangeDictionary;
+  readonly widgetTime: WidgetRangeDictionary;
+  readonly widgetTimeRange: WidgetRangeDictionary;
   readonly engineIndex: EngineIndexDictionary;
 }

@@ -18,6 +18,7 @@ export const home: HomeDictionary = {
     increaseMinuteLabel: '增加分鐘',
     decreaseMinuteLabel: '減少分鐘',
     currentTimeLabel: '現在時間',
+    selectedTimeLabel: '操作時間',
     widgetLinkLabel: 'Widget →',
     engineLinkLabel: 'Engine →',
   },

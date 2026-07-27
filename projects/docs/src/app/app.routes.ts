@@ -64,6 +64,48 @@ export const routes: Routes = [
                 (m) => m.RangeWidgetPageComponent,
               ),
           },
+          {
+            path: 'widget/multi',
+            loadComponent: () =>
+              import('./pages/widget/multi/multi-widget-page.component').then(
+                (m) => m.MultiWidgetPageComponent,
+              ),
+          },
+          {
+            path: 'widget/granularity',
+            loadComponent: () =>
+              import('./pages/widget/granularity/granularity-widget-page.component').then(
+                (m) => m.GranularityWidgetPageComponent,
+              ),
+          },
+          {
+            path: 'widget/granularity-range',
+            loadComponent: () =>
+              import(
+                './pages/widget/granularity-range/granularity-range-widget-page.component'
+              ).then((m) => m.GranularityRangeWidgetPageComponent),
+          },
+          {
+            path: 'widget/granularity-multi',
+            loadComponent: () =>
+              import(
+                './pages/widget/granularity-multi/granularity-multi-widget-page.component'
+              ).then((m) => m.GranularityMultiWidgetPageComponent),
+          },
+          {
+            path: 'widget/time',
+            loadComponent: () =>
+              import('./pages/widget/time/time-widget-page.component').then(
+                (m) => m.TimeWidgetPageComponent,
+              ),
+          },
+          {
+            path: 'widget/time-range',
+            loadComponent: () =>
+              import('./pages/widget/time-range/time-range-widget-page.component').then(
+                (m) => m.TimeRangeWidgetPageComponent,
+              ),
+          },
         ],
       },
     ],

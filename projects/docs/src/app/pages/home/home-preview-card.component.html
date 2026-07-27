@@ -1,0 +1,161 @@
+<div class="rounded-lg border border-border bg-surface p-5 shadow-sm md:p-6">
+  <div class="border-b border-border pb-5">
+    <div class="min-w-0">
+      <p class="font-mono text-sm font-semibold text-foreground">@sanring/date-picker</p>
+      <p class="mt-1 text-sm text-muted">{{ t().subtitle }}</p>
+    </div>
+  </div>
+
+  <div class="mt-5 flex flex-wrap items-start gap-4">
+    <div
+      sanringCalendarGrid
+      #grid="sanringCalendarGrid"
+      tabindex="0"
+      class="w-72 shrink-0 rounded-lg border border-border bg-background/40 p-4 outline-none focus-within:ring-2 focus-within:ring-primary"
+    >
+      <div class="mb-4 flex items-center justify-between">
+        <button
+          sanringBtn
+          type="button"
+          variant="ghost"
+          size="icon"
+          [class]="'text-muted'"
+          [attr.aria-label]="t().prevMonthLabel"
+          (click)="grid.engine.prevMonth(); markInteraction()"
+        >
+          ‹
+        </button>
+        <span class="font-semibold text-foreground">
+          {{ currentMonthLabel(grid.engine.monthGrids()[0]) }}
+        </span>
+        <button
+          sanringBtn
+          type="button"
+          variant="ghost"
+          size="icon"
+          [class]="'text-muted'"
+          [attr.aria-label]="t().nextMonthLabel"
+          (click)="grid.engine.nextMonth(); markInteraction()"
+        >
+          ›
+        </button>
+      </div>
+
+      <div
+        class="mb-1 grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted"
+        aria-hidden="true"
+      >
+        @for (label of weekdayLabels; track label) {
+          <span>{{ label }}</span>
+        }
+      </div>
+
+      <div class="grid grid-cols-7 gap-1">
+        @for (week of toWeeks(grid.engine.monthGrids()[0]); track $index) {
+          @for (day of week; track day.date.getTime()) {
+            <button
+              type="button"
+              [disabled]="day.isDisabled"
+              [attr.aria-selected]="day.isSelected ? true : null"
+              class="aspect-square rounded text-sm transition-colors active:brightness-90"
+              [class.text-muted]="!day.isCurrentMonth && !day.isSelected"
+              [class.text-foreground]="day.isCurrentMonth && !day.isSelected"
+              [class.bg-primary]="day.isSelected"
+              [class.text-primary-foreground]="day.isSelected"
+              [class.font-bold]="day.isToday && !day.isSelected"
+              [class.hover:bg-surface-strong]="!day.isSelected && !day.isDisabled"
+              [class.opacity-40]="day.isDisabled"
+              (click)="selectCalendarDate(day.date); markInteraction()"
+            >
+              {{ day.date.getDate() }}
+            </button>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="flex min-w-[9rem] flex-1 flex-col gap-4">
+      <div class="rounded-lg border border-border bg-background/40 p-4">
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">
+          {{ t().timePickerLabel }}
+        </p>
+        <div class="mt-3 flex items-center justify-center gap-2">
+          <div class="flex flex-col items-center">
+            <button
+              sanringBtn
+              type="button"
+              variant="ghost"
+              size="icon"
+              [class]="'text-muted'"
+              [attr.aria-label]="t().increaseHourLabel"
+              (click)="adjustPickerHour(1)"
+            >
+              ▲
+            </button>
+            <span class="w-10 text-center font-mono text-xl text-foreground">
+              {{ pickerHour().toString().padStart(2, '0') }}
+            </span>
+            <button
+              sanringBtn
+              type="button"
+              variant="ghost"
+              size="icon"
+              [class]="'text-muted'"
+              [attr.aria-label]="t().decreaseHourLabel"
+              (click)="adjustPickerHour(-1)"
+            >
+              ▼
+            </button>
+          </div>
+          <span class="text-xl text-foreground">:</span>
+          <div class="flex flex-col items-center">
+            <button
+              sanringBtn
+              type="button"
+              variant="ghost"
+              size="icon"
+              [class]="'text-muted'"
+              [attr.aria-label]="t().increaseMinuteLabel"
+              (click)="adjustPickerMinute(1)"
+            >
+              ▲
+            </button>
+            <span class="w-10 text-center font-mono text-xl text-foreground">
+              {{ pickerMinute().toString().padStart(2, '0') }}
+            </span>
+            <button
+              sanringBtn
+              type="button"
+              variant="ghost"
+              size="icon"
+              [class]="'text-muted'"
+              [attr.aria-label]="t().decreaseMinuteLabel"
+              (click)="adjustPickerMinute(-1)"
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-border bg-background/40 p-4">
+        <p class="text-xs font-medium uppercase tracking-wide text-muted">
+          {{ isLive() ? t().currentTimeLabel : t().selectedTimeLabel }}
+        </p>
+        <div class="mt-2">
+          <p class="font-mono text-xs text-muted">{{ displayDate() }}</p>
+          <p class="font-mono text-2xl font-semibold text-primary">{{ displayTimeOfDay() }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 flex flex-wrap justify-center gap-2">
+    <a sanringBtn variant="outline" size="sm" routerLink="/widget" class="no-underline">
+      {{ t().widgetLinkLabel }}
+    </a>
+    <a sanringBtn variant="outline" size="sm" routerLink="/engine" class="no-underline">
+      {{ t().engineLinkLabel }}
+    </a>
+  </div>
+</div>
