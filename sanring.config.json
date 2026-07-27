@@ -30,6 +30,9 @@
     "collapsible/collapsible-content.directive.ts": "3d15236d68063d438bc1da9bc928cfda8398ecd10709b6e56bba48ff40650d85",
     "collapsible/index.ts": "fbb26c5639ad078c5284dbfb1c07f8f69f078f10ff7074f5ff352449593ceb77",
     "shared/utils.ts": "d4c1faed0b5ce416c0c6ef658c8773fd2cf3ca6a44f3f25b7bbdf59d4942ece1",
-    "shared/component-styles.ts": "ca2204fff659cfe1cbdfb55955983420e733fcb6d9205ad731298beda6c292c0"
+    "shared/component-styles.ts": "ca2204fff659cfe1cbdfb55955983420e733fcb6d9205ad731298beda6c292c0",
+    "badge/badge.directive.ts": "07d45991cc13786a955fd7d02737d382cfc83720d3c2ff70a204e61151ef2207",
+    "badge/badge.type.ts": "2df60368e3911eaa67c2e9f284728fe75538ae8480fb52895813092afbe0a830",
+    "badge/index.ts": "ae4bd8fcaabbe742bcd868b1669cc1ed9edd8a0c5819a13e19e0f199ab5ba852"
   }
 }
