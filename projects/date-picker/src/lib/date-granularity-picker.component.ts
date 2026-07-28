@@ -21,7 +21,7 @@ import {
   type GranularityCell,
   type PickerGranularity,
   type QuarterStartMonth,
-} from '@sanring/date-picker';
+} from '@sanring/date-picker-core';
 import { DatePickerOverlayShellComponent } from './date-picker-overlay-shell.component';
 
 let nextDialogId = 0;

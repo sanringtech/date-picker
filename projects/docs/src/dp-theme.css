@@ -3,8 +3,8 @@
  *
  * date-picker's own color identity, not borrowed from @sanring/ui. This
  * file only backs the docs site's own chrome (nav, buttons, cards); the
- * published `@sanring/date-picker-widget` package ships its own separate
- * `dp-theme.css` (projects/date-picker-widget/src/dp-theme.css) since it's
+ * published `@sanring/date-picker` package ships its own separate
+ * `dp-theme.css` (projects/date-picker/src/dp-theme.css) since it's
  * a standalone artifact with its own consumers. The two share the same
  * eight core hex values (primary/primary-light/accent/danger/text-main/
  * text-muted/text-disabled/bg-base) — kept in sync by hand, not imported,

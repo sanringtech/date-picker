@@ -37,7 +37,7 @@ export class HomePageComponent {
       {
         title: home.widgetSection.eyebrow,
         heading: home.widgetSection.title,
-        description: `${home.widgetSection.descriptionPrefix} <code class="rounded bg-surface-strong px-1 font-mono text-xs">@sanring/date-picker</code> ${home.widgetSection.descriptionSuffix}`,
+        description: `${home.widgetSection.descriptionPrefix} <code class="rounded bg-surface-strong px-1 font-mono text-xs">@sanring/date-picker-core</code> ${home.widgetSection.descriptionSuffix}`,
         cards: [
           {
             title: home.widgetSection.datePickerTitle,

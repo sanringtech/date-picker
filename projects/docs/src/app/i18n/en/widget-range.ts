@@ -3,7 +3,7 @@ import type { WidgetDateRangeDictionary } from '../i18n.types';
 export const widgetRange: WidgetDateRangeDictionary = {
   pageTitle: 'Widget Layer — Range',
   pageDescription:
-    'Composed widget layer (<code class="font-mono text-xs">@sanring/date-picker-widget</code>): range selection shown as dual-trigger dual-month, combined-trigger dual-month, and two-trigger single-month patterns.',
+    'Composed widget layer (<code class="font-mono text-xs">@sanring/date-picker</code>): range selection shown as dual-trigger dual-month, combined-trigger dual-month, and two-trigger single-month patterns.',
   cardTitle: 'DateRangePicker (dual-month, dual trigger)',
   cardDescription:
     'Start and end triggers share one side-by-side dual-month overlay. The first click sets the draft start, and the second click commits the range.',

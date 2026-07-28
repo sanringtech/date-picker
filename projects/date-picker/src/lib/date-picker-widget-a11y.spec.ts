@@ -13,8 +13,8 @@
 import axe from 'axe-core';
 import { Component, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CALENDAR_TODAY } from '@sanring/date-picker';
-import type { CalendarLocale, DateInterval, DateRange } from '@sanring/date-picker';
+import { CALENDAR_TODAY } from '@sanring/date-picker-core';
+import type { CalendarLocale, DateInterval, DateRange } from '@sanring/date-picker-core';
 import { DatePickerComponent } from './date-picker.component';
 import { DateRangePickerComponent } from './date-range-picker.component';
 import { DEFAULT_DATE_FORMAT_CONFIG, type DateFormatConfig } from './date-format';

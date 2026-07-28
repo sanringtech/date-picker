@@ -1,12 +1,12 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CALENDAR_TODAY } from '@sanring/date-picker';
+import { CALENDAR_TODAY } from '@sanring/date-picker-core';
 import type {
   CalendarLocale,
   DateInterval,
   PickerGranularity,
   QuarterStartMonth,
-} from '@sanring/date-picker';
+} from '@sanring/date-picker-core';
 import { DateGranularityPickerComponent } from './date-granularity-picker.component';
 
 const testLocale: CalendarLocale = {

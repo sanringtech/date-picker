@@ -6,8 +6,8 @@ import {
   LucideChevronRight,
   LucideChevronUp,
 } from '@lucide/angular';
-import { CALENDAR_LOCALE, CalendarGridDirective, TimeAdjustmentEngine } from '@sanring/date-picker';
-import type { CalendarDay } from '@sanring/date-picker';
+import { CALENDAR_LOCALE, CalendarGridDirective, TimeAdjustmentEngine } from '@sanring/date-picker-core';
+import type { CalendarDay } from '@sanring/date-picker-core';
 import { ButtonDirective } from '../../../components/ui/button';
 import { EngineDemoCardComponent } from '../../../components/engine-demo-card/engine-demo-card.component';
 import { EnginePageComponent } from '../../../components/engine-page/engine-page.component';

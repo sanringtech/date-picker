@@ -1,7 +1,7 @@
 import { Component, signal, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CALENDAR_TODAY } from '@sanring/date-picker';
-import type { CalendarLocale, DateInterval } from '@sanring/date-picker';
+import { CALENDAR_TODAY } from '@sanring/date-picker-core';
+import type { CalendarLocale, DateInterval } from '@sanring/date-picker-core';
 import { DateTimePickerComponent } from './date-time-picker.component';
 
 const testLocale: CalendarLocale = {

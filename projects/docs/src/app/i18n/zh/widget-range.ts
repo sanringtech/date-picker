@@ -3,7 +3,7 @@ import type { WidgetDateRangeDictionary } from '../i18n.types';
 export const widgetRange: WidgetDateRangeDictionary = {
   pageTitle: 'Widget Layer — Range',
   pageDescription:
-    'Composed Widget 層（<code class="font-mono text-xs">@sanring/date-picker-widget</code>）：區間選取同時展示雙月雙 trigger、雙月單 trigger 與雙 trigger 單月三種常見形態。',
+    'Composed Widget 層（<code class="font-mono text-xs">@sanring/date-picker</code>）：區間選取同時展示雙月雙 trigger、雙月單 trigger 與雙 trigger 單月三種常見形態。',
   cardTitle: 'DateRangePicker（雙月模式，雙 Trigger）',
   cardDescription:
     '起始與結束兩個 trigger 共享同一個雙月並排 overlay；第一次點擊設定起點（Draft），第二次點擊提交區間並關閉。',

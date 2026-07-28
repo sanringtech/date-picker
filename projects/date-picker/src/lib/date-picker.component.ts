@@ -19,31 +19,32 @@ import {
   type CalendarDay,
   type CalendarLocale,
   type DisabledInput,
-} from '@sanring/date-picker';
+} from '@sanring/date-picker-core';
 import { DEFAULT_DATE_FORMAT_CONFIG, type DateFormatConfig } from './date-format';
 import { DatePickerOverlayShellComponent } from './date-picker-overlay-shell.component';
 
 let nextDialogId = 0;
 
 /**
- * Multi-mode composed DatePicker (widget PRD §10 W5 draft). Wraps engine
- * `selectionMode: 'multi'` (M6) — a toggle-collection selection with no
- * Draft state, unlike Range — so unlike W1/W2 the overlay stays open after
- * each pick and only closes on Escape/backdrop click, letting the user
- * accumulate several dates in one session.
+ * Single-mode composed DatePicker (PRD §7). Styling uses Tailwind utility
+ * classes matching the engine demo (docs `styles.css` maps them to `--dp-*`
+ * custom properties) — the black-box npm precompiled CSS bundle that makes
+ * this render correctly without a consumer Tailwind pipeline is W4 scope,
+ * not yet built.
  */
 @Component({
-  selector: 'sanring-date-multi-picker',
+  selector: 'sanring-date-picker',
   imports: [DatePickerOverlayShellComponent],
-  templateUrl: './date-multi-picker.component.html',
+  templateUrl: './date-picker.component.html',
 })
-export class DateMultiPickerComponent {
+export class DatePickerComponent {
   private readonly parentTodayFn = inject(CALENDAR_TODAY);
   private readonly parentInjector = inject(Injector);
 
-  readonly selectedDates = model<Date[]>([]);
+  readonly selectedDate = model<Date | null>(null);
   readonly locale = input.required<CalendarLocale>();
   readonly disabled = input<DisabledInput | undefined>(undefined);
+  readonly allowDeselect = input(false);
   readonly today = input<Date | undefined>(undefined);
   readonly format = input<DateFormatConfig>(DEFAULT_DATE_FORMAT_CONFIG);
   readonly placeholder = input('');
@@ -51,6 +52,13 @@ export class DateMultiPickerComponent {
   readonly viewDate = input<Date | undefined>(undefined);
   readonly openedChange = output<boolean>();
 
+  /**
+   * Own child injector (not the `providers` array) so CALENDAR_TODAY can read
+   * the `today` input reactively without Angular reporting a circular
+   * dependency (CalendarEngine would otherwise resolve CALENDAR_TODAY through
+   * this same component's own DI node while the component is still under
+   * construction).
+   */
   private readonly engineInjector = Injector.create({
     parent: this.parentInjector,
     providers: [
@@ -69,12 +77,7 @@ export class DateMultiPickerComponent {
   protected readonly isOpen = computed(() => this.shell.isOpen());
   protected readonly inputValue = signal('');
   protected readonly invalid = signal(false);
-  protected readonly dialogId = `sanring-date-multi-picker-dialog-${nextDialogId++}`;
-
-  /** Chronological display order — the engine's Map preserves insertion order, not date order. */
-  protected readonly sortedSelectedDates = computed(() =>
-    [...this.engine.selectedDates()].sort((a, b) => a.getTime() - b.getTime()),
-  );
+  protected readonly dialogId = `sanring-date-picker-dialog-${nextDialogId++}`;
 
   protected readonly weekdayLabels = computed(() => {
     const l = this.locale();
@@ -82,42 +85,46 @@ export class DateMultiPickerComponent {
   });
 
   constructor() {
-    this.engine.setSelectionMode('multi');
-
     effect(() => this.engine.setLocale(this.locale()));
     effect(() => this.engine.setDisabled(this.disabled()));
+    effect(() => this.engine.setAllowDeselect(this.allowDeselect()));
     effect(() => this.engine.setMonthsToDisplay(this.monthsToDisplay()));
     effect(() => { const vd = this.viewDate(); if (vd !== undefined) this.engine.setViewDate(vd); });
 
     /**
-     * One direction only: external `[(selectedDates)]` writes -> engine (+ input
-     * text). See W1's equivalent comment for why this isn't a two-way effect pair.
+     * One direction only: external `[(selectedDate)]` writes -> engine (+ input
+     * text). The reverse direction (grid click -> model + input text) is handled
+     * synchronously by `syncFromEngine()` at its call sites instead of a second
+     * effect — two effects that each write what the other reads doesn't converge
+     * within a single change-detection tick (Angular schedules the second effect's
+     * re-run for the *next* flush), so e.g. a click-then-assert in the same test
+     * tick would see stale input text.
      */
     effect(() => {
-      const modelValue = this.selectedDates();
+      const modelValue = this.selectedDate();
       untracked(() => {
-        if (sameDateSet(modelValue, this.engine.selectedDates())) {
+        if (modelValue === this.engine.selectedDate()) {
           return;
         }
-        this.engine.setSelectedDates(modelValue);
-        this.applyEngineDatesToText();
+        if (modelValue === null) {
+          this.engine.clearSelection();
+        } else {
+          this.engine.setSelectedDate(modelValue);
+        }
+        this.inputValue.set(modelValue ? this.format().format(modelValue) : '');
+        this.invalid.set(false);
       });
     });
   }
 
-  private applyEngineDatesToText(): void {
-    const dates = this.sortedSelectedDates();
-    this.inputValue.set(dates.map((d) => this.format().format(d)).join(', '));
-    this.invalid.set(false);
-  }
-
-  /** Synchronous engine -> model + input text sync for call sites that mutate the engine directly (grid clicks, chip removal, keyboard selection). */
+  /** Synchronous engine -> model + input text sync for call sites that mutate the engine directly (grid clicks, keyboard selection). */
   private syncFromEngine(): void {
-    const value = this.engine.selectedDates();
-    if (!sameDateSet(value, this.selectedDates())) {
-      this.selectedDates.set(value);
+    const value = this.engine.selectedDate();
+    if (value !== this.selectedDate()) {
+      this.selectedDate.set(value);
     }
-    this.applyEngineDatesToText();
+    this.inputValue.set(value ? this.format().format(value) : '');
+    this.invalid.set(false);
   }
 
   protected toWeeks(grid: readonly CalendarDay[]): CalendarDay[][] {
@@ -135,10 +142,6 @@ export class DateMultiPickerComponent {
     return formatDate(day.date, 'yyyy-MM-dd');
   }
 
-  protected chipAriaLabel(date: Date): string {
-    return formatDate(date, 'yyyy-MM-dd');
-  }
-
   protected onInputFocus(): void {
     if (this.suppressNextFocusOpen) {
       this.suppressNextFocusOpen = false;
@@ -147,57 +150,36 @@ export class DateMultiPickerComponent {
     this.open();
   }
 
-  /** Returning focus to the input after a close() fires a native 'focus' event, which would otherwise re-open via onInputFocus(). */
+  /** Returning focus to the input after a close() (below) fires a native 'focus' event, which would otherwise re-open via onInputFocus(). */
   private suppressNextFocusOpen = false;
   private refocusInputWithoutReopening(): void {
     this.suppressNextFocusOpen = true;
     this.inputElRef.nativeElement.focus();
   }
 
-  /**
-   * Typed input is a comma-separated list, parsed as one indivisible batch
-   * (Range's "wait for the whole transaction" precedent) — a half-typed
-   * trailing entry simply waits rather than partially committing.
-   */
   protected onInputChange(value: string): void {
     this.inputValue.set(value);
-    if (value.trim() === '') {
+    if (value === '') {
       this.invalid.set(false);
       this.engine.clearSelection();
-      this.selectedDates.set([]);
+      this.selectedDate.set(null);
       return;
     }
-    const entries = value.split(',').map((v) => v.trim());
-    if (entries.some((v) => v === '')) {
-      // Trailing/empty comma segment — still typing, wait rather than reject.
-      return;
-    }
-    const parsed = entries.map((v) => this.format().parse(v));
-    if (parsed.some((d) => d === null)) {
+    const parsed = this.format().parse(value);
+    if (parsed === null) {
       this.invalid.set(true);
       return;
     }
-    this.engine.setSelectedDates(parsed as Date[]);
-    const committed = this.engine.selectedDates();
-    // setSelectedDates() silently drops disabled/duplicate entries (I2, Decision 13) —
-    // surface that instead of silently claiming every typed entry stuck.
-    this.invalid.set(committed.length !== new Set(entries).size);
-    this.selectedDates.set(committed);
+    this.invalid.set(false);
+    this.engine.setSelectedDate(parsed);
+    this.selectedDate.set(parsed);
   }
 
   protected selectDate(date: Date): void {
     this.engine.selectDate(date);
     this.syncFromEngine();
-  }
-
-  protected removeDate(date: Date): void {
-    this.engine.removeDate(date);
-    this.syncFromEngine();
-  }
-
-  protected clearAll(): void {
-    this.engine.clearSelection();
-    this.syncFromEngine();
+    this.close();
+    this.refocusInputWithoutReopening();
   }
 
   protected onGridKeydown(event: KeyboardEvent): void {
@@ -255,10 +237,4 @@ export class DateMultiPickerComponent {
     this.shell.close();
     this.openedChange.emit(false);
   }
-}
-
-function sameDateSet(a: readonly Date[], b: readonly Date[]): boolean {
-  if (a.length !== b.length) return false;
-  const keysB = new Set(b.map((d) => d.toDateString()));
-  return a.every((d) => keysB.has(d.toDateString()));
 }

@@ -22,7 +22,7 @@ import {
   type DisabledInput,
   type TimeGuardMatcher,
   type TimePrecision,
-} from '@sanring/date-picker';
+} from '@sanring/date-picker-core';
 import { DEFAULT_DATE_TIME_FORMAT_CONFIG, type DateFormatConfig } from './date-format';
 import { DatePickerOverlayShellComponent } from './date-picker-overlay-shell.component';
 

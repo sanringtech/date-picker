@@ -3,10 +3,18 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../out-tsc/lib",
+    "outDir": "../../out-tsc/lib-date-picker",
     "declaration": true,
     "declarationMap": true,
-    "types": []
+    "types": [],
+    /* Library packaging (ng-packagr) enforces rootDir containment, unlike app
+       builds — the root tsconfig's `@sanring/date-picker-core` path maps to raw
+       source outside this project, which trips that check. Point this build
+       at the built dist .d.ts instead, so `ng build date-picker-core` must run
+       before `ng build date-picker` (correct dependency order anyway). */
+    "paths": {
+      "@sanring/date-picker-core": ["../../dist/date-picker-core/types/sanring-date-picker-core.d.ts"]
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts"]

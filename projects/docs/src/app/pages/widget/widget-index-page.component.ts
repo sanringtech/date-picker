@@ -101,7 +101,7 @@ export class WidgetIndexPageComponent {
         installValue: t.npmInstallValueSuffix,
         customizeValue: t.npmCustomizeValue,
         updateValue: 'npm update',
-        command: 'npm install @sanring/date-picker-widget @sanring/date-picker',
+        command: 'npm install @sanring/date-picker @sanring/date-picker-core',
       },
       {
         title: t.copyTitle,

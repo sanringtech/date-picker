@@ -1,13 +1,13 @@
 {
   "name": "@sanring/date-picker",
-  "version": "0.5.0",
-  "description": "Headless Angular calendar engine — pure logic, zero DOM/CSS assumptions",
+  "version": "1.0.0",
+  "description": "Composed Angular DatePicker/RangePicker widget — CDK Overlay + Input assembled on top of @sanring/date-picker-core",
   "keywords": [
     "angular",
     "calendar",
     "datepicker",
-    "headless",
-    "signals"
+    "widget",
+    "overlay"
   ],
   "repository": {
     "type": "git",
@@ -15,14 +15,18 @@
   },
   "license": "MIT",
   "peerDependencies": {
+    "@angular/cdk": "^22.0.0",
     "@angular/common": "^22.0.0",
     "@angular/core": "^22.0.0"
   },
   "dependencies": {
+    "@sanring/date-picker-core": "^0.5.0",
     "date-fns": "^4.4.0",
     "tslib": "^2.3.0"
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "publishConfig": {
     "access": "public"
   }

@@ -1,5 +1,5 @@
 /**
- * Public domain types for @sanring/date-picker.
+ * Public domain types for @sanring/date-picker-core.
  * Source of truth: .claude/prds/date-picker.md §6, .claude/constitutions/date-picker.md §3/§5/§6
  */
 

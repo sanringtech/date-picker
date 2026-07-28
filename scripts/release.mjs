@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Builds and publishes each library package, skipping any whose current
-// version is already on the registry. Needed because @sanring/date-picker
-// and @sanring/date-picker-widget version independently (PRD
+// version is already on the registry. Needed because @sanring/date-picker-core
+// and @sanring/date-picker version independently (PRD
 // .claude/prds/date-picker-widget.md §5) — a changeset PR often bumps only
 // one of the two, and `npm publish` errors on a version that's already
 // published, so this script must not blindly publish both every run.
@@ -9,8 +9,8 @@ import { execFileSync, execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const packages = [
+  { project: 'date-picker-core', dist: 'dist/date-picker-core' },
   { project: 'date-picker', dist: 'dist/date-picker' },
-  { project: 'date-picker-widget', dist: 'dist/date-picker-widget' },
 ];
 
 for (const { project, dist } of packages) {

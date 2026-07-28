@@ -6,8 +6,8 @@ import {
   CalendarEngine,
   CalendarGridDirective,
   GranularityPickerEngine,
-} from '@sanring/date-picker';
-import type { CalendarDay, DateInterval, GranularityCell } from '@sanring/date-picker';
+} from '@sanring/date-picker-core';
+import type { CalendarDay, DateInterval, GranularityCell } from '@sanring/date-picker-core';
 import { ButtonDirective } from '../../../components/ui/button';
 import { EngineDemoCardComponent } from '../../../components/engine-demo-card/engine-demo-card.component';
 import { EnginePageComponent } from '../../../components/engine-page/engine-page.component';

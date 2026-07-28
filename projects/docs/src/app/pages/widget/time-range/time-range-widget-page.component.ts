@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { format } from 'date-fns/format';
-import { CALENDAR_LOCALE } from '@sanring/date-picker';
-import type { DateRange } from '@sanring/date-picker';
-import { DateTimeRangePickerComponent } from '@sanring/date-picker-widget';
+import { CALENDAR_LOCALE } from '@sanring/date-picker-core';
+import type { DateRange } from '@sanring/date-picker-core';
+import { DateTimeRangePickerComponent } from '@sanring/date-picker';
 import { PageHeaderComponent } from '../../../components/page-header/page-header.component';
 import { WidgetDemoComponent } from '../../../components/widget-demo/widget-demo.component';
 import { I18nService } from '../../../i18n/i18n.service';

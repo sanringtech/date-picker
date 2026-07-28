@@ -9,8 +9,8 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { format } from 'date-fns/format';
-import { CALENDAR_LOCALE, CALENDAR_TODAY, CalendarGridDirective } from '@sanring/date-picker';
-import type { CalendarDay } from '@sanring/date-picker';
+import { CALENDAR_LOCALE, CALENDAR_TODAY, CalendarGridDirective } from '@sanring/date-picker-core';
+import type { CalendarDay } from '@sanring/date-picker-core';
 import { ButtonDirective } from '../../components/ui/button';
 import { I18nService } from '../../i18n/i18n.service';
 

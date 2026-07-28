@@ -1,11 +1,11 @@
 import { Component, effect, inject, viewChildren } from '@angular/core';
 import { LucideChevronLeft, LucideChevronRight, LucideX } from '@lucide/angular';
-import { CALENDAR_LOCALE, GranularityGridDirective } from '@sanring/date-picker';
+import { CALENDAR_LOCALE, GranularityGridDirective } from '@sanring/date-picker-core';
 import type {
   GranularityCell,
   GranularityPickerEngine,
   PickerGranularity,
-} from '@sanring/date-picker';
+} from '@sanring/date-picker-core';
 import { ButtonDirective } from '../../../components/ui/button';
 import { EngineDemoCardComponent } from '../../../components/engine-demo-card/engine-demo-card.component';
 import { EnginePageComponent } from '../../../components/engine-page/engine-page.component';

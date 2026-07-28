@@ -1,4 +1,4 @@
-# @sanring/date-picker
+# @sanring/date-picker-core
 
 Headless Angular date-picker engines — pure logic, zero DOM/CSS assumptions. It supports day/date selection through `CalendarEngine`, and month/quarter/year period selection through `GranularityPickerEngine`; you own every pixel of markup and styling (Tailwind, plain CSS, whatever).
 
@@ -10,7 +10,7 @@ Off-the-shelf Angular datepickers (Material, PrimeNG, ...) couple appearance to 
 
 ## Granularity contract
 
-`@sanring/date-picker` names all supported selectable units with the public `Granularity` type:
+`@sanring/date-picker-core` names all supported selectable units with the public `Granularity` type:
 
 ```ts
 type Granularity = 'day' | 'month' | 'quarter' | 'year';
@@ -30,7 +30,7 @@ Use `engineKindForGranularity()`, `isDayGranularity()`, or `isPeriodGranularity(
 ## Installation
 
 ```bash
-npm install @sanring/date-picker
+npm install @sanring/date-picker-core
 ```
 
 Peer dependencies: `@angular/common` and `@angular/core` ^22.0.0.
@@ -44,7 +44,7 @@ Peer dependencies: `@angular/common` and `@angular/core` ^22.0.0.
 ```ts
 // app.config.ts
 import { ApplicationConfig } from '@angular/core';
-import { CALENDAR_LOCALE } from '@sanring/date-picker';
+import { CALENDAR_LOCALE } from '@sanring/date-picker-core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -78,7 +78,7 @@ export const appConfig: ApplicationConfig = {
 ```ts
 // my-calendar.component.ts
 import { Component } from '@angular/core';
-import { CalendarGridDirective } from '@sanring/date-picker';
+import { CalendarGridDirective } from '@sanring/date-picker-core';
 
 @Component({
   selector: 'my-calendar',
@@ -312,8 +312,8 @@ These are not deferred features — they are outside the engine's service bounda
 
 ```
 projects/
+  date-picker-core/    publishable library  (ng-packagr → dist/date-picker-core)
   date-picker/         publishable library  (ng-packagr → dist/date-picker)
-  date-picker-widget/  publishable library  (ng-packagr → dist/date-picker-widget)
   docs/                Tailwind docs site   (ng serve docs → localhost:4400)
 ```
 
@@ -321,8 +321,8 @@ projects/
 
 ```bash
 ng serve docs                     # docs site with live reload
-ng build date-picker              # build library → dist/date-picker
-ng test date-picker --no-watch    # unit tests + axe-core WAI-ARIA gate (78 tests)
+ng build date-picker-core              # build library → dist/date-picker-core
+ng test date-picker-core --no-watch    # unit tests + axe-core WAI-ARIA gate (78 tests)
 ng lint                           # ESLint
 npm run format                    # Prettier write
 npm run format:check              # Prettier check
@@ -332,4 +332,4 @@ npm run format:check              # Prettier check
 
 - Business rules (source of truth): `.claude/constitutions/date-picker.md`
 - Product/technical spec (engine): `.claude/prds/date-picker.md`
-- Composed widget (npm install + copy-mode consumption): [`projects/date-picker-widget/README.md`](./projects/date-picker-widget/README.md), spec at `.claude/prds/date-picker-widget.md`
+- Composed widget (npm install + copy-mode consumption): [`projects/date-picker/README.md`](./projects/date-picker/README.md), spec at `.claude/prds/date-picker-widget.md`

@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
+      - 'projects/date-picker-core/**'
       - 'projects/date-picker/**'
-      - 'projects/date-picker-widget/**'
 
 jobs:
   check:
