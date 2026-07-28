@@ -5,6 +5,20 @@
   /* single source of truth for the docs shell's content width — header, footer,
      home page, and the sidebar layout each reference this instead of hardcoding max-w-5xl */
   --dp-content-max-w: 72rem;
+
+  --sanring-background: var(--dp-bg-base);
+  --sanring-foreground: var(--dp-text-main);
+  --sanring-muted: var(--dp-text-muted);
+  --sanring-border: var(--dp-border);
+  --sanring-border-strong: var(--dp-border-strong);
+  --sanring-surface: var(--dp-surface);
+  --sanring-surface-strong: var(--dp-surface-strong);
+  --sanring-control: var(--dp-control);
+  --sanring-control-foreground: var(--dp-control-foreground);
+  --sanring-active: var(--dp-active);
+  --sanring-radius-xs: 6px;
+  --sanring-radius-sm: var(--dp-radius);
+  --sanring-radius: var(--dp-radius);
 }
 
 @theme inline {

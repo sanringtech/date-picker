@@ -9,7 +9,6 @@ import {
 } from '@sanring/date-picker';
 import type { CalendarDay, DateInterval, GranularityCell } from '@sanring/date-picker';
 import { ButtonDirective } from '../../../components/ui/button';
-import { CardComponent, CardContentComponent } from '../../../components/ui/card';
 import { EngineDemoCardComponent } from '../../../components/engine-demo-card/engine-demo-card.component';
 import { EnginePageComponent } from '../../../components/engine-page/engine-page.component';
 import { SectionComponent } from '../../../components/section/section.component';
@@ -80,8 +79,6 @@ type DrillViewMode = 'day' | 'month' | 'year';
   imports: [
     CalendarGridDirective,
     ButtonDirective,
-    CardComponent,
-    CardContentComponent,
     EngineDemoCardComponent,
     EnginePageComponent,
     SectionComponent,

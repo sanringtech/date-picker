@@ -1,0 +1,24 @@
+:host {
+  display: block;
+}
+
+.widget-demo-stage {
+  background-color: color-mix(in srgb, var(--dp-surface) 86%, var(--dp-primary) 14%);
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--dp-border-strong) 48%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--dp-border-strong) 48%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 28px 28px;
+}
+
+.widget-demo-trigger-frame {
+  box-shadow:
+    0 24px 70px color-mix(in srgb, #000 30%, transparent),
+    0 1px 0 color-mix(in srgb, #fff 12%, transparent) inset;
+}

@@ -26,6 +26,7 @@ export const ALERT_DESCRIPTION_TEXT_CLASS = 'text-sm [&_p]:leading-relaxed opaci
 
 export const NAV_ITEM_TEXT_CLASS = 'text-sm font-medium';
 export const MENU_ITEM_SIZE_CLASS = 'min-h-8 px-2 py-1.5 text-sm';
+export const SELECT_ITEM_SIZE_CLASS = MENU_ITEM_SIZE_CLASS;
 export const BREADCRUMB_TEXT_CLASS = 'text-sm';
 export const BREADCRUMB_CURRENT_PAGE_CLASS = 'font-normal text-[var(--dp-text-main)]';
 export const BREADCRUMB_ICON_SIZE_CLASS = 'size-9';

@@ -2,15 +2,62 @@
 
 <app-widget-demo
   controlClass="w-full max-w-lg"
+  manualInputMode="range"
   [title]="t().cardTitle"
   [description]="t().cardDescription"
   [resultLabel]="t().selectedLabel"
-  [resultValue]="formatSelected()"
+  [resultValue]="formatDualSplitSelected()"
 >
   <sanring-date-range-picker
     widgetControl
     [locale]="locale"
-    [(selectedRange)]="selectedRange"
+    [monthsToDisplay]="2"
+    [(selectedRange)]="dualSplitRange"
     [placeholder]="t().placeholder"
   />
+</app-widget-demo>
+
+<app-widget-demo
+  class="mt-8 block"
+  controlClass="w-full max-w-lg"
+  manualInputMode="range"
+  [title]="t().combinedCardTitle"
+  [description]="t().combinedCardDescription"
+  [resultLabel]="t().selectedLabel"
+  [resultValue]="formatDualCombinedSelected()"
+>
+  <sanring-date-range-picker
+    widgetControl
+    triggerMode="combined"
+    [locale]="locale"
+    [monthsToDisplay]="2"
+    [(selectedRange)]="dualCombinedRange"
+    [placeholder]="t().placeholder"
+  />
+</app-widget-demo>
+
+<app-widget-demo
+  class="mt-8 block"
+  controlClass="w-full max-w-xl"
+  manualInputMode="range"
+  [title]="t().singleMonthCardTitle"
+  [description]="t().singleMonthCardDescription"
+  [resultLabel]="t().selectedLabel"
+  [resultValue]="formatSplitSelected()"
+>
+  <div widgetControl class="grid w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+    <sanring-date-picker
+      [locale]="locale"
+      [disabled]="splitStartDisabled()"
+      [(selectedDate)]="splitStartDate"
+      [placeholder]="t().startPlaceholder"
+    />
+    <span class="hidden self-center text-center text-muted sm:block" aria-hidden="true">–</span>
+    <sanring-date-picker
+      [locale]="locale"
+      [disabled]="splitEndDisabled()"
+      [(selectedDate)]="splitEndDate"
+      [placeholder]="t().endPlaceholder"
+    />
+  </div>
 </app-widget-demo>

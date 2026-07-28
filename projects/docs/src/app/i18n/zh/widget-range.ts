@@ -1,13 +1,21 @@
-import type { WidgetRangeDictionary } from '../i18n.types';
+import type { WidgetDateRangeDictionary } from '../i18n.types';
 
-export const widgetRange: WidgetRangeDictionary = {
+export const widgetRange: WidgetDateRangeDictionary = {
   pageTitle: 'Widget Layer — Range',
   pageDescription:
-    'Composed Widget 層（<code class="font-mono text-xs">@sanring/date-picker-widget</code>）： DateRangePickerComponent，雙月並排的區間選取器。',
-  cardTitle: 'DateRangePicker（W2，Range 模式）',
+    'Composed Widget 層（<code class="font-mono text-xs">@sanring/date-picker-widget</code>）：區間選取同時展示雙月雙 trigger、雙月單 trigger 與雙 trigger 單月三種常見形態。',
+  cardTitle: 'DateRangePicker（雙月模式，雙 Trigger）',
   cardDescription:
-    '點擊或聚焦任一輸入框開啟雙月並排月曆；第一次點擊設定起點（Draft），第二次點擊提交區間並關閉。方向鍵移動、Enter/Space 選取，Draft 中 Escape 或點擊外部會中止並回溯到中止前的舊值。',
+    '起始與結束兩個 trigger 共享同一個雙月並排 overlay；第一次點擊設定起點（Draft），第二次點擊提交區間並關閉。',
+  combinedCardTitle: 'DateRangePicker（雙月模式，單 Trigger）',
+  combinedCardDescription:
+    '單一 trigger 顯示完整區間，開啟後仍使用雙月並排 overlay 選取起訖日期；適合 filter bar 或緊湊工具列。',
+  singleMonthCardTitle: 'DateRangePicker（單月模式）',
+  singleMonthCardDescription:
+    '起始與結束各自使用一個 DatePicker trigger；每個 trigger 都開啟自己的單月月曆，適合表單空間較窄或需要明確拆開起訖日期的介面。',
   placeholder: '選擇日期',
+  startPlaceholder: '起始日期',
+  endPlaceholder: '結束日期',
   selectedLabel: '已選：',
   notSelected: '尚未選取',
 };

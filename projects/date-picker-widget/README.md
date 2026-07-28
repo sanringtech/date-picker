@@ -170,6 +170,7 @@ Same `locale` / `disabled` / `today` / `format` / `placeholder` / `openedChange`
 | `selectedRange`      | `model<DateRange>`                       | `{ start: null, end: null }` | two-way, `[(selectedRange)]`                        |
 | `rangeDayCountLimit` | `input<RangeDayCountLimit \| undefined>` | `undefined`                  |                                                     |
 | `monthsToDisplay`    | `input<number>`                          | `2`                          | dual-month by default (engine itself defaults to 1) |
+| `triggerMode`        | `input<'split' \| 'combined'>`           | `'split'`                    | split start/end inputs or one combined trigger      |
 
 ### Types
 

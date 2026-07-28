@@ -8,11 +8,7 @@
         <app-engine-demo-card
           [title]="scenario.title"
           [description]="scenario.description"
-          [inputAreaClass]="
-            (scenario.monthsToDisplay ?? 1) > 1
-              ? 'w-full shrink-0'
-              : 'w-full max-w-[20rem] shrink-0 sm:w-80'
-          "
+          inputAreaClass="w-full max-w-[20rem] shrink-0 sm:w-80"
         >
           <div demoInput>
             <div
@@ -25,7 +21,15 @@
                 [attr.data-testid]="'calendar-grid-' + scenario.id"
                 class="block outline-none"
               >
-                <div [class]="grid.engine.monthGrids().length > 1 ? 'flex gap-6' : 'block'">
+                <div
+                  [class]="
+                    scenario.id === 'multimonth'
+                      ? 'flex flex-col gap-6'
+                      : grid.engine.monthGrids().length > 1
+                        ? 'flex gap-6'
+                        : 'block'
+                  "
+                >
                   @for (monthGrid of grid.engine.monthGrids(); track $index) {
                     <div class="min-w-60 flex-1">
                       <div class="mb-4 flex items-center justify-between">
@@ -188,12 +192,13 @@
     </div>
   </app-section>
 
-  <app-section
-    title="年→月→日逐層收斂（跨引擎組裝）"
-    description='CalendarEngine 與 GranularityPickerEngine 是互不知情的 sibling 引擎（ADR-0001）——點上方標題向外縮小（日→月→年），點年/月格向內收斂，兩個引擎之間唯一的橋接是 <code class="rounded bg-surface-strong px-1 font-mono text-xs">setViewDate()</code>。'
-  >
-    <sanring-card class="w-full max-w-[20rem] overflow-hidden sm:w-80">
-      <sanring-card-content class="p-5 md:p-6">
+  <div class="mt-10">
+    <app-engine-demo-card
+      title="跨引擎組裝"
+      description='CalendarEngine 與 GranularityPickerEngine 是互不知情的 sibling 引擎；這個範例只在層級切換時用 <code class="rounded bg-surface-strong px-1 font-mono text-xs">setViewDate()</code> 同步視圖日期。'
+      inputAreaClass="w-full max-w-[20rem] shrink-0 sm:w-80"
+    >
+      <div demoInput>
         <div class="rounded-lg border border-border bg-background p-4 shadow-inner">
           <div class="mb-4 flex items-center justify-between">
             <button
@@ -300,10 +305,43 @@
             }
           }
         </div>
-        <div class="mt-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-muted">
+      </div>
+
+      <div demoResult class="space-y-3 text-sm">
+        <div class="space-y-2 text-muted">
+          <p>點標題會往外縮小：日 → 月 → 年。</p>
+          <p>點年份或月份會往內收斂，最後回到 CalendarEngine 的日格。</p>
+          <p>兩個引擎不共享 selection state，只共享下一層要看的 view date。</p>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="rounded-lg border border-border bg-surface px-3 py-2">
+            <div class="text-xs font-medium uppercase text-muted">目前層級</div>
+            <div class="mt-1 font-semibold text-foreground">
+              @switch (drillViewMode()) {
+                @case ('year') {
+                  年
+                }
+                @case ('month') {
+                  月
+                }
+                @case ('day') {
+                  日
+                }
+              }
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-border bg-surface px-3 py-2">
+            <div class="text-xs font-medium uppercase text-muted">Bridge</div>
+            <code class="mt-1 block font-mono text-xs text-foreground">setViewDate()</code>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-border bg-surface px-3 py-2 text-muted">
           已選：{{ drillFormatSelected() }}
         </div>
-      </sanring-card-content>
-    </sanring-card>
-  </app-section>
+      </div>
+    </app-engine-demo-card>
+  </div>
 </app-engine-page>

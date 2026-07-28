@@ -35,6 +35,7 @@ const EMPTY_RANGE: DateRange = { start: null, end: null };
       [(selectedRange)]="selectedRange"
       [disabled]="disabled()"
       [format]="format()"
+      [triggerMode]="triggerMode()"
       placeholder="pick a date"
     />
   `,
@@ -45,6 +46,7 @@ class TestHostComponent {
   readonly selectedRange = signal<DateRange>(EMPTY_RANGE);
   readonly disabled = signal<DateInterval | undefined>(undefined);
   readonly format = signal<DateFormatConfig>(DEFAULT_DATE_FORMAT_CONFIG);
+  readonly triggerMode = signal<'split' | 'combined'>('split');
 }
 
 describe('DateRangePickerComponent', () => {
@@ -57,6 +59,10 @@ describe('DateRangePickerComponent', () => {
 
   function endInputEl(): HTMLInputElement {
     return fixture.nativeElement.querySelectorAll('input')[1];
+  }
+
+  function combinedInputEl(): HTMLInputElement {
+    return fixture.nativeElement.querySelectorAll('input')[2];
   }
 
   function dayButton(iso: string): HTMLButtonElement | null {
@@ -96,6 +102,28 @@ describe('DateRangePickerComponent', () => {
     fixture.detectChanges();
 
     expect(document.querySelectorAll('[role="grid"]').length).toBe(2);
+  });
+
+  it('supports a combined trigger that opens the dual-month overlay and displays the committed range', () => {
+    host.triggerMode.set('combined');
+    fixture.detectChanges();
+
+    combinedInputEl().dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+
+    expect(document.querySelectorAll('[role="grid"]').length).toBe(2);
+
+    dayButton('2026-02-10')!.click();
+    fixture.detectChanges();
+    dayButton('2026-02-14')!.click();
+    fixture.detectChanges();
+
+    expect(host.selectedRange()).toEqual({
+      start: new Date(2026, 1, 10),
+      end: new Date(2026, 1, 14),
+    });
+    expect(combinedInputEl().value).toBe('2026-02-10 ~ 2026-02-14');
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 
   it('first pick opens a Draft: shows the start date, keeps the overlay open, leaves the model untouched', () => {

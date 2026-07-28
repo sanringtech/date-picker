@@ -1,38 +1,67 @@
-<div #anchorEl class="inline-flex w-full max-w-md items-center gap-2">
+<div
+  #anchorEl
+  class="w-full max-w-md"
+  [class.inline-flex]="triggerMode() === 'split'"
+  [class.items-center]="triggerMode() === 'split'"
+  [class.gap-2]="triggerMode() === 'split'"
+  [class.inline-block]="triggerMode() === 'combined'"
+>
+  <div class="contents" [class.hidden]="triggerMode() !== 'split'">
+    <input
+      #startInputEl
+      type="text"
+      role="combobox"
+      aria-haspopup="dialog"
+      aria-label="起始日期"
+      autocomplete="off"
+      class="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+      [class.border-red-500]="startInvalid()"
+      [placeholder]="placeholder()"
+      [value]="startText()"
+      [attr.aria-expanded]="isOpen()"
+      [attr.aria-invalid]="startInvalid() ? true : null"
+      [attr.aria-controls]="dialogId"
+      (focus)="onStartInputFocus()"
+      (input)="onStartInputChange($any($event.target).value)"
+    />
+    <span class="text-muted" aria-hidden="true">–</span>
+    <input
+      #endInputEl
+      type="text"
+      role="combobox"
+      aria-haspopup="dialog"
+      aria-label="結束日期"
+      autocomplete="off"
+      class="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+      [class.border-red-500]="endInvalid()"
+      [placeholder]="placeholder()"
+      [value]="endText()"
+      [attr.aria-expanded]="isOpen()"
+      [attr.aria-invalid]="endInvalid() ? true : null"
+      [attr.aria-controls]="dialogId"
+      (focus)="onEndInputFocus()"
+      (input)="onEndInputChange($any($event.target).value)"
+    />
+  </div>
+
   <input
-    #startInputEl
+    #combinedInputEl
     type="text"
     role="combobox"
     aria-haspopup="dialog"
-    aria-label="起始日期"
+    aria-label="日期範圍"
     autocomplete="off"
-    class="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-    [class.border-red-500]="startInvalid()"
+    readonly
+    class="w-full cursor-pointer rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+    [class.hidden]="triggerMode() !== 'combined'"
+    [class.border-red-500]="startInvalid() || endInvalid()"
     [placeholder]="placeholder()"
-    [value]="startText()"
+    [value]="combinedText()"
     [attr.aria-expanded]="isOpen()"
-    [attr.aria-invalid]="startInvalid() ? true : null"
+    [attr.aria-invalid]="startInvalid() || endInvalid() ? true : null"
     [attr.aria-controls]="dialogId"
-    (focus)="onStartInputFocus()"
-    (input)="onStartInputChange($any($event.target).value)"
-  />
-  <span class="text-muted" aria-hidden="true">–</span>
-  <input
-    #endInputEl
-    type="text"
-    role="combobox"
-    aria-haspopup="dialog"
-    aria-label="結束日期"
-    autocomplete="off"
-    class="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
-    [class.border-red-500]="endInvalid()"
-    [placeholder]="placeholder()"
-    [value]="endText()"
-    [attr.aria-expanded]="isOpen()"
-    [attr.aria-invalid]="endInvalid() ? true : null"
-    [attr.aria-controls]="dialogId"
-    (focus)="onEndInputFocus()"
-    (input)="onEndInputChange($any($event.target).value)"
+    (focus)="onCombinedInputFocus()"
+    (click)="open()"
   />
 </div>
 

@@ -29,6 +29,7 @@ import { DatePickerOverlayShellComponent } from './date-picker-overlay-shell.com
 const EMPTY_RANGE: DateRange = { start: null, end: null };
 
 let nextDialogId = 0;
+type DateRangePickerTriggerMode = 'split' | 'combined';
 
 /**
  * Range-mode composed DatePicker (PRD §7 DateRangePickerComponent, W2). Shares
@@ -51,6 +52,7 @@ export class DateRangePickerComponent {
   readonly today = input<Date | undefined>(undefined);
   readonly format = input<DateFormatConfig>(DEFAULT_DATE_FORMAT_CONFIG);
   readonly placeholder = input('');
+  readonly triggerMode = input<DateRangePickerTriggerMode>('split');
   readonly rangeDayCountLimit = input<RangeDayCountLimit | undefined>(undefined);
   readonly monthsToDisplay = input(2);
   readonly viewDate = input<Date | undefined>(undefined);
@@ -69,6 +71,8 @@ export class DateRangePickerComponent {
   protected readonly startInputElRef!: ElementRef<HTMLInputElement>;
   @ViewChild('endInputEl', { static: true })
   protected readonly endInputElRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('combinedInputEl', { static: true })
+  protected readonly combinedInputElRef!: ElementRef<HTMLInputElement>;
   @ViewChild('anchorEl', { static: true })
   protected readonly anchorElRef!: ElementRef<HTMLElement>;
   @ViewChild('gridEl') private readonly gridElRef?: ElementRef<HTMLDivElement>;
@@ -81,13 +85,21 @@ export class DateRangePickerComponent {
   protected readonly startInvalid = signal(false);
   protected readonly endInvalid = signal(false);
   protected readonly dialogId = `sanring-date-range-picker-dialog-${nextDialogId++}`;
+  protected readonly combinedText = computed(() => {
+    const start = this.startText();
+    const end = this.endText();
+    if (start && end) return `${start} ~ ${end}`;
+    if (start) return `${start} ~`;
+    if (end) return `~ ${end}`;
+    return '';
+  });
 
   protected readonly weekdayLabels = computed(() => {
     const l = this.locale();
     return [...l.weekdayLabels.slice(l.weekStartsOn), ...l.weekdayLabels.slice(0, l.weekStartsOn)];
   });
 
-  private lastFocusedField: 'start' | 'end' = 'start';
+  private lastFocusedField: 'start' | 'end' | 'combined' = 'start';
 
   constructor() {
     this.engine.setSelectionMode('range');
@@ -96,7 +108,10 @@ export class DateRangePickerComponent {
     effect(() => this.engine.setDisabled(this.disabled()));
     effect(() => this.engine.setMonthsToDisplay(this.monthsToDisplay()));
     effect(() => this.engine.setRangeDayCountLimit(this.rangeDayCountLimit()));
-    effect(() => { const vd = this.viewDate(); if (vd !== undefined) this.engine.setViewDate(vd); });
+    effect(() => {
+      const vd = this.viewDate();
+      if (vd !== undefined) this.engine.setViewDate(vd);
+    });
 
     /** One direction only: external `[(selectedRange)]` writes -> engine (+ input text). See W1's equivalent comment for why this isn't a two-way effect pair. */
     effect(() => {
@@ -169,11 +184,25 @@ export class DateRangePickerComponent {
     this.open();
   }
 
+  protected onCombinedInputFocus(): void {
+    this.lastFocusedField = 'combined';
+    if (this.suppressNextFocusOpen) {
+      this.suppressNextFocusOpen = false;
+      return;
+    }
+    this.open();
+  }
+
   /** Returning focus after a close() fires a native 'focus' event, which would otherwise re-open via on*InputFocus(). */
   private suppressNextFocusOpen = false;
   private refocusInputWithoutReopening(): void {
     this.suppressNextFocusOpen = true;
-    const target = this.lastFocusedField === 'start' ? this.startInputElRef : this.endInputElRef;
+    const target =
+      this.lastFocusedField === 'combined'
+        ? this.combinedInputElRef
+        : this.lastFocusedField === 'start'
+          ? this.startInputElRef
+          : this.endInputElRef;
     target.nativeElement.focus();
   }
 
@@ -311,6 +340,7 @@ export class DateRangePickerComponent {
   }
 
   open(): void {
+    if (this.shell.isOpen()) return;
     this.shell.open();
     this.openedChange.emit(true);
     queueMicrotask(() => this.gridElRef?.nativeElement.focus());

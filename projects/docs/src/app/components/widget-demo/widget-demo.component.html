@@ -1,20 +1,130 @@
-<div class="w-full">
-  <h3 class="text-base font-semibold tracking-tight text-foreground">{{ title() }}</h3>
-  <p class="mt-2 max-w-2xl text-sm leading-6 text-muted" [innerHTML]="description()"></p>
+<section class="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+  <div class="border-b border-border px-5 py-4 sm:px-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div class="min-w-0">
+        <h3 class="text-base font-semibold text-foreground">{{ title() }}</h3>
+        <p class="mt-1 max-w-3xl text-sm leading-6 text-muted" [innerHTML]="description()"></p>
+      </div>
 
-  <div
-    class="mt-6 flex justify-center rounded-2xl border border-border bg-surface p-10 shadow-inner md:p-14"
-  >
-    <div [class]="controlClass()">
-      <ng-content select="[widgetControl]" />
+      <span
+        class="inline-flex shrink-0 items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-xs font-medium text-muted"
+      >
+        <span class="size-2 rounded-full bg-primary"></span>
+        <span>Trigger demo</span>
+      </span>
     </div>
   </div>
 
-  <div class="mt-4 flex min-w-0 items-center gap-2 text-sm">
-    <span class="shrink-0 text-muted">{{ resultLabel() }}</span>
-    <code
-      class="min-w-0 truncate rounded bg-surface px-2 py-0.5 font-mono text-xs text-foreground"
-      >{{ resultValue() }}</code
-    >
+  <div class="grid lg:grid-cols-[minmax(0,1fr)_18rem]">
+    <div class="widget-demo-stage px-4 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+      <div class="mx-auto w-full max-w-2xl">
+        <div class="mb-3 flex items-center justify-between gap-3 text-xs font-medium">
+          <span class="uppercase text-muted">Trigger</span>
+          <div class="w-40">
+            <sanring-select [(ngModel)]="demoMode">
+              <button sanringSelectTrigger class="h-8">
+                <sanring-select-value />
+                <svg lucideChevronDown class="size-4 shrink-0 text-muted"></svg>
+              </button>
+              <sanring-select-content matchTriggerWidth>
+                <sanring-select-item value="select">選擇取用</sanring-select-item>
+                <sanring-select-item value="manual">手動輸入</sanring-select-item>
+              </sanring-select-content>
+            </sanring-select>
+          </div>
+        </div>
+
+        <div
+          class="widget-demo-trigger-frame rounded-lg border border-border-strong bg-background p-3 sm:p-4"
+        >
+          <div [class]="controlClass()" [class.hidden]="demoMode !== 'select'">
+            <ng-content select="[widgetControl]" />
+          </div>
+
+          @if (demoMode === 'manual' && manualInputMode() === 'single') {
+            <sanring-field>
+              <label sanringLabel>手動輸入</label>
+              <input
+                sanringInput
+                class="w-full"
+                type="text"
+                autocomplete="off"
+                placeholder="YYYY-MM-DD"
+                [pattern]="manualInputPattern"
+                [(ngModel)]="manualInputValue"
+              />
+              <sanring-error-message>請使用 YYYY-MM-DD 格式</sanring-error-message>
+            </sanring-field>
+          }
+
+          @if (demoMode === 'manual' && manualInputMode() === 'range') {
+            <div class="grid w-full gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+              <sanring-field>
+                <label sanringLabel>起始日期</label>
+                <input
+                  sanringInput
+                  class="w-full"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="YYYY-MM-DD"
+                  [pattern]="manualInputPattern"
+                  [class.border-red-500]="manualRangeOrderInvalid()"
+                  [(ngModel)]="manualStartValue"
+                />
+                <sanring-error-message>請使用 YYYY-MM-DD 格式</sanring-error-message>
+              </sanring-field>
+
+              <span
+                class="hidden h-10 items-center text-center text-muted sm:mt-7 sm:flex"
+                aria-hidden="true"
+                >–</span
+              >
+
+              <sanring-field>
+                <label sanringLabel>結束日期</label>
+                <input
+                  sanringInput
+                  class="w-full"
+                  type="text"
+                  autocomplete="off"
+                  placeholder="YYYY-MM-DD"
+                  [pattern]="manualInputPattern"
+                  [class.border-red-500]="manualRangeOrderInvalid()"
+                  [(ngModel)]="manualEndValue"
+                />
+                <sanring-error-message>請使用 YYYY-MM-DD 格式</sanring-error-message>
+              </sanring-field>
+            </div>
+
+            @if (manualRangeOrderInvalid()) {
+              <p class="mt-2 text-sm font-medium text-red-500">起始日期不可晚於結束日期</p>
+            }
+          }
+        </div>
+      </div>
+    </div>
+
+    <aside class="border-t border-border bg-surface px-5 py-5 lg:border-l lg:border-t-0">
+      <div class="text-xs font-medium uppercase text-muted">{{ resultLabel() }}</div>
+      <code
+        class="mt-3 block min-h-10 overflow-hidden text-ellipsis rounded-md border border-border bg-background px-3 py-2 font-mono text-sm leading-6 text-foreground"
+        >{{ displayedResult() }}</code
+      >
+
+      <div class="mt-5 grid grid-cols-2 gap-2 text-xs">
+        <div class="rounded-md border border-border bg-background px-3 py-2">
+          <div class="text-muted">Mode</div>
+          <div class="mt-1 font-medium text-foreground">
+            {{ demoMode === 'manual' ? 'Manual' : 'Select' }}
+          </div>
+        </div>
+        <div class="rounded-md border border-border bg-background px-3 py-2">
+          <div class="text-muted">Layer</div>
+          <div class="mt-1 font-medium text-foreground">
+            {{ demoMode === 'manual' ? 'Input' : 'Overlay' }}
+          </div>
+        </div>
+      </div>
+    </aside>
   </div>
-</div>
+</section>

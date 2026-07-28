@@ -119,6 +119,15 @@ export interface WidgetRangeDictionary {
   readonly notSelected: string;
 }
 
+export interface WidgetDateRangeDictionary extends WidgetRangeDictionary {
+  readonly combinedCardTitle: string;
+  readonly combinedCardDescription: string;
+  readonly singleMonthCardTitle: string;
+  readonly singleMonthCardDescription: string;
+  readonly startPlaceholder: string;
+  readonly endPlaceholder: string;
+}
+
 export interface EngineIndexDictionary {
   readonly pageTitle: string;
   readonly pageDescription: string;
@@ -139,7 +148,7 @@ export interface Dictionary {
   readonly home: HomeDictionary;
   readonly widgetIndex: WidgetIndexDictionary;
   readonly widgetSingle: WidgetSingleDictionary;
-  readonly widgetRange: WidgetRangeDictionary;
+  readonly widgetRange: WidgetDateRangeDictionary;
   readonly widgetMulti: WidgetRangeDictionary;
   readonly widgetGranularity: WidgetRangeDictionary;
   readonly widgetGranularityRange: WidgetRangeDictionary;

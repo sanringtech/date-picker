@@ -1,13 +1,21 @@
-import type { WidgetRangeDictionary } from '../i18n.types';
+import type { WidgetDateRangeDictionary } from '../i18n.types';
 
-export const widgetRange: WidgetRangeDictionary = {
+export const widgetRange: WidgetDateRangeDictionary = {
   pageTitle: 'Widget Layer — Range',
   pageDescription:
-    'Composed widget layer (<code class="font-mono text-xs">@sanring/date-picker-widget</code>): DateRangePickerComponent, a side-by-side dual-month range picker.',
-  cardTitle: 'DateRangePicker (W2, range mode)',
+    'Composed widget layer (<code class="font-mono text-xs">@sanring/date-picker-widget</code>): range selection shown as dual-trigger dual-month, combined-trigger dual-month, and two-trigger single-month patterns.',
+  cardTitle: 'DateRangePicker (dual-month, dual trigger)',
   cardDescription:
-    'Click or focus either input to open the dual-month calendar; the first click sets the start (draft), the second commits the range and closes. Arrow keys move, Enter/Space selects, and Escape or an outside click while in draft aborts and reverts to the previous value.',
+    'Start and end triggers share one side-by-side dual-month overlay. The first click sets the draft start, and the second click commits the range.',
+  combinedCardTitle: 'DateRangePicker (dual-month, combined trigger)',
+  combinedCardDescription:
+    'One trigger displays the full range and opens the same side-by-side dual-month overlay for start/end selection. This fits filter bars and compact toolbars.',
+  singleMonthCardTitle: 'DateRangePicker (single-month mode)',
+  singleMonthCardDescription:
+    'Start and end each use a DatePicker trigger. Each trigger opens its own single-month calendar, which fits narrower forms or interfaces that need explicit start/end controls.',
   placeholder: 'Select date',
+  startPlaceholder: 'Start date',
+  endPlaceholder: 'End date',
   selectedLabel: 'Selected: ',
   notSelected: 'Not selected',
 };
