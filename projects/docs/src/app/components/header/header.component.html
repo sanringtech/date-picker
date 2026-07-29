@@ -1,9 +1,13 @@
 <header class="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur">
-  <div class="mx-auto flex h-14 max-w-[var(--dp-content-max-w)] items-center justify-between px-6">
+  <div
+    class="mx-auto flex h-14 max-w-[var(--dp-content-max-w)] items-center justify-between px-4 sm:px-6"
+  >
     <app-logo />
 
-    <div class="flex items-center gap-4">
-      <app-navigation />
+    <div class="flex items-center gap-2 sm:gap-4">
+      <div class="hidden sm:block">
+        <app-navigation />
+      </div>
 
       <div class="flex items-center gap-2">
         <button
@@ -46,7 +50,30 @@
           <svg sanringSwitchIconChecked lucideMoon [size]="12"></svg>
           <svg sanringSwitchIconUnchecked lucideSun [size]="12"></svg>
         </sanring-switch>
+
+        <button
+          type="button"
+          sanringBtn
+          variant="outline"
+          size="icon"
+          class="size-8 rounded-md sm:hidden"
+          [attr.aria-label]="mobileMenuOpen() ? '關閉選單' : '開啟選單'"
+          [attr.aria-expanded]="mobileMenuOpen()"
+          (click)="toggleMobileMenu()"
+        >
+          @if (mobileMenuOpen()) {
+            <svg lucideX [size]="18"></svg>
+          } @else {
+            <svg lucideMenu [size]="18"></svg>
+          }
+        </button>
       </div>
     </div>
   </div>
+
+  @if (mobileMenuOpen()) {
+    <div class="border-t border-border px-4 py-3 sm:hidden" (click)="closeMobileMenu()">
+      <app-navigation [vertical]="true" />
+    </div>
+  }
 </header>

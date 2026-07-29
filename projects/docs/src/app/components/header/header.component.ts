@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideMoon, LucideSun } from '@lucide/angular';
+import { LucideMenu, LucideMoon, LucideSun, LucideX } from '@lucide/angular';
 import { ButtonDirective } from '../ui/button';
 import { SwitchComponent } from '../ui/switch';
 import { LogoComponent } from '../logo/logo.component';
@@ -18,6 +18,8 @@ import type { Locale } from '../../i18n/i18n.types';
     NavigationComponent,
     LucideMoon,
     LucideSun,
+    LucideMenu,
+    LucideX,
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
@@ -26,6 +28,15 @@ export class HeaderComponent {
   protected readonly i18n = inject(I18nService);
   protected readonly isDark = signal(true);
   protected readonly themeSwitchId = 'header-theme-switch';
+  protected readonly mobileMenuOpen = signal(false);
+
+  protected toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((open) => !open);
+  }
+
+  protected closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
 
   protected toggleLocale(): void {
     this.i18n.setLocale(this.i18n.locale() === 'zh' ? 'en' : 'zh');

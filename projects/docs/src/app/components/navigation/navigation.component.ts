@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, booleanAttribute, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ButtonDirective } from '../ui/button';
 import { docsTopNavItems } from '../../navigation/docs-navigation';
@@ -11,4 +11,5 @@ import { docsTopNavItems } from '../../navigation/docs-navigation';
 })
 export class NavigationComponent {
   protected readonly items = docsTopNavItems;
+  readonly vertical = input(false, { transform: booleanAttribute });
 }

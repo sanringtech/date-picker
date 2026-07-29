@@ -1,4 +1,4 @@
-<nav class="flex items-center gap-1">
+<nav [class]="vertical() ? 'flex flex-col items-stretch gap-1' : 'flex items-center gap-1'">
   @for (item of items; track item.path) {
     <a
       sanringBtn
@@ -12,6 +12,8 @@
       [class.bg-surface-strong]="rla.isActive"
       [class.text-foreground]="rla.isActive"
       [class.text-muted]="!rla.isActive"
+      [class.w-full]="vertical()"
+      [class.justify-start]="vertical()"
     >
       {{ item.label }}
     </a>
