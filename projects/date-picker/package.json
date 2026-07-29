@@ -1,6 +1,6 @@
 {
   "name": "@sanring/date-picker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Composed Angular DatePicker/RangePicker widget — CDK Overlay + Input assembled on top of @sanring/date-picker-core",
   "keywords": [
     "angular",
